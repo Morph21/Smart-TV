@@ -27,6 +27,7 @@ import NoConnection from '../components/NoConnection/NoConnection';
 import SyncPlayDialog from '../components/SyncPlayDialog';
 import PhotoViewer from '../components/PhotoViewer';
 import ComicViewer from '../components/ComicViewer';
+import SettingsPanel from '../components/SettingsPanel';
 import useInactivityTimer from '../hooks/useInactivityTimer';
 import {useThemeMusic} from '../hooks/useThemeMusic';
 import Login from '../views/Login';
@@ -122,6 +123,7 @@ const AppContent = (props) => {
 	const [libraries, setLibraries] = useState([]);
 	const [showAccountModal, setShowAccountModal] = useState(false);
 	const [showExitDialog, setShowExitDialog] = useState(false);
+	const [showSettingsPanel, setShowSettingsPanel] = useState(false);
 	const cleanupHandlersRef = useRef(null);
 	const backHandlerRef = useRef(null);
 	const detailsItemStackRef = useRef([]);
@@ -202,51 +204,52 @@ const AppContent = (props) => {
 				html.style.fontSize = previousInlineFontSize;
 			} else {
 				html.style.removeProperty('font-size');
+	useEffect(() => {
+		const handleKeyDown = (e) => {
+			if (e.keyCode === KEYS.BACKSPACE && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+				return;
+			}
+			if (isBackKey(e)) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				if (showExitDialog) {
+					return;
+				}
+
+				if (showAccountModal) {
+					setShowAccountModal(false);
+					return;
+				}
+
+				if (showSettingsPanel) {
+					return;
+				}
+
+				if (panelIndex === PANELS.BROWSE || panelIndex === PANELS.LOGIN) {
+					setShowExitDialog(true);
+					return;
+				}
+				if (panelIndex === PANELS.PLAYER || panelIndex === PANELS.SETTINGS) {
+					return;
+				}
+				if (backHandlerRef.current?.()) return;
+				// Pop item stack for same-panel back navigation
+				if (panelIndex === PANELS.DETAILS && detailsItemStackRef.current.length > 0) {
+					setSelectedItem(detailsItemStackRef.current.pop());
+					return;
+				}
+				if (panelIndex === PANELS.JELLYSEERR_DETAILS && jellyseerrItemStackRef.current.length > 0) {
+					setJellyseerrItem(jellyseerrItemStackRef.current.pop());
+					return;
+				}
+				handleBack();
 			}
 		};
-	}, [settings.uiScale]);
 
-	const {updateInfo, formattedNotes, dismiss: dismissUpdate} = useVersionCheck(isAuthenticated ? 3000 : null);
-
-	const screensaverActive = isAuthenticated &&
-		settings.screensaverEnabled &&
-		panelIndex !== PANELS.LOGIN &&
-		(panelIndex !== PANELS.PLAYER || isPlayerPaused);
-	const {isInactive: showScreensaver, dismiss: dismissScreensaver} = useInactivityTimer(
-		settings.screensaverTimeout || 90,
-		screensaverActive
-	);
-
-	const THEME_MUSIC_TYPES = ['Movie', 'Series', 'Season', 'Episode'];
-
-	useEffect(() => {
-		if (panelIndex === PANELS.DETAILS && selectedItem && THEME_MUSIC_TYPES.includes(selectedItem.Type)) {
-			themeMusic.playThemeMusic(selectedItem.SeriesId || selectedItem.Id);
-		} else if (panelIndex === PANELS.PLAYER) {
-			themeMusic.stopThemeMusicImmediate();
-		} else if (panelIndex !== PANELS.DETAILS) {
-			themeMusic.cancelDelayed();
-			themeMusic.stopThemeMusic();
-		}
-	}, [panelIndex, selectedItem?.Id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	const performAppCleanup = useCallback(() => {
-		console.log('[App] Performing app cleanup...');
-
-		// Stop any active playback reporting
-		playback.stopProgressReporting();
-		playback.stopHealthMonitoring();
-
-		// Try to report playback stopped if there was an active session
-		const session = playback.getCurrentSession();
-		if (session) {
-			try {
-				playback.reportStop(session.positionTicks || 0);
-			} catch (e) {
-				console.warn('[App] Failed to report stop during cleanup:', e);
-			}
-		}
-
+		window.addEventListener('keydown', handleKeyDown, true);
+		return () => window.removeEventListener('keydown', handleKeyDown, true);
+	}, [panelIndex, handleBack, performAppCleanup, showAccountModal, showExitDialog, showSettingsPanel]);
 		// Clean up any video elements to release hardware decoder
 		const videoElements = document.querySelectorAll('video');
 		videoElements.forEach(video => {
@@ -410,6 +413,10 @@ const AppContent = (props) => {
 					return;
 				}
 
+				if (showSettingsPanel) {
+					return;
+				}
+
 				if (panelIndex === PANELS.BROWSE || panelIndex === PANELS.LOGIN) {
 					setShowExitDialog(true);
 					return;
@@ -433,7 +440,7 @@ const AppContent = (props) => {
 
 		window.addEventListener('keydown', handleKeyDown, true);
 		return () => window.removeEventListener('keydown', handleKeyDown, true);
-	}, [panelIndex, handleBack, performAppCleanup, showAccountModal, showExitDialog]);
+	}, [panelIndex, handleBack, performAppCleanup, showAccountModal, showExitDialog, showSettingsPanel]);
 
 	const handleLoggedIn = useCallback(() => {
 		setPanelHistory([]);
@@ -583,28 +590,34 @@ const AppContent = (props) => {
 
 	const handleOpenSearch = useCallback(() => {
 		navigateTo(PANELS.SEARCH);
-	}, [navigateTo]);
+				if (showAccountModal) {
+					setShowAccountModal(false);
+					return;
+				}
 
-	const handleOpenSettings = useCallback(() => {
-		navigateTo(PANELS.SETTINGS);
-	}, [navigateTo]);
+				if (showSettingsPanel) {
+					return;
+				}
 
-	const handleOpenAccountModal = useCallback(() => {
-		setShowAccountModal(true);
-	}, []);
-
-	const handleCloseAccountModal = useCallback(() => {
-		setShowAccountModal(false);
-	}, []);
-
-	const handleCancelExitDialog = useCallback(() => {
-		setShowExitDialog(false);
-	}, []);
-
-	const handleOpenFavorites = useCallback(() => {
-		navigateTo(PANELS.FAVORITES);
-	}, [navigateTo]);
-
+				if (panelIndex === PANELS.BROWSE || panelIndex === PANELS.LOGIN) {
+					setShowExitDialog(true);
+					return;
+				}
+				if (panelIndex === PANELS.PLAYER || panelIndex === PANELS.SETTINGS) {
+					return;
+				}
+				if (backHandlerRef.current?.()) return;
+				// Pop item stack for same-panel back navigation
+				if (panelIndex === PANELS.DETAILS && detailsItemStackRef.current.length > 0) {
+					setSelectedItem(detailsItemStackRef.current.pop());
+					return;
+				}
+				if (panelIndex === PANELS.JELLYSEERR_DETAILS && jellyseerrItemStackRef.current.length > 0) {
+					setJellyseerrItem(jellyseerrItemStackRef.current.pop());
+					return;
+				}
+				handleBack();
+				handleBack();
 	const handleOpenGenres = useCallback(() => {
 		navigateTo(PANELS.GENRES);
 	}, [navigateTo]);
@@ -1042,6 +1055,12 @@ const AppContent = (props) => {
 						<button className={css.retryButton} onClick={() => revalidateSession(true)}>Retry</button> // eslint-disable-line react/jsx-no-bind
 					)}
 				</div>
+			)}
+			{showSettingsPanel && (
+				<SettingsPanel
+					onClose={handleCloseSettingsPanel}
+					onLibrariesChanged={fetchLibraries}
+				/>
 			)}
 		</div>
 	);

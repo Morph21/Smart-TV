@@ -58,11 +58,12 @@ const IconChevron = () => (
 );
 
 const getBaseCategories = () => [
-	{ id: 'general', label: $L('General'), description: $L('App behavior, navigation, and home screen'), Icon: IconGeneral },
-	{ id: 'playback', label: $L('Playback'), description: $L('Video, audio, and subtitle options'), Icon: IconPlayback },
-	{ id: 'display', label: $L('Display'), description: $L('Appearance, theme, and screensaver'), Icon: IconDisplay },
-	{ id: 'plugin', label: $L('Plugin'), description: $L('Moonfin plugin and integrations'), Icon: IconPlugin },
-	{ id: 'about', label: $L('About'), description: $L('App info and device capabilities'), Icon: IconAbout }
+	{ id: 'accountSecurity', label: $L('Account & Security'), description: $L('Authentication, PIN, and safety controls'), Icon: IconGeneral },
+	{ id: 'personalization', label: $L('Personalization'), description: $L('Style, navigation, home, and libraries'), Icon: IconDisplay },
+	{ id: 'dynamicContent', label: $L('Dynamic Content'), description: $L('Visual overlays and media bar content'), Icon: IconPlayback },
+	{ id: 'integrations', label: $L('Integrations'), description: $L('Plugin sync, ratings, Seerr, and plugin integrations'), Icon: IconPlugin },
+	{ id: 'playbackSyncPlay', label: $L('Playback & SyncPlay'), description: $L('Video, audio, subtitles, queue, and sync settings'), Icon: IconPlayback },
+	{ id: 'about', label: $L('About'), description: $L('App version, device info, and diagnostics'), Icon: IconAbout }
 ];
 
 const getBitrateOptions = () => [
@@ -325,7 +326,7 @@ const renderChevron = () => (
 	</div>
 );
 
-const Settings = ({ onBack, onLibrariesChanged }) => {
+const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const { api, serverUrl, accessToken, hasMultipleServers, logoutAll } = useAuth();
 	const { settings, updateSetting, resetSettings } = useSettings();
 	const { capabilities } = useDeviceInfo();
@@ -376,7 +377,7 @@ const Settings = ({ onBack, onLibrariesChanged }) => {
 			}
 			const cv = navStack[navStack.length - 1];
 			if (cv.view === 'categories') {
-				Spotlight.focus('cat-general');
+				Spotlight.focus(`cat-${categories[0]?.id || 'accountSecurity'}`);
 			} else if (cv.view === 'category') {
 				const subcats = getSubcategories(cv.id); // eslint-disable-line no-use-before-define
 				Spotlight.focus(subcats.length > 0 ? `subcat-${subcats[0].id}` : 'category-view');
@@ -644,6 +645,15 @@ const Settings = ({ onBack, onLibrariesChanged }) => {
 		</SpottableDiv>
 	);
 
+	const renderMissingItem = (id, title, desc = $L('Not available on Smart-TV yet')) => (
+		<SpottableDiv className={css.listItem} spotlightId={`missing-${id}`}>
+			<div className={css.listItemBody}>
+				<div className={css.listItemHeading}>{title}</div>
+				<div className={css.listItemCaption}>{desc}</div>
+			</div>
+		</SpottableDiv>
+	);
+
 	const renderSliderItem = (settingKey, title, min, max, step, format) => (
 		<div className={css.sliderContainer}>
 			<div className={css.sliderLabel}>
@@ -857,6 +867,213 @@ const Settings = ({ onBack, onLibrariesChanged }) => {
 		</>
 	);
 
+	const renderAccountAuthentication = () => (
+		<>
+			{renderToggleItem('autoLogin', $L('Auto Sign In'), $L('Automatically sign in on app launch'))}
+			{renderMissingItem('always-authenticate', $L('Always Authenticate'))}
+			{renderMissingItem('pin-code-protection', $L('PIN Code Protection'))}
+			{renderMissingItem('sort-servers-by', $L('Sort Servers By'))}
+		</>
+	);
+
+	const renderAccountPrivacySafety = () => (
+		<>
+			{renderMissingItem('blocked-ratings', $L('Blocked Ratings'))}
+			{renderMissingItem('exit-confirmation', $L('Exit Confirmation'))}
+		</>
+	);
+
+	const renderPersonalizationGeneralStyle = () => (
+		<>
+			{renderMissingItem('appearance-theme', $L('Theme'))}
+			{renderOptionItem('focusColor', $L('Focus Border Color'), getFocusColorOptions(), $L('Blue'))}
+			{renderOptionItem('clockDisplay', $L('Clock Display'), getClockDisplayOptions(), $L('24-Hour'))}
+			{renderMissingItem('24-hour-clock', $L('24-Hour Clock'), $L('Handled via Clock Display on Smart-TV'))}
+			{renderToggleItem('cardFocusZoom', $L('Card Focus Expansion'), $L('Slightly enlarge cards when focused'))}
+			{renderToggleItem('showHomeBackdrop', $L('Show Backdrops'), $L('Show background art while browsing'))}
+			{renderOptionItem('backdropBlurHome', $L('Browsing Blur'), getBlurOptions(), $L('Medium'))}
+			{renderOptionItem('backdropBlurDetail', $L('Details Blur'), getBlurOptions(), $L('Medium'))}
+			{renderOptionItem('watchedIndicatorBehavior', $L('Watched Indicators'), getWatchedIndicatorOptions(), $L('Always'))}
+			{renderToggleItem('themeMusicEnabled', $L('Theme Music'), $L('Play background music on detail pages'))}
+			{settings.themeMusicEnabled &&
+				renderSliderItem('themeMusicVolume', $L('Theme Music Volume'), 0, 100, 5, (v) => `${v}%`)}
+		</>
+	);
+
+	const renderPersonalizationNavigation = () => (
+		<>
+			{renderOptionItem('navbarPosition', $L('Navbar Position'), getNavPositionOptions(), $L('Top Bar'))}
+			{renderOptionItem('uiColor', $L('Navbar Color'), getUiColorOptions(), $L('Gray'))}
+			{renderOptionItem('uiOpacity', $L('Navbar Opacity'), UI_OPACITY_OPTIONS, '85%')}
+			{renderToggleItem('showShuffleButton', $L('Shuffle Button'), $L('Show shuffle button in navigation bar'))}
+			{settings.showShuffleButton &&
+				renderOptionItem('shuffleContentType', $L('Shuffle Content Type'), getContentTypeOptions(), $L('Movies & TV Shows'))}
+			{renderToggleItem('showGenresButton', $L('Genres Button'), $L('Show genres button in navigation bar'))}
+			{renderToggleItem('showFavoritesButton', $L('Favorites Button'), $L('Show favorites button in navigation bar'))}
+			{renderToggleItem('showLibrariesInToolbar', $L('Libraries Button'), $L('Show library shortcuts in navigation bar'))}
+			{renderToggleItem('showSyncPlayButton', $L('SyncPlay Button'), $L('Show SyncPlay button in navigation bar'))}
+		</>
+	);
+
+	const renderPersonalizationHomePage = () => (
+		<>
+			{renderNavItem('homeRows', $L('Home Sections'), $L('Configure which rows appear on home screen'), openHomeRows)}
+			{renderToggleItem('mergeContinueWatchingNextUp', $L('Merge Continue Watching'), $L('Combine Continue Watching and Next Up'))}
+			{renderOptionItem('homeRowsImageType', $L('Home Row Image Type'), getImageTypeOptions(), $L('Poster'))}
+			{renderToggleItem('useSeriesThumbnails', $L('Series Thumbnails'), $L('Use series artwork instead of episode images'))}
+			{renderOptionItem('homeRowsPosterSize', $L('Image Size'), getPosterSizeOptions(), $L('Default'))}
+			{renderMissingItem('home-row-overlay', $L('Home Row Overlay'))}
+			{renderToggleItem('themeMusicOnHomeRows', $L('Play Theme Music on Home Page'), $L('Play theme music while browsing home rows'))}
+		</>
+	);
+
+	const renderPersonalizationLibraries = () => (
+		<>
+			{renderNavItem('hideLibraries', $L('Library Visibility'), $L('Choose which libraries are hidden'), openLibraries)}
+			{renderMissingItem('folder-view', $L('Folder View'))}
+			{renderToggleItem('unifiedLibraryMode', $L('Multi-Server Libraries'), $L('Combine content from all servers into a single view'))}
+		</>
+	);
+
+	const renderDynamicVisualOverlays = () => (
+		<>
+			{renderOptionItem('seasonalTheme', $L('Seasonal Surprise'), getSeasonalThemeOptions(), $L('None'))}
+			{renderToggleItem('screensaverEnabled', $L('In-App Screensaver'), $L('Reduce brightness after inactivity'))}
+			{settings.screensaverEnabled &&
+				renderOptionItem('screensaverMode', $L('Screensaver Mode'), getScreensaverModeOptions(), $L('Library Backdrops'))}
+			{settings.screensaverEnabled &&
+				renderOptionItem('screensaverTimeout', $L('Screensaver Timeout'), getScreensaverTimeoutOptions(), $L('90 seconds'))}
+			{settings.screensaverEnabled &&
+				renderOptionItem('screensaverDimmingLevel', $L('Screensaver Dimming Level'), getScreensaverDimmingOptions(), '50%')}
+			{settings.screensaverEnabled &&
+				renderOptionItem('screensaverMaxRating', $L('Screensaver Max Age Rating'), AGE_RATING_OPTIONS, 'PG-13')}
+			{settings.screensaverEnabled &&
+				renderToggleItem('screensaverAgeFilter', $L('Screensaver Rating Requirement'), $L('Only show content with a rating'))}
+			{settings.screensaverEnabled &&
+				renderToggleItem('screensaverShowClock', $L('Screensaver Clock'), $L('Display clock during screensaver'))}
+		</>
+	);
+
+	const renderDynamicMediaBar = () => (
+		<>
+			{renderToggleItem('showFeaturedBar', $L('Media Bar Mode'), $L('Toggle media bar visibility'))}
+			{renderOptionItem('featuredContentType', $L('Content Type'), getContentTypeOptions(), $L('Movies & TV Shows'))}
+			{renderOptionItem('featuredItemCount', $L('Item Count'), getFeaturedItemCountOptions(), $L('10 items'))}
+			{renderNavItem('sourceLibraries', $L('Source Libraries'), $L('Choose source libraries for media bar'), () => {})}
+			{renderNavItem('sourceCollections', $L('Source Collections'), $L('Choose source collections for media bar'), () => {})}
+			{renderMissingItem('excluded-genres', $L('Excluded Genres'))}
+			{renderMissingItem('auto-advance', $L('Auto Advance'))}
+			{renderMissingItem('auto-advance-interval', $L('Auto Advance Interval'))}
+			{renderToggleItem('featuredTrailerPreview', $L('Trailer Preview'), $L('Automatically play trailer previews in media bar'))}
+			{renderMissingItem('media-preview', $L('Media Preview'))}
+			{renderMissingItem('preview-audio', $L('Preview Audio'))}
+		</>
+	);
+
+	const renderIntegrationsPlugin = () => (
+		<>
+			{renderToggleItem('useMoonfinPlugin', $L('Plugin Sync Enabled'), $L('Enable Moonfin plugin integration'))}
+			{renderMissingItem('customization-profile', $L('Customization Profile'))}
+			{renderMissingItem('load-profile', $L('Load Profile'))}
+			{renderMissingItem('save-profile', $L('Save Profile'))}
+		</>
+	);
+
+	const renderIntegrationsMetadataRatings = () => (
+		<>
+			{renderToggleItem('mdblistEnabled', $L('Fetch Additional Ratings'), $L('Enable MDBList ratings'))}
+			{renderMissingItem('enabled-rating-sources', $L('Enabled Rating Sources'))}
+			{renderToggleItem('tmdbEpisodeRatingsEnabled', $L('Show Episode Ratings'), $L('Show episode ratings from TMDB'))}
+			{renderToggleItem('showRatingLabels', $L('Show Rating Text Labels'), $L('Display source labels under scores'))}
+			{renderMissingItem('show-rating-badges', $L('Show Rating Badges'))}
+		</>
+	);
+
+	const renderIntegrationsSeerr = () => (
+		<>
+			{renderMissingItem('enable-seerr', $L('Enable Seerr'))}
+			{renderMissingItem('nsfw-filter', $L('NSFW Filter'))}
+			{renderMissingItem('logged-in-as', $L('Logged In As'))}
+			{renderMissingItem('discover-rows', $L('Discover Rows'))}
+		</>
+	);
+
+	const renderPlaybackAudio = () => (
+		<>
+			{renderMissingItem('audio-night-mode', $L('Audio Night Mode'))}
+			{renderMissingItem('default-audio-language', $L('Default Audio Language'))}
+			{renderMissingItem('audio-behavior', $L('Audio Behavior'))}
+			{renderMissingItem('ac3-passthrough', $L('AC3 Passthrough'))}
+			{renderMissingItem('truehd-support', $L('TrueHD Support'))}
+		</>
+	);
+
+	const renderPlaybackSubtitleCustomization = () => (
+		<>
+			{renderOptionItem('subtitleSize', $L('Subtitle Size'), getSubtitleSizeOptions(), $L('Medium'))}
+			{renderOptionItem('subtitleColor', $L('Text Fill Color'), getSubtitleColorOptions(), $L('White'))}
+			{renderOptionItem('subtitleShadowColor', $L('Text Stroke Color'), getSubtitleShadowColorOptions(), $L('Black'))}
+			{renderOptionItem('subtitleBackgroundColor', $L('Background Color'), getSubtitleBackgroundColorOptions(), $L('Black'))}
+			{renderOptionItem('subtitlePosition', $L('Vertical Offset'), getSubtitlePositionOptions(), $L('Bottom'))}
+		</>
+	);
+
+	const renderPlaybackAutomationQueue = () => (
+		<>
+			{renderMissingItem('cinema-mode', $L('Cinema Mode'))}
+			{renderToggleItem('autoPlay', $L('Episode Queuing'), $L('Automatically play the next episode'))}
+			{renderOptionItem('nextUpBehavior', $L('Next Up Prompt'), getNextUpBehaviorOptions(), $L('Extended'))}
+			{settings.nextUpBehavior !== 'disabled' &&
+				renderSliderItem('nextUpTimeout', $L('Next Up Prompt Timeout'), 0, 30, 1, (v) => (v === 0 ? $L('Instant') : `${v}s`))}
+			{renderMissingItem('still-watching', $L('Still Watching Prompt'))}
+		</>
+	);
+
+	const renderPlaybackOfflineDownloads = () => (
+		<>
+			{renderMissingItem('default-download-quality', $L('Default Download Quality'))}
+			{renderMissingItem('wifi-only', $L('WiFi Only'))}
+			{renderMissingItem('storage-limit', $L('Storage Limit'))}
+			{renderMissingItem('download-location', $L('Download Location'))}
+			{renderMissingItem('save-to-downloads', $L('Save to Downloads Folder'))}
+			{renderMissingItem('concurrent-downloads', $L('Concurrent Downloads'))}
+		</>
+	);
+
+	const renderPlaybackSyncPlay = () => (
+		<>
+			{renderMissingItem('syncplay-enabled', $L('SyncPlay Enabled'))}
+			{renderToggleItem('showSyncPlayButton', $L('SyncPlay Button'), $L('Show SyncPlay button in navigation bar'))}
+			{renderMissingItem('open-syncplay', $L('Open SyncPlay'))}
+			{renderMissingItem('advanced-correction', $L('Advanced Correction'))}
+			{renderMissingItem('sync-correction', $L('Sync Correction'))}
+			{renderMissingItem('speed-to-sync', $L('Speed to Sync'))}
+			{renderMissingItem('skip-to-sync', $L('Skip to Sync'))}
+			{renderMissingItem('minimum-speed-delay', $L('Minimum Speed Delay'))}
+			{renderMissingItem('maximum-speed-delay', $L('Maximum Speed Delay'))}
+			{renderMissingItem('speed-duration', $L('Speed Duration'))}
+			{renderMissingItem('minimum-skip-delay', $L('Minimum Skip Delay'))}
+			{renderMissingItem('syncplay-extra-offset', $L('SyncPlay Extra Offset'))}
+		</>
+	);
+
+	const renderPlaybackAdvanced = () => (
+		<>
+			{renderMissingItem('video-start-delay', $L('Video Start Delay'))}
+			{renderMissingItem('custom-mpv-conf', $L('Custom MPV Conf'))}
+			{renderMissingItem('mpv-conf-path', $L('MPV Conf Path'))}
+			{renderMissingItem('unsafe-mpv-options', $L('Unsafe MPV Options'))}
+			{renderMissingItem('live-tv-direct', $L('Live TV Direct'))}
+		</>
+	);
+
+	const renderAboutAppInfo = () => (
+		<>
+			{renderAboutApp()}
+			{renderMissingItem('update-notifications', $L('Update Notifications'))}
+		</>
+	);
+
 	const renderPluginMoonfin = () => (
 		<>
 			<SpottableDiv className={css.listItem} onClick={handleMoonfinToggle} spotlightId='setting-useMoonfinPlugin'>
@@ -1031,49 +1248,46 @@ const Settings = ({ onBack, onLibrariesChanged }) => {
 	);
 
 	const getSubcategories = (catId) => {
-		const info = jellyseerr.pluginInfo;
-		const isConnected = settings.useMoonfinPlugin && info;
 		switch (catId) {
-			case 'general': {
-				const subs = [{ id: 'application', label: $L('Application'), description: $L('Clock, auto login') }];
-				if (hasMultipleServers) {
-					subs.push({ id: 'multiServer', label: $L('Multi-Server'), description: $L('Unified library settings') });
-				}
-				subs.push(
-					{ id: 'navbar', label: $L('Navigation Bar'), description: $L('Style, buttons, and shortcuts') },
-					{ id: 'homeScreen', label: $L('Home Screen'), description: $L('Rows and library visibility') }
-				);
-				return subs;
-			}
-			case 'playback':
+			case 'accountSecurity':
 				return [
-					{ id: 'video', label: $L('Video'), description: $L('Playback, bitrate, and seeking') },
-					{ id: 'nextUp', label: $L('Next Up'), description: $L('Auto-play and next episode prompt') },
-					{ id: 'subtitles', label: $L('Subtitles'), description: $L('Size, position, color, and background') }
+					{ id: 'authentication', label: $L('Authentication'), description: $L('Sign-in and account protection') },
+					{ id: 'privacySafety', label: $L('Privacy & Safety'), description: $L('Content safety and app-exit protections') }
 				];
-			case 'display':
+			case 'personalization':
 				return [
-					{ id: 'backdrop', label: $L('Backdrop'), description: $L('Background art and blur') },
-					{ id: 'uiElements', label: $L('UI Elements'), description: $L('Opacity, color, and avatar') },
-					{ id: 'featuredBar', label: $L('Featured Media Bar'), description: $L('Featured content and trailers') },
-					{ id: 'themes', label: $L('Themes & Effects'), description: $L('Seasonal effects and theme music') },
-					{ id: 'screensaver', label: $L('Screensaver'), description: $L('Burn-in protection') }
+					{ id: 'generalStyle', label: $L('General Style'), description: $L('Theme, blur, and visual style') },
+					{ id: 'navigation', label: $L('Navigation'), description: $L('Navbar layout and shortcut controls') },
+					{ id: 'homePage', label: $L('Home Page'), description: $L('Rows and home screen behavior') },
+					{ id: 'libraries', label: $L('Libraries'), description: $L('Library visibility and server grouping') }
 				];
-			case 'plugin': {
-				const subs = [{ id: 'moonfinPlugin', label: $L('Moonfin Plugin'), description: $L('Plugin connection and login') }];
-				if (isConnected) {
-					subs.push(
-						{ id: 'pluginStatus', label: $L('Plugin Status'), description: $L('Version and sync info') },
-						{ id: 'mdblistRatings', label: $L('MDBList Ratings'), description: $L('Rating display settings') },
-						{ id: 'tmdb', label: 'TMDB', description: $L('Episode rating settings') },
-						{ id: 'seerr', label: seerrLabel, description: $L('{seerrLabel} connection status').replace('{seerrLabel}', seerrLabel) }
-					);
-				}
-				return subs;
-			}
+			case 'dynamicContent':
+				return [
+					{ id: 'visualOverlays', label: $L('Visual Overlays'), description: $L('Seasonal effects and screensaver controls') },
+					{ id: 'mediaBarLocalPreviews', label: $L('Media Bar & Local Previews'), description: $L('Featured media bar content and previews') }
+				];
+			case 'integrations':
+				return [
+					{ id: 'plugin', label: $L('Plugin'), description: $L('Plugin sync and profile integration') },
+					{ id: 'metadataRatings', label: $L('Metadata & Ratings'), description: $L('Ratings providers and display options') },
+					{ id: 'seerr', label: seerrLabel, description: $L('{seerrLabel} settings and status').replace('{seerrLabel}', seerrLabel) },
+					{ id: 'homeScreenSections', label: $L('Home Screen Sections'), description: $L('Plugin-backed home sections') },
+					{ id: 'kefinTweaks', label: $L('KefinTweaks'), description: $L('KefinTweaks integration and rows') }
+				];
+			case 'playbackSyncPlay':
+				return [
+					{ id: 'video', label: $L('Video'), description: $L('Playback quality, seeking, and behavior') },
+					{ id: 'audio', label: $L('Audio'), description: $L('Audio language and passthrough options') },
+					{ id: 'subtitles', label: $L('Subtitles'), description: $L('Subtitle defaults and direct-play options') },
+					{ id: 'subtitleCustomization', label: $L('Subtitle Customization'), description: $L('Text color, size, and position styling') },
+					{ id: 'automationQueue', label: $L('Automation & Queue'), description: $L('Next up, queueing, and prompt behavior') },
+					{ id: 'offlineDownloads', label: $L('Offline Downloads'), description: $L('Download quality, location, and limits') },
+					{ id: 'syncPlay', label: $L('SyncPlay'), description: $L('Group playback sync controls') },
+					{ id: 'advanced', label: $L('Advanced'), description: $L('Expert playback and MPV options') }
+				];
 			case 'about': {
 				const subs = [
-					{ id: 'appInfo', label: $L('Application'), description: $L('Version and platform') },
+					{ id: 'appInfo', label: $L('App Info'), description: $L('Version and update settings') },
 					{ id: 'serverInfo', label: $L('Server'), description: $L('Connection and version') },
 					{ id: 'debugging', label: $L('Debugging'), description: $L('Logging options') }
 				];
@@ -1094,42 +1308,50 @@ const Settings = ({ onBack, onLibrariesChanged }) => {
 	const getSubcategoryContent = (categoryId, subcategoryId) => {
 		const key = `${categoryId}.${subcategoryId}`;
 		switch (key) {
-			case 'general.application':
-				return renderGeneralApplication();
-			case 'general.multiServer':
-				return renderGeneralMultiServer();
-			case 'general.navbar':
-				return renderGeneralNavbar();
-			case 'general.homeScreen':
-				return renderGeneralHomeScreen();
-			case 'playback.video':
+			case 'accountSecurity.authentication':
+				return renderAccountAuthentication();
+			case 'accountSecurity.privacySafety':
+				return renderAccountPrivacySafety();
+			case 'personalization.generalStyle':
+				return renderPersonalizationGeneralStyle();
+			case 'personalization.navigation':
+				return renderPersonalizationNavigation();
+			case 'personalization.homePage':
+				return renderPersonalizationHomePage();
+			case 'personalization.libraries':
+				return renderPersonalizationLibraries();
+			case 'dynamicContent.visualOverlays':
+				return renderDynamicVisualOverlays();
+			case 'dynamicContent.mediaBarLocalPreviews':
+				return renderDynamicMediaBar();
+			case 'integrations.plugin':
+				return renderIntegrationsPlugin();
+			case 'integrations.metadataRatings':
+				return renderIntegrationsMetadataRatings();
+			case 'integrations.seerr':
+				return renderIntegrationsSeerr();
+			case 'integrations.homeScreenSections':
+				return renderMissingItem('home-screen-sections', $L('Home Screen Sections'));
+			case 'integrations.kefinTweaks':
+				return renderMissingItem('kefin-tweaks', $L('KefinTweaks'));
+			case 'playbackSyncPlay.video':
 				return renderPlaybackVideo();
-			case 'playback.nextUp':
-				return renderPlaybackNextUp();
-			case 'playback.subtitles':
+			case 'playbackSyncPlay.audio':
+				return renderPlaybackAudio();
+			case 'playbackSyncPlay.subtitles':
 				return renderPlaybackSubtitles();
-			case 'display.backdrop':
-				return renderDisplayBackdrop();
-			case 'display.uiElements':
-				return renderDisplayUI();
-			case 'display.featuredBar':
-				return renderDisplayFeatured();
-			case 'display.themes':
-				return renderDisplayThemes();
-			case 'display.screensaver':
-				return renderDisplayScreensaver();
-			case 'plugin.moonfinPlugin':
-				return renderPluginMoonfin();
-			case 'plugin.pluginStatus':
-				return renderPluginStatus();
-			case 'plugin.mdblistRatings':
-				return renderPluginMDBList();
-			case 'plugin.tmdb':
-				return renderPluginTMDB();
-			case 'plugin.seerr':
-				return renderPluginSeerr();
+			case 'playbackSyncPlay.subtitleCustomization':
+				return renderPlaybackSubtitleCustomization();
+			case 'playbackSyncPlay.automationQueue':
+				return renderPlaybackAutomationQueue();
+			case 'playbackSyncPlay.offlineDownloads':
+				return renderPlaybackOfflineDownloads();
+			case 'playbackSyncPlay.syncPlay':
+				return renderPlaybackSyncPlay();
+			case 'playbackSyncPlay.advanced':
+				return renderPlaybackAdvanced();
 			case 'about.appInfo':
-				return renderAboutApp();
+				return renderAboutAppInfo();
 			case 'about.serverInfo':
 				return renderAboutServer();
 			case 'about.debugging':
@@ -1352,7 +1574,7 @@ const Settings = ({ onBack, onLibrariesChanged }) => {
 	/* eslint-enable react/jsx-no-bind */
 
 	return (
-		<div className={css.page}>
+		<div className={`${css.page}${panelMode ? ` ${css.pagePanel}` : ''}`}>
 			{currentView.view === 'categories' && renderCategoriesView()}
 			{currentView.view === 'category' && renderCategoryView()}
 			{currentView.view === 'subcategory' && renderSubcategoryView()}
