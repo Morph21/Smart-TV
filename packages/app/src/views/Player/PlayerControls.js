@@ -1,14 +1,9 @@
-/**
- * PlayerControls — shared player controls overlay, skip button, and modals.
- *
- * Used by both TizenPlayer and WebOSPlayer to eliminate ~400 lines of
- * duplicated rendering code. Platform-specific parts (next-episode overlay,
- * info-modal playback rows) are injected via props.
- */
-import {useMemo} from 'react';
+import {useCallback, useMemo, useState} from 'react';
 import $L from '@enact/i18n/$L';
 import Scroller from '@enact/sandstone/Scroller';
 import * as playback from '../../services/playback';
+import {getImageUrl} from '../../utils/helpers';
+import {getServerUrl} from '../../services/jellyfinApi';
 import TrickplayPreview from '../../components/TrickplayPreview';
 import SubtitleOffsetOverlay from './SubtitleOffsetOverlay';
 import SubtitleSettingsOverlay from './SubtitleSettingsOverlay';
@@ -16,23 +11,16 @@ import {
 	SpottableButton, SpottableDiv, ModalContainer,
 	formatTime, formatEndTime, PLAYBACK_RATES, getQualityPresets,
 	IconPlay, IconPause, IconRewind, IconForward, IconSubtitle, IconAudio,
-	IconChapters, IconPrevious, IconNext, IconSpeed, IconQuality, IconInfo,
+	IconChapters, IconPrevious, IconNext, PlaybackRateLabel, IconQuality, IconInfo, IconCast, IconZoom,
 	IconShuffle, IconRepeat, IconRepeatOne, IconFavorite, IconFavoriteFilled
 } from './PlayerConstants';
 import { useSettings } from '../../context/SettingsContext';
 
-// ============================================================
-// usePlayerControls — shared button / state logic
-// ============================================================
-
-/**
- * Builds the top and bottom button arrays used by the controls overlay.
- * Call from the platform player and pass the results to <PlayerControls>.
- */
 export const usePlayerButtons = ({
 	isPaused, audioStreams, subtitleStreams, chapters,
 	nextEpisode, isAudioMode, isLiveTV, hasNextTrack, hasPrevTrack,
-	shuffleMode, repeatMode, isFavorite
+	shuffleMode, repeatMode, isFavorite, playbackRate, selectedQuality,
+	hasCastMembers, zoomModeLabel, zoomModeKey
 }) => {
 	const topButtons = useMemo(() => {
 		if (isAudioMode) {
@@ -44,21 +32,34 @@ export const usePlayerButtons = ({
 				{id: 'repeat', icon: repeatMode === 'one' ? <IconRepeatOne /> : <IconRepeat />, label: 'Repeat', action: 'repeat', active: repeatMode !== 'off'}
 			];
 		}
-		const buttons = [
-			{id: 'playPause', icon: isPaused ? <IconPlay /> : <IconPause />, label: isPaused ? $L('Play') : $L('Pause'), action: 'playPause'}
-		];
+		const buttons = [];
 		if (!isLiveTV) {
+			if (hasPrevTrack) {
+				buttons.push(
+					{id: 'previous', icon: <IconPrevious />, label: $L('Previous'), action: 'prevTrack'}
+				);
+			}
 			buttons.push(
-				{id: 'rewind', icon: <IconRewind />, label: $L('Rewind'), action: 'rewind'},
-				{id: 'forward', icon: <IconForward />, label: $L('Forward'), action: 'forward'}
+				{id: 'rewind', icon: <IconRewind />, label: $L('Seek Back'), action: 'rewind'},
+				{id: 'playPause', icon: isPaused ? <IconPlay /> : <IconPause />, label: isPaused ? $L('Play') : $L('Pause'), action: 'playPause'},
+				{id: 'forward', icon: <IconForward />, label: $L('Seek Forward'), action: 'forward'}
+			);
+			if (hasNextTrack) {
+				buttons.push(
+					{id: 'nextTrack', icon: <IconNext />, label: $L('Next'), action: 'nextTrack'}
+				);
+			} else if (nextEpisode) {
+				buttons.push(
+					{id: 'next', icon: <IconNext />, label: $L('Next Episode'), action: 'next'}
+				);
+			}
+		} else {
+			buttons.push(
+				{id: 'playPause', icon: isPaused ? <IconPlay /> : <IconPause />, label: isPaused ? $L('Play') : $L('Pause'), action: 'playPause'}
 			);
 		}
-		buttons.push(
-			{id: 'audio', icon: <IconAudio />, label: $L('Audio'), action: 'audio', disabled: audioStreams.length === 0},
-			{id: 'subtitle', icon: <IconSubtitle />, label: $L('Subtitles'), action: 'subtitle', disabled: subtitleStreams.length === 0}
-		);
 		return buttons;
-	}, [isPaused, audioStreams.length, subtitleStreams.length, isAudioMode, isLiveTV, hasNextTrack, hasPrevTrack, shuffleMode, repeatMode]);
+	}, [isPaused, isAudioMode, isLiveTV, nextEpisode, hasNextTrack, hasPrevTrack, shuffleMode, repeatMode]);
 
 	const bottomButtons = useMemo(() => {
 		if (isAudioMode) {
@@ -66,19 +67,24 @@ export const usePlayerButtons = ({
 		}
 		if (isLiveTV) {
 			return [
-				{id: 'quality', icon: <IconQuality />, label: $L('Quality'), action: 'quality'},
-				{id: 'info', icon: <IconInfo />, label: $L('Info'), action: 'info'}
+				{id: 'subtitle', icon: <IconSubtitle />, label: $L('Subtitles'), action: 'subtitle', disabled: subtitleStreams.length === 0},
+				{id: 'audio', icon: <IconAudio />, label: $L('Audio'), action: 'audio', disabled: audioStreams.length === 0},
+				{id: 'zoom', icon: <IconZoom />, label: $L('Zoom').concat(` (${zoomModeLabel})`), action: 'zoom', active: zoomModeKey !== 'fit'},
+				{id: 'quality', icon: <IconQuality />, label: $L('Playback Quality'), action: 'quality'},
+				{id: 'info', icon: <IconInfo />, label: $L('Playback Information'), action: 'info'}
 			];
 		}
 		return [
+			{id: 'speed', icon: <PlaybackRateLabel value={playbackRate} />, label: $L('Playback Speed'), action: 'speed', active: playbackRate !== 1},
 			{id: 'chapters', icon: <IconChapters />, label: $L('Chapters'), action: 'chapter', disabled: chapters.length === 0},
-			{id: 'previous', icon: <IconPrevious />, label: $L('Previous'), action: 'previous', disabled: true},
-			{id: 'next', icon: <IconNext />, label: $L('Next'), action: 'next', disabled: !nextEpisode},
-			{id: 'speed', icon: <IconSpeed />, label: $L('Speed'), action: 'speed'},
-			{id: 'quality', icon: <IconQuality />, label: $L('Quality'), action: 'quality'},
-			{id: 'info', icon: <IconInfo />, label: $L('Info'), action: 'info'}
+			{id: 'subtitle', icon: <IconSubtitle />, label: $L('Subtitles'), action: 'subtitle', disabled: subtitleStreams.length === 0},
+			{id: 'audio', icon: <IconAudio />, label: $L('Audio'), action: 'audio', disabled: audioStreams.length === 0},
+			{id: 'cast', icon: <IconCast />, label: $L('Cast and Crew'), action: 'cast', disabled: !hasCastMembers},
+			{id: 'zoom', icon: <IconZoom />, label: $L('Zoom').concat(` (${zoomModeLabel})`), action: 'zoom', active: zoomModeKey !== 'fit'},
+			{id: 'quality', icon: <IconQuality />, label: $L('Playback Quality'), action: 'quality', active: selectedQuality != null},
+			{id: 'info', icon: <IconInfo />, label: $L('Playback Information'), action: 'info'}
 		];
-	}, [chapters.length, nextEpisode, isAudioMode, isLiveTV]);
+	}, [audioStreams.length, chapters.length, subtitleStreams.length, isAudioMode, isLiveTV, playbackRate, selectedQuality, hasCastMembers, zoomModeLabel, zoomModeKey]);
 
 	const favoriteButton = useMemo(() => {
 		if (!isAudioMode) return null;
@@ -87,10 +93,6 @@ export const usePlayerButtons = ({
 
 	return {topButtons, bottomButtons, favoriteButton};
 };
-
-// ============================================================
-// Shared info-modal helpers (exported for both platforms)
-// ============================================================
 
 export const formatBitrate = (bitrate) => {
 	if (!bitrate) return $L('Unknown');
@@ -150,24 +152,16 @@ export const getAudioChannels = (audioStream) => {
 	return `${channels} ${$L('channels')}`;
 };
 
-// ============================================================
-// <PlayerControls> component
-// ============================================================
-
 const PlayerControls = ({
 	css,
-	// Visibility & layout
 	controlsVisible,
 	activeModal,
 	isAudioMode,	isLiveTV,	focusRow,
-	// Media info
 	title,
 	subtitle,
-	// Buttons
 	topButtons,
 	bottomButtons,
 	favoriteButton,
-	// Progress
 	displayTime,
 	duration,
 	progressPercent,
@@ -175,7 +169,6 @@ const PlayerControls = ({
 	seekPosition,
 	item,
 	mediaSourceId,
-	// Playback state
 	playMethod,
 	playbackRate,
 	selectedAudioIndex,
@@ -186,9 +179,7 @@ const PlayerControls = ({
 	chapters,
 	currentTime,
 	subtitleOffset,
-	// Skip intro
 	showSkipIntro,
-	// Handlers
 	handleControlButtonClick,
 	handleProgressClick,
 	handleProgressKeyDown,
@@ -200,6 +191,7 @@ const PlayerControls = ({
 	handleSelectSpeed,
 	handleSelectQuality,
 	handleSelectChapter,
+	handleSelectCastMember,
 	handleOpenSubtitleOffset,
 	handleOpenSubtitleSettings,
 	handleOpenRemoteSubtitleSearch,
@@ -207,18 +199,59 @@ const PlayerControls = ({
 	canDownloadRemoteSubtitles,
 	isSearchingRemoteSubtitles,
 	remoteSubtitleResults,
+	castMembers,
+	isLoadingCastMembers,
 	handleSubtitleOffsetChange,
 	closeModal,
 	stopPropagation,
-	// Info modal: platform-specific rows injected as render prop
 	renderInfoPlaybackRows,
 	renderInfoVideoExtra
 }) => {
 	const { settings } = useSettings();
+	const [focusedTooltip, setFocusedTooltip] = useState(null);
+
+	const handleTooltipFocus = useCallback((e) => {
+		const label = e.currentTarget.dataset.tooltip;
+		if (!label) return;
+		setFocusedTooltip(label);
+	}, []);
+
+	const handleTooltipBlur = useCallback(() => {
+		setFocusedTooltip(null);
+	}, []);
+
+	const renderControlButton = useCallback((btn, row, defaultSpotlightId) => (
+		<div key={btn.id} className={css.controlBtnWrapper}>
+			<SpottableButton
+				className={`${css.controlBtn} ${btn.disabled ? css.controlBtnDisabled : ''} ${btn.active ? css.controlBtnActive : ''}`}
+				data-action={btn.action}
+				data-tooltip={btn.label}
+				onClick={btn.disabled ? undefined : handleControlButtonClick}
+				onFocus={handleTooltipFocus}
+				onBlur={handleTooltipBlur}
+				aria-label={btn.label}
+				aria-disabled={btn.disabled}
+				spotlightDisabled={focusRow !== row}
+				spotlightId={defaultSpotlightId}
+			>
+				{btn.icon}
+			</SpottableButton>
+			{focusedTooltip === btn.label && (
+				<div className={css.focusTooltip}>{btn.label}</div>
+			)}
+		</div>
+	), [css.controlBtn, css.controlBtnActive, css.controlBtnDisabled, css.controlBtnWrapper, css.focusTooltip, focusRow, focusedTooltip, handleControlButtonClick, handleTooltipBlur, handleTooltipFocus]);
+
+	const handleCastClick = useCallback((e) => {
+		const index = Number(e.currentTarget.dataset.index);
+		if (!Number.isFinite(index)) return;
+		const person = castMembers[index];
+		if (!person) return;
+		handleSelectCastMember?.(person);
+	}, [castMembers, handleSelectCastMember]);
 
 	return (
 		<>
-			{/* Skip Intro Button */}
 			{showSkipIntro && !isAudioMode && !isLiveTV && !activeModal && !controlsVisible && (
 				<div className={css.skipOverlay}>
 					<SpottableButton className={css.skipButton} onClick={handleSkipIntro} spotlightId="skip-intro-btn">
@@ -227,9 +260,7 @@ const PlayerControls = ({
 				</div>
 			)}
 
-			{/* Player Controls Overlay */}
 			<div className={`${css.playerControls} ${controlsVisible && !activeModal ? css.visible : ''} ${isAudioMode ? css.audioControls : ''}`}>
-				{/* Top - Media Info (hidden in audio mode) */}
 				{!isAudioMode && (
 				<div className={css.controlsTop}>
 					<div className={css.mediaInfo}>
@@ -239,45 +270,30 @@ const PlayerControls = ({
 				</div>
 				)}
 
-				{/* Bottom - Controls */}
 				<div className={css.controlsBottom}>
-					{/* Favorite button above seekbar (audio mode only) */}
 					{isAudioMode && favoriteButton && (
 						<div className={css.audioFavoriteRow}>
-							<SpottableButton
-								className={`${css.controlBtn} ${favoriteButton.active ? css.controlBtnActive : ''}`}
-								data-action={favoriteButton.action}
-								onClick={handleControlButtonClick}
-								aria-label={favoriteButton.label}
-								spotlightDisabled={focusRow !== 'top'}
-								spotlightId="favorite-btn"
-							>
-								{favoriteButton.icon}
-							</SpottableButton>
+							<div className={css.controlBtnWrapper}>
+								<SpottableButton
+									className={`${css.controlBtn} ${favoriteButton.active ? css.controlBtnActive : ''}`}
+									data-action={favoriteButton.action}
+									data-tooltip={favoriteButton.label}
+									onClick={handleControlButtonClick}
+									onFocus={handleTooltipFocus}
+									onBlur={handleTooltipBlur}
+									aria-label={favoriteButton.label}
+									spotlightDisabled={focusRow !== 'top'}
+									spotlightId="favorite-btn"
+								>
+									{favoriteButton.icon}
+								</SpottableButton>
+								{focusedTooltip === favoriteButton.label && (
+									<div className={css.focusTooltip}>{favoriteButton.label}</div>
+								)}
+							</div>
 						</div>
 					)}
 
-					{/* Top Row Buttons (video mode only) */}
-					{!isAudioMode && (
-					<div className={css.controlButtons}>
-						{topButtons.map((btn) => (
-							<SpottableButton
-								key={btn.id}
-								className={`${css.controlBtn} ${btn.disabled ? css.controlBtnDisabled : ''}`}
-								data-action={btn.action}
-								onClick={btn.disabled ? undefined : handleControlButtonClick}
-								aria-label={btn.label}
-								aria-disabled={btn.disabled}
-								spotlightDisabled={focusRow !== 'top'}
-								spotlightId={btn.id === 'playPause' ? 'play-pause-btn' : undefined}
-							>
-								{btn.icon}
-							</SpottableButton>
-						))}
-					</div>
-					)}
-
-					{/* Progress Bar (hidden for live TV) */}
 					{!isLiveTV && (
 					<div className={css.progressContainer}>
 						<div className={css.timeInfoTop}>
@@ -312,49 +328,30 @@ const PlayerControls = ({
 					</div>
 					)}
 
-					{/* Audio mode: Shuffle | Prev | Play/Pause | Next | Repeat below seekbar */}
-					{isAudioMode && (
-					<div className={css.audioTransportButtons}>
-						{topButtons.map((btn) => (
-							<SpottableButton
-								key={btn.id}
-								className={`${css.controlBtn} ${btn.disabled ? css.controlBtnDisabled : ''} ${btn.active ? css.controlBtnActive : ''}`}
-								data-action={btn.action}
-								onClick={btn.disabled ? undefined : handleControlButtonClick}
-								aria-label={btn.label}
-								aria-disabled={btn.disabled}
-								spotlightDisabled={focusRow !== 'bottom'}
-								spotlightId={btn.id === 'playPause' ? 'play-pause-btn' : undefined}
-							>
-								{btn.icon}
-							</SpottableButton>
-						))}
-					</div>
+					{!isAudioMode && (topButtons.length > 0 || bottomButtons.length > 0) && (
+						<div className={css.videoControlsRow}>
+							{topButtons.length > 0 && (
+								<div className={css.transportButtons}>
+									{topButtons.map((btn) => renderControlButton(btn, 'bottom', btn.id === 'playPause' ? 'play-pause-btn' : undefined))}
+								</div>
+							)}
+
+							{bottomButtons.length > 0 && (
+								<div className={css.controlButtonsBottom}>
+						{bottomButtons.map((btn) => renderControlButton(btn, 'bottom'))}
+								</div>
+							)}
+						</div>
 					)}
 
-					{/* Bottom Row Buttons (video mode) */}
-					{bottomButtons.length > 0 && (
-					<div className={css.controlButtonsBottom}>
-						{bottomButtons.map((btn) => (
-							<SpottableButton
-								key={btn.id}
-								className={`${css.controlBtn} ${btn.disabled ? css.controlBtnDisabled : ''}`}
-								data-action={btn.action}
-								onClick={btn.disabled ? undefined : handleControlButtonClick}
-								aria-label={btn.label}
-								aria-disabled={btn.disabled}
-								spotlightDisabled={focusRow !== 'bottom'}
-								spotlightId={btn.id === 'chapters' ? 'bottom-row-default' : undefined}
-							>
-								{btn.icon}
-							</SpottableButton>
-						))}
-					</div>
+					{isAudioMode && topButtons.length > 0 && (
+						<div className={css.audioTransportButtons}>
+							{topButtons.map((btn) => renderControlButton(btn, 'bottom', btn.id === 'playPause' ? 'play-pause-btn' : undefined))}
+						</div>
 					)}
 				</div>
 			</div>
 
-			{/* Audio Track Modal */}
 			{activeModal === 'audio' && (
 				<div className={css.trackModal} onClick={closeModal}>
 					<ModalContainer className={css.modalContent} onClick={stopPropagation} data-modal="audio" spotlightId="audio-modal">
@@ -378,7 +375,6 @@ const PlayerControls = ({
 				</div>
 			)}
 
-			{/* Subtitle Modal */}
 			{activeModal === 'subtitle' && (
 				<div className={css.trackModal} onClick={closeModal}>
 					<ModalContainer className={css.modalContent} onClick={stopPropagation} data-modal="subtitle" spotlightId="subtitle-modal">
@@ -454,7 +450,6 @@ const PlayerControls = ({
 				</div>
 			)}
 
-			{/* Speed Modal */}
 			{activeModal === 'speed' && (
 				<div className={css.trackModal} onClick={closeModal}>
 					<ModalContainer className={css.modalContent} onClick={stopPropagation} data-modal="speed" spotlightId="speed-modal">
@@ -477,7 +472,6 @@ const PlayerControls = ({
 				</div>
 			)}
 
-			{/* Quality Modal */}
 			{activeModal === 'quality' && (
 				<div className={css.trackModal} onClick={closeModal}>
 					<ModalContainer className={css.modalContent} onClick={stopPropagation} data-modal="quality" spotlightId="quality-modal">
@@ -500,7 +494,6 @@ const PlayerControls = ({
 				</div>
 			)}
 
-			{/* Chapter Modal */}
 			{activeModal === 'chapter' && (
 				<div className={css.trackModal} onClick={closeModal}>
 					<ModalContainer className={`${css.modalContent} ${css.chaptersModal}`} onClick={stopPropagation} data-modal="chapter" spotlightId="chapter-modal">
@@ -530,7 +523,61 @@ const PlayerControls = ({
 				</div>
 			)}
 
-			{/* Info Modal */}
+			{activeModal === 'cast' && (
+				<div className={css.trackModal} onClick={closeModal}>
+					<ModalContainer className={css.modalContent} onClick={stopPropagation} data-modal="cast" spotlightId="cast-modal">
+						<h2 className={css.modalTitle}>{$L('Cast and Crew')}</h2>
+						<div className={css.trackList}>
+							{isLoadingCastMembers && (
+								<SpottableDiv className={css.trackItem}>
+									<span className={css.trackName}>{$L('Loading...')}</span>
+								</SpottableDiv>
+							)}
+							{!isLoadingCastMembers && castMembers.length === 0 && (
+								<SpottableDiv className={css.trackItem}>
+									<span className={css.trackName}>{$L('No cast information available')}</span>
+								</SpottableDiv>
+							)}
+							{!isLoadingCastMembers && castMembers.length > 0 && (
+								<div className={css.castRow}>
+									{castMembers.map((person, index) => {
+										const imageTag = person?.PrimaryImageTag || person?.ImageTag || person?.ImageTags?.Primary || null;
+										const imageServer = person?._serverUrl || item?._serverUrl || getServerUrl();
+										const imageUrl = getImageUrl(imageServer, person?.Id, 'Primary', {
+											maxHeight: 220,
+											quality: 90,
+											tag: imageTag
+										});
+
+										return (
+											<SpottableButton
+												key={`${person.Id || person.Name || 'person'}-${index}`}
+												className={css.castCard}
+												data-index={index}
+												data-selected={index === 0 ? 'true' : undefined}
+												onClick={handleCastClick}
+												aria-label={person.Name || $L('Unknown')}
+											>
+												<div className={css.castPhotoWrap}>
+													{imageUrl ? (
+														<img className={css.castPhoto} src={imageUrl} alt="" aria-hidden="true" />
+													) : (
+														<div className={css.castPhotoFallback}>{(person.Name || '?').charAt(0).toUpperCase()}</div>
+													)}
+												</div>
+												<div className={css.castName}>{person.Name || $L('Unknown')}</div>
+												<div className={css.castRole}>{person.Role || person.Type || $L('Cast')}</div>
+											</SpottableButton>
+										);
+									})}
+								</div>
+							)}
+						</div>
+						<p className={css.modalFooter}>{$L('Press BACK to close')}</p>
+					</ModalContainer>
+				</div>
+			)}
+
 			{activeModal === 'info' && (() => {
 				const session = playback.getCurrentSession();
 				const mediaSource = session?.mediaSource;
@@ -551,14 +598,12 @@ const PlayerControls = ({
 								horizontalScrollbar="hidden"
 								verticalScrollbar="hidden"
 							>
-								{/* Playback Section */}
 								<SpottableDiv className={css.infoSection} spotlightId="info-playback">
 									<h3 className={css.infoHeader}>{$L('Playback')}</h3>
 									<div className={`${css.infoRow} ${css.infoHighlight}`}>
 										<span className={css.infoLabel}>{$L('Play Method')}</span>
 										<span className={css.infoValue}>{playMethod || $L('Unknown')}</span>
 									</div>
-									{/* Platform-specific playback rows */}
 									{renderInfoPlaybackRows && renderInfoPlaybackRows({css, mediaSource, playMethod})}
 									<div className={css.infoRow}>
 										<span className={css.infoLabel}>{$L('Container')}</span>
@@ -574,7 +619,6 @@ const PlayerControls = ({
 									</div>
 								</SpottableDiv>
 
-								{/* Video Section */}
 								{videoStream && (
 									<SpottableDiv className={css.infoSection} spotlightId="info-video">
 										<h3 className={css.infoHeader}>{$L('Video')}</h3>
@@ -593,7 +637,6 @@ const PlayerControls = ({
 											<span className={css.infoLabel}>{$L('Codec')}</span>
 											<span className={css.infoValue}>{getVideoCodec(videoStream)}</span>
 										</div>
-										{/* Platform-specific video rows */}
 										{renderInfoVideoExtra && renderInfoVideoExtra({css, videoStream})}
 										{videoStream.BitRate && (
 											<div className={css.infoRow}>
@@ -604,7 +647,6 @@ const PlayerControls = ({
 									</SpottableDiv>
 								)}
 
-								{/* Audio Section */}
 								{audioStream && (
 									<SpottableDiv className={css.infoSection} spotlightId="info-audio">
 										<h3 className={css.infoHeader}>{$L('Audio')}</h3>
@@ -637,7 +679,6 @@ const PlayerControls = ({
 									</SpottableDiv>
 								)}
 
-								{/* Subtitle Section */}
 								{subtitleStream && (
 									<SpottableDiv className={css.infoSection} spotlightId="info-subtitles">
 										<h3 className={css.infoHeader}>{$L('Subtitles')}</h3>
@@ -668,7 +709,6 @@ const PlayerControls = ({
 				);
 			})()}
 
-			{/* Subtitle Offset Modal */}
 			<SubtitleOffsetOverlay
 				visible={activeModal === 'subtitleOffset'}
 				currentOffset={subtitleOffset}
@@ -676,7 +716,6 @@ const PlayerControls = ({
 				onOffsetChange={handleSubtitleOffsetChange}
 			/>
 
-			{/* Subtitle Settings Modal */}
 			<SubtitleSettingsOverlay
 				visible={activeModal === 'subtitleSettings'}
 				onClose={closeModal}

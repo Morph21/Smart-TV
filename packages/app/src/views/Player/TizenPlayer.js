@@ -27,6 +27,7 @@ import {
 	mapSubtitleStreamsFromMediaSource,
 	mapRemoteSubtitleOptions
 } from './remoteSubtitleUtils';
+import {getVideoDisplayAspectRatio, getZoomDisplayRect} from './aspectRatioUtils';
 
 import css from './TizenPlayer.module.less';
 
@@ -68,7 +69,7 @@ const getRootFontSizePx = () => {
  * playback. AVPlay renders on a platform multimedia layer BEHIND the web engine;
  * the web layer must be transparent in the video area for the content to show through.
  */
-const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialSubtitleIndex, initialStartPositionTicks, onEnded, onBack, onPlayNext, audioPlaylist, onPausedChange}) => {
+const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialSubtitleIndex, initialStartPositionTicks, onEnded, onBack, onPlayNext, onSelectPerson, audioPlaylist, onPausedChange}) => {
 	const {settings} = useSettings();
 	const {isInGroup, lastCommand} = useSyncPlay();
 	const syncPlayCommandRef = useRef(false);
@@ -103,7 +104,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	const [seekPosition, setSeekPosition] = useState(0);
 	const [mediaSourceId, setMediaSourceId] = useState(null);
 	const [hasTriedTranscode, setHasTriedTranscode] = useState(false);
-	const [focusRow, setFocusRow] = useState('top');
+	const [focusRow, setFocusRow] = useState('bottom');
 	const isLiveTV = item.Type === 'TvChannel';
 	const [isAudioMode, setIsAudioMode] = useState(false);
 	const [lyricsLines, setLyricsLines] = useState([]);
@@ -112,6 +113,11 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	const [shuffleMode, setShuffleMode] = useState(false);
 	const [repeatMode, setRepeatMode] = useState('off');
 	const [isFavorite, setIsFavorite] = useState(false);
+	const [zoomMode, setZoomMode] = useState('fit');
+	const [videoAspectRatio, setVideoAspectRatio] = useState(null);
+	const [castMembers, setCastMembers] = useState([]);
+	const [isLoadingCastMembers, setIsLoadingCastMembers] = useState(false);
+	const zoomModeRef = useRef('fit');
 
 	// Audio playlist tracking
 	const audioPlaylistIndex = useMemo(() => {
@@ -158,10 +164,11 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	const prevInlineRootFontSizeRef = useRef('');
 
 	const applyDisplayWindow = useCallback(() => {
-		const rect = getTizenFullscreenRect();
-		setDisplayWindow(rect);
-		avplaySetDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
-	}, []);
+		const screenRect = getTizenFullscreenRect();
+		const zoomRect = getZoomDisplayRect(screenRect, videoAspectRatio, zoomModeRef.current);
+		setDisplayWindow(zoomRect);
+		avplaySetDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN');
+	}, [videoAspectRatio]);
 
 	const enforceRootFontSize = useCallback(() => {
 		if (typeof document === 'undefined') return;
@@ -192,11 +199,32 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		}
 	}, []);
 
+	const zoomModeLabel = useMemo(() => {
+		if (zoomMode === 'fill') return $L('Crop');
+		if (zoomMode === 'stretch') return $L('Stretch');
+		return $L('Fit');
+	}, [zoomMode]);
+
+	const hasCastMembers = useMemo(() => {
+		if (castMembers.length > 0) return true;
+		return item?.Type === 'Episode' && Boolean(item?.SeriesId);
+	}, [castMembers.length, item]);
+
 	const {topButtons, bottomButtons, favoriteButton} = usePlayerButtons({
 		isPaused, audioStreams, subtitleStreams, chapters,
 		nextEpisode, isAudioMode, isLiveTV, hasNextTrack, hasPrevTrack,
-		shuffleMode, repeatMode, isFavorite
+		shuffleMode, repeatMode, isFavorite, playbackRate, selectedQuality,
+		hasCastMembers, zoomModeLabel, zoomModeKey: zoomMode
 	});
+
+	useEffect(() => {
+		zoomModeRef.current = zoomMode;
+	}, [zoomMode]);
+
+	useEffect(() => {
+		const people = Array.isArray(item?.People) ? item.People : [];
+		setCastMembers(people);
+	}, [item]);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -459,6 +487,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			setSubtitleTrackEvents(null);
 			setCurrentSubtitleText(null);
 			setSelectedSubtitleIndex(-1);
+			setVideoAspectRatio(null);
 			resetPopups(); // eslint-disable-line no-use-before-define
 
 			// Stop any previous playback
@@ -484,6 +513,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 
 				setPlayMethod(result.playMethod);
 				setMediaSourceId(result.mediaSourceId);
+				setVideoAspectRatio(getVideoDisplayAspectRatio(result.mediaSource));
 				playSessionRef.current = result.playSessionId;
 				positionRef.current = startPosition;
 				runTimeRef.current = result.runTimeTicks || 0;
@@ -664,6 +694,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				setSubtitle(displaySubtitle);
 				const shouldUseAudioMode = !!result.isAudio || item?.MediaType === 'Audio' || item?.Type === 'Audio';
 				setIsAudioMode(shouldUseAudioMode);
+				setFocusRow(shouldUseAudioMode ? 'top' : 'bottom');
 				setIsFavorite(!!item.UserData?.IsFavorite);
 
 				// Audio mode: always show controls, skip video-only features
@@ -890,6 +921,12 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		return () => window.removeEventListener('resize', handleResize);
 	}, [applyDisplayWindow, enforceRootFontSize]);
 
+	useEffect(() => {
+		if (avplayReadyRef.current) {
+			applyDisplayWindow();
+		}
+	}, [videoAspectRatio, applyDisplayWindow]);
+
 	// Guard against random WebKit/Tizen page zoom side-effects while in player.
 	// We lock the root font-size to the value at player entry and restore on exit.
 	useEffect(() => {
@@ -978,9 +1015,15 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		onPlayNext: onPlayNextWithCleanup
 	});
 
-	// Audio playlist: next track (respects shuffle, repeat)
 	const handleNextTrack = useCallback(async () => {
 		if (!audioPlaylist || !onPlayNext) return;
+		if (!isAudioMode) {
+			if (hasNextTrack) {
+				await playback.reportStop(positionRef.current);
+				onPlayNext(audioPlaylist[audioPlaylistIndex + 1]);
+			}
+			return;
+		}
 		if (repeatMode === 'one' && avplayReadyRef.current) {
 			avplaySeek(0).catch(e => console.warn('[Player] Seek failed:', e));
 			return;
@@ -1000,10 +1043,17 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			await playback.reportStop(positionRef.current);
 			onPlayNext(audioPlaylist[0]);
 		}
-	}, [hasNextTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode]);
+	}, [hasNextTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode, isAudioMode]);
 
-	// Audio playlist: previous track (or restart current if >3s in)
 	const handlePrevTrack = useCallback(async () => {
+		if (!audioPlaylist || !onPlayNext) return;
+		if (!isAudioMode) {
+			if (hasPrevTrack) {
+				await playback.reportStop(positionRef.current);
+				onPlayNext(audioPlaylist[audioPlaylistIndex - 1]);
+			}
+			return;
+		}
 		if (avplayReadyRef.current) {
 			const ms = avplayGetCurrentTime();
 			if (ms > 3000) {
@@ -1026,7 +1076,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			await playback.reportStop(positionRef.current);
 			onPlayNext(audioPlaylist[audioPlaylist.length - 1]);
 		}
-	}, [hasPrevTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode]);
+	}, [hasPrevTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode, isAudioMode]);
 
 	// ==============================
 	// Playback Event Handlers (via AVPlay listener refs)
@@ -1497,7 +1547,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		} else if (e.key === 'ArrowUp' || e.keyCode === 38) {
 			e.preventDefault();
 			executeDeferredSeek();
-			setFocusRow('top');
+			setFocusRow(isAudioMode ? 'top' : 'bottom');
 			setIsSeeking(false);
 			window.requestAnimationFrame(() => Spotlight.focus(isAudioMode ? 'favorite-btn' : 'play-pause-btn'));
 		} else if (e.key === 'ArrowDown' || e.keyCode === 40) {
@@ -1542,7 +1592,45 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		}
 	}, [item, isFavorite]);
 
-	// Button action handler
+	const handleToggleZoom = useCallback(() => {
+		setZoomMode((prev) => {
+			const next = prev === 'fit' ? 'fill' : (prev === 'fill' ? 'stretch' : 'fit');
+			zoomModeRef.current = next;
+			window.requestAnimationFrame(() => applyDisplayWindow());
+			return next;
+		});
+	}, [applyDisplayWindow]);
+
+	const handleOpenCast = useCallback(async () => {
+		openModal('cast');
+		if (castMembers.length > 0 || !(item?.Type === 'Episode' && item?.SeriesId)) return;
+
+		setIsLoadingCastMembers(true);
+		try {
+			const apiClient = item._serverUrl
+				? createApiForServer(item._serverUrl, item._serverAccessToken, item._serverUserId)
+				: jellyfinApi;
+			const seriesItem = await apiClient.getItem(item.SeriesId);
+			setCastMembers(Array.isArray(seriesItem?.People) ? seriesItem.People : []);
+		} catch (err) {
+			setCastMembers([]);
+		} finally {
+			setIsLoadingCastMembers(false);
+		}
+	}, [openModal, castMembers.length, item]);
+
+	const handleSelectCastMember = useCallback((person) => {
+		if (!person?.Id || !onSelectPerson) return;
+		closeModal();
+		onSelectPerson({
+			...person,
+			Type: 'Person',
+			_serverUrl: item?._serverUrl,
+			_serverAccessToken: item?._serverAccessToken,
+			_serverUserId: item?._serverUserId
+		});
+	}, [closeModal, item, onSelectPerson]);
+
 	const handleButtonAction = useCallback((action) => {
 		showControls();
 		switch (action) {
@@ -1554,6 +1642,8 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			case 'speed': openModal('speed'); break;
 			case 'quality': openModal('quality'); break;
 			case 'chapter': openModal('chapter'); break;
+			case 'cast': handleOpenCast(); break;
+			case 'zoom': handleToggleZoom(); break;
 			case 'info': openModal('info'); break;
 			case 'next': handlePlayNextEpisode(); break;
 			case 'nextTrack': handleNextTrack(); break;
@@ -1563,9 +1653,8 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			case 'favorite': handleToggleFavorite(); break;
 			default: break;
 		}
-	}, [showControls, handlePlayPause, handleRewind, handleForward, openModal, handlePlayNextEpisode, handleNextTrack, handlePrevTrack, handleToggleShuffle, handleToggleRepeat, handleToggleFavorite]);
+	}, [showControls, handlePlayPause, handleRewind, handleForward, openModal, handleOpenCast, handleToggleZoom, handlePlayNextEpisode, handleNextTrack, handlePrevTrack, handleToggleShuffle, handleToggleRepeat, handleToggleFavorite]);
 
-	// Wrapper for control button clicks - reads action from data attribute
 	const handleControlButtonClick = useCallback((e) => {
 		const action = e.currentTarget.dataset.action;
 		if (action) {
@@ -1577,7 +1666,6 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		setSubtitleOffset(newOffset);
 	}, []);
 
-	// Prevent propagation handler for modals
 	const stopPropagation = useCallback((e) => {
 		e.stopPropagation();
 	}, []);
@@ -1867,17 +1955,17 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 
 			// Up/Down arrow navigation between rows when controls are visible
 			if (controlsVisible && !activeModal) {
-				showControls(); // Reset timer on navigation
+				showControls();
 
 				if (key === 'ArrowUp' || e.keyCode === 38) {
 					e.preventDefault();
 					setFocusRow(prev => {
-						if (prev === 'bottom') return isLiveTV ? 'top' : 'progress';
+						if (prev === 'bottom') return !isLiveTV ? 'progress' : (isAudioMode ? 'top' : 'bottom');
 						if (prev === 'progress') {
 							window.requestAnimationFrame(() => Spotlight.focus(isAudioMode ? 'favorite-btn' : 'play-pause-btn'));
-							return 'top';
+							return isAudioMode ? 'top' : 'bottom';
 						}
-						return 'top';
+						return isAudioMode ? 'top' : 'bottom';
 					});
 					return;
 				}
@@ -1916,7 +2004,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			if (focusRow === 'progress') {
 				Spotlight.focus('progress-bar');
 			} else if (focusRow === 'bottom') {
-				Spotlight.focus('bottom-row-default');
+				Spotlight.focus('play-pause-btn');
 			}
 		});
 	}, [focusRow, controlsVisible]);
@@ -2122,6 +2210,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				handleSelectSpeed={handleSelectSpeed}
 				handleSelectQuality={handleSelectQuality}
 				handleSelectChapter={handleSelectChapter}
+				handleSelectCastMember={handleSelectCastMember}
 				handleOpenSubtitleOffset={handleOpenSubtitleOffset}
 				handleOpenSubtitleSettings={handleOpenSubtitleSettings}
 				handleOpenRemoteSubtitleSearch={handleOpenRemoteSubtitleSearch}
@@ -2129,6 +2218,8 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				canDownloadRemoteSubtitles={!isAudioMode && Boolean(item?.Id)}
 				isSearchingRemoteSubtitles={isSearchingRemoteSubtitles}
 				remoteSubtitleResults={remoteSubtitleResults}
+				castMembers={castMembers}
+				isLoadingCastMembers={isLoadingCastMembers}
 				handleSubtitleOffsetChange={handleSubtitleOffsetChange}
 				closeModal={closeModal}
 				stopPropagation={stopPropagation}

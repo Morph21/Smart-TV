@@ -597,6 +597,16 @@ const AppContent = (props) => {
 		navigateTo(PANELS.PERSON);
 	}, [navigateTo]);
 
+	const handleSelectPersonFromPlayer = useCallback((person) => {
+		if (!person?.Id) return;
+		setIsPlayerPaused(false);
+		setPlayingItem(null);
+		setPlaybackOptions(null);
+		setIsResume(false);
+		setSelectedPerson(person);
+		navigateTo(PANELS.PERSON, false);
+	}, [navigateTo]);
+
 	const handlePlayChannel = useCallback((channel) => {
 		setPlayingItem(channel);
 		setPlaybackOptions(null);
@@ -861,6 +871,7 @@ const AppContent = (props) => {
 								onEnded={handlePlayerEnd}
 								onBack={handlePlayerEnd}
 								onPlayNext={handlePlayNext}
+								onSelectPerson={handleSelectPersonFromPlayer}
 								onPausedChange={setIsPlayerPaused}
 							/>
 						)}

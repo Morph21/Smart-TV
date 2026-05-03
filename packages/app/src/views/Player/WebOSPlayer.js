@@ -15,6 +15,7 @@ import {
 	keepScreenOn,
 	cleanupVideoElement,
 	waitForDecoderRelease,
+	setDisplayWindow,
 	getSharedVideoElement,
 	setupVisibilityHandler,
 	setupWebOSLifecycle
@@ -34,10 +35,11 @@ import {
 	mapSubtitleStreamsFromMediaSource,
 	mapRemoteSubtitleOptions
 } from './remoteSubtitleUtils';
+import {getVideoDisplayAspectRatio, getZoomDisplayRect} from './aspectRatioUtils';
 
 import css from './WebOSPlayer.module.less';
 
-const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialSubtitleIndex, initialStartPositionTicks, onEnded, onBack, onPlayNext, audioPlaylist, onPausedChange}) => {
+const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialSubtitleIndex, initialStartPositionTicks, onEnded, onBack, onPlayNext, onSelectPerson, audioPlaylist, onPausedChange}) => {
 	const {settings} = useSettings();
 	const {isInGroup, lastCommand} = useSyncPlay();
 	const syncPlayCommandRef = useRef(false);
@@ -74,7 +76,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	const [seekPosition, setSeekPosition] = useState(0);
 	const [mediaSourceId, setMediaSourceId] = useState(null);
 	const [hasTriedTranscode, setHasTriedTranscode] = useState(false);
-	const [focusRow, setFocusRow] = useState('top');
+	const [focusRow, setFocusRow] = useState('bottom');
 	const [isAudioMode, setIsAudioMode] = useState(false);
 	const [lyricsLines, setLyricsLines] = useState([]);
 	const [, setIsLyricsLoading] = useState(false);
@@ -82,6 +84,22 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	const [shuffleMode, setShuffleMode] = useState(false);
 	const [repeatMode, setRepeatMode] = useState('off');
 	const [isFavorite, setIsFavorite] = useState(false);
+	const [zoomMode, setZoomMode] = useState('fit');
+	const [videoDisplayAspectRatio, setVideoDisplayAspectRatio] = useState(null);
+	const [decodedAspectRatio, setDecodedAspectRatio] = useState(null);
+	const [castMembers, setCastMembers] = useState([]);
+	const [isLoadingCastMembers, setIsLoadingCastMembers] = useState(false);
+	const zoomModeLabel = useMemo(() => {
+		if (zoomMode === 'fill') return $L('Crop');
+		if (zoomMode === 'stretch') return $L('Stretch');
+		return $L('Fit');
+	}, [zoomMode]);
+
+	const hasCastMembers = useMemo(() => {
+		if (castMembers.length > 0) return true;
+		return item?.Type === 'Episode' && Boolean(item?.SeriesId);
+	}, [castMembers.length, item]);
+
 	const audioPlaylistIndex = useMemo(() => {
 		if (!audioPlaylist || !item) return -1;
 		return audioPlaylist.findIndex(t => t.Id === item.Id);
@@ -141,6 +159,35 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		}
 	};
 
+	const applyWebOSZoomWindow = useCallback(() => {
+		if (typeof window === 'undefined' || isAudioMode) return;
+
+		const screenRect = {
+			width: Math.max(1, Math.round(window.innerWidth || 1920)),
+			height: Math.max(1, Math.round(window.innerHeight || 1080))
+		};
+
+		const decodedAspect = Number.isFinite(decodedAspectRatio) && decodedAspectRatio > 0 ? decodedAspectRatio : null;
+		const targetAspect = Number.isFinite(videoDisplayAspectRatio) && videoDisplayAspectRatio > 0
+			? videoDisplayAspectRatio
+			: decodedAspect;
+		const destRect = getZoomDisplayRect(screenRect, targetAspect, zoomMode);
+
+		const sourceWidth = Math.max(1, Math.round(videoRef.current?.videoWidth || screenRect.width));
+		const sourceHeight = Math.max(1, Math.round(videoRef.current?.videoHeight || screenRect.height));
+
+		setDisplayWindow({
+			x: 0,
+			y: 0,
+			width: sourceWidth,
+			height: sourceHeight,
+			destX: destRect.x,
+			destY: destRect.y,
+			destWidth: destRect.width,
+			destHeight: destRect.height
+		});
+	}, [decodedAspectRatio, videoDisplayAspectRatio, zoomMode, isAudioMode]);
+
 	// Match a Jellyfin audio stream to a browser audioTracks entry by language,
 	// falling back to array-position if language matching is ambiguous or unavailable.
 	const matchAudioTrack = (nativeTracks, jellyfinStreams, targetIndex) => {
@@ -173,8 +220,50 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	const {topButtons, bottomButtons, favoriteButton} = usePlayerButtons({
 		isPaused, audioStreams, subtitleStreams, chapters,
 		nextEpisode, isAudioMode, isLiveTV, hasNextTrack, hasPrevTrack,
-		shuffleMode, repeatMode, isFavorite
+		shuffleMode, repeatMode, isFavorite, playbackRate, selectedQuality,
+		hasCastMembers, zoomModeLabel, zoomModeKey: zoomMode
 	});
+
+	useEffect(() => {
+		const people = Array.isArray(item?.People) ? item.People : [];
+		setCastMembers(people);
+	}, [item]);
+
+	useEffect(() => {
+		const modeToFit = {
+			fit: 'contain',
+			fill: 'cover',
+			stretch: 'fill'
+		};
+		const video = videoRef.current;
+		if (video) {
+			video.style.objectFit = modeToFit[zoomMode] || 'contain';
+			const decodedAspect = Number.isFinite(decodedAspectRatio) && decodedAspectRatio > 0
+				? decodedAspectRatio
+				: null;
+			const targetAspect = Number.isFinite(videoDisplayAspectRatio) && videoDisplayAspectRatio > 0
+				? videoDisplayAspectRatio
+				: decodedAspect;
+			const correction = decodedAspect && targetAspect ? (targetAspect / decodedAspect) : 1;
+			video.style.transformOrigin = 'center center';
+			if (zoomMode !== 'stretch' && Number.isFinite(correction) && Math.abs(correction - 1) > 0.01) {
+				video.style.transform = `scaleX(${Math.max(0.5, Math.min(2.0, correction)).toFixed(4)})`;
+			} else {
+				video.style.transform = 'scaleX(1)';
+			}
+		}
+	}, [zoomMode, videoDisplayAspectRatio, decodedAspectRatio]);
+
+	useEffect(() => {
+		applyWebOSZoomWindow();
+	}, [applyWebOSZoomWindow]);
+
+	useEffect(() => {
+		if (typeof window === 'undefined') return () => {};
+		const handleResize = () => applyWebOSZoomWindow();
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, [applyWebOSZoomWindow]);
 
 	const initAssRendererForStream = useCallback(async (stream) => {
 		if (!stream?.isAss || !videoRef.current) {
@@ -422,6 +511,8 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			setSubtitleTrackEvents(null);
 			setCurrentSubtitleText(null);
 			setSelectedSubtitleIndex(-1);
+			setVideoDisplayAspectRatio(null);
+			setDecodedAspectRatio(null);
 
 			resetPopups(); // eslint-disable-line no-use-before-define
 			setNextEpisode(null);
@@ -456,6 +547,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				setMimeType(result.mimeType || 'video/mp4');
 				setPlayMethod(result.playMethod);
 				setMediaSourceId(result.mediaSourceId);
+				setVideoDisplayAspectRatio(getVideoDisplayAspectRatio(result.mediaSource));
 				playSessionRef.current = result.playSessionId;
 
 				positionRef.current = startPosition;
@@ -600,6 +692,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				setTitle(displayTitle);
 				setSubtitle(displaySubtitle);
 				setIsAudioMode(shouldUseAudioMode);
+				setFocusRow(shouldUseAudioMode ? 'top' : 'bottom');
 				setIsFavorite(!!item.UserData?.IsFavorite);
 
 				// Audio mode: always show controls, skip video-only features
@@ -1082,9 +1175,15 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		onPlayNext: onPlayNextWithCleanup
 	});
 
-	// Audio playlist: next track (respects shuffle, repeat)
 	const handleNextTrack = useCallback(async () => {
 		if (!audioPlaylist || !onPlayNext) return;
+		if (!isAudioMode) {
+			if (hasNextTrack) {
+				await playback.reportStop(positionRef.current);
+				onPlayNext(audioPlaylist[audioPlaylistIndex + 1]);
+			}
+			return;
+		}
 		if (repeatMode === 'one') {
 			const video = videoRef.current;
 			if (video) { video.currentTime = 0; video.play(); }
@@ -1105,10 +1204,17 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			await playback.reportStop(positionRef.current);
 			onPlayNext(audioPlaylist[0]);
 		}
-	}, [hasNextTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode]);
+	}, [hasNextTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode, isAudioMode]);
 
-	// Audio playlist: previous track (or restart current if >3s in)
 	const handlePrevTrack = useCallback(async () => {
+		if (!audioPlaylist || !onPlayNext) return;
+		if (!isAudioMode) {
+			if (hasPrevTrack) {
+				await playback.reportStop(positionRef.current);
+				onPlayNext(audioPlaylist[audioPlaylistIndex - 1]);
+			}
+			return;
+		}
 		const video = videoRef.current;
 		if (video && video.currentTime > 3) {
 			video.currentTime = 0;
@@ -1129,10 +1235,16 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			await playback.reportStop(positionRef.current);
 			onPlayNext(audioPlaylist[audioPlaylist.length - 1]);
 		}
-	}, [hasPrevTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode]);
+	}, [hasPrevTrack, onPlayNext, audioPlaylist, audioPlaylistIndex, shuffleMode, repeatMode, isAudioMode]);
 
 	const handleLoadedMetadata = useCallback(() => {
 		if (videoRef.current) {
+			const width = Number(videoRef.current.videoWidth);
+			const height = Number(videoRef.current.videoHeight);
+			if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+				setDecodedAspectRatio(width / height);
+			}
+
 			if (playMethod !== 'Transcode') {
 				setDuration(videoRef.current.duration);
 			}
@@ -1786,7 +1898,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			seekByOffset(step, true);
 		} else if (e.key === 'ArrowUp' || e.keyCode === 38) {
 			e.preventDefault();
-			setFocusRow('top');
+			setFocusRow(isAudioMode ? 'top' : 'bottom');
 			setIsSeeking(false);
 			window.requestAnimationFrame(() => Spotlight.focus(isAudioMode ? 'favorite-btn' : 'play-pause-btn'));
 		} else if (e.key === 'ArrowDown' || e.keyCode === 40) {
@@ -1829,6 +1941,44 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		}
 	}, [item, isFavorite]);
 
+	const handleToggleZoom = useCallback(() => {
+		setZoomMode((prev) => {
+			if (prev === 'fit') return 'fill';
+			if (prev === 'fill') return 'stretch';
+			return 'fit';
+		});
+	}, []);
+
+	const handleOpenCast = useCallback(async () => {
+		openModal('cast');
+		if (castMembers.length > 0 || !(item?.Type === 'Episode' && item?.SeriesId)) return;
+
+		setIsLoadingCastMembers(true);
+		try {
+			const apiClient = item._serverUrl
+				? createApiForServer(item._serverUrl, item._serverAccessToken, item._serverUserId)
+				: jellyfinApi;
+			const seriesItem = await apiClient.getItem(item.SeriesId);
+			setCastMembers(Array.isArray(seriesItem?.People) ? seriesItem.People : []);
+		} catch (err) {
+			setCastMembers([]);
+		} finally {
+			setIsLoadingCastMembers(false);
+		}
+	}, [openModal, castMembers.length, item]);
+
+	const handleSelectCastMember = useCallback((person) => {
+		if (!person?.Id || !onSelectPerson) return;
+		closeModal();
+		onSelectPerson({
+			...person,
+			Type: 'Person',
+			_serverUrl: item?._serverUrl,
+			_serverAccessToken: item?._serverAccessToken,
+			_serverUserId: item?._serverUserId
+		});
+	}, [closeModal, item, onSelectPerson]);
+
 	const handleButtonAction = useCallback((action) => {
 		showControls();
 		switch (action) {
@@ -1840,6 +1990,8 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			case 'speed': openModal('speed'); break;
 			case 'quality': openModal('quality'); break;
 			case 'chapter': openModal('chapter'); break;
+			case 'cast': handleOpenCast(); break;
+			case 'zoom': handleToggleZoom(); break;
 			case 'info': openModal('info'); break;
 			case 'next': handlePlayNextEpisode(); break;
 			case 'nextTrack': handleNextTrack(); break;
@@ -1849,7 +2001,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			case 'favorite': handleToggleFavorite(); break;
 			default: break;
 		}
-	}, [showControls, handlePlayPause, handleRewind, handleForward, openModal, handlePlayNextEpisode, handleNextTrack, handlePrevTrack, handleToggleShuffle, handleToggleRepeat, handleToggleFavorite]);
+	}, [showControls, handlePlayPause, handleRewind, handleForward, openModal, handleOpenCast, handleToggleZoom, handlePlayNextEpisode, handleNextTrack, handlePrevTrack, handleToggleShuffle, handleToggleRepeat, handleToggleFavorite]);
 
 	const handleControlButtonClick = useCallback((e) => {
 		const action = e.currentTarget.dataset.action;
@@ -2036,13 +2188,13 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				if (key === 'ArrowUp' || e.keyCode === 38) {
 					e.preventDefault();
 					showControls();
-				setFocusRow(prev => {
-						if (prev === 'bottom') return isLiveTV ? 'top' : 'progress';
+					setFocusRow(prev => {
+						if (prev === 'bottom') return !isLiveTV ? 'progress' : (isAudioMode ? 'top' : 'bottom');
 						if (prev === 'progress') {
 							window.requestAnimationFrame(() => Spotlight.focus(isAudioMode ? 'favorite-btn' : 'play-pause-btn'));
-							return 'top';
+							return isAudioMode ? 'top' : 'bottom';
 						}
-						return 'top';
+						return isAudioMode ? 'top' : 'bottom';
 					});
 					return;
 				}
@@ -2080,7 +2232,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			if (focusRow === 'progress') {
 				Spotlight.focus('progress-bar');
 			} else if (focusRow === 'bottom') {
-				Spotlight.focus('bottom-row-default');
+				Spotlight.focus('play-pause-btn');
 			}
 		});
 	}, [focusRow, controlsVisible]);
@@ -2302,6 +2454,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				handleSelectSpeed={handleSelectSpeed}
 				handleSelectQuality={handleSelectQuality}
 				handleSelectChapter={handleSelectChapter}
+				handleSelectCastMember={handleSelectCastMember}
 				handleOpenSubtitleOffset={handleOpenSubtitleOffset}
 				handleOpenSubtitleSettings={handleOpenSubtitleSettings}
 				handleOpenRemoteSubtitleSearch={handleOpenRemoteSubtitleSearch}
@@ -2309,6 +2462,8 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				canDownloadRemoteSubtitles={!isAudioMode && Boolean(item?.Id)}
 				isSearchingRemoteSubtitles={isSearchingRemoteSubtitles}
 				remoteSubtitleResults={remoteSubtitleResults}
+				castMembers={castMembers}
+				isLoadingCastMembers={isLoadingCastMembers}
 				handleSubtitleOffsetChange={handleSubtitleOffsetChange}
 				closeModal={closeModal}
 				stopPropagation={stopPropagation}
