@@ -1,5 +1,5 @@
 // webOS Video Service - Luna API interface for hardware video playback
-// Capability detection is handled by deviceProfile.js — this module focuses on
+// Capability detection is handled by deviceProfile.js - this module focuses on
 // playback decisions, audio codec checks, and Luna hardware control.
 
 let lunaClient = null;
@@ -69,7 +69,7 @@ export const getSupportedAudioCodecs = (capabilities, container = '') => {
 		const dtsObj = capabilities.dts;
 		let dtsOk = false;
 		if (!container) {
-			// No container context — include DTS if supported in any container
+			// No container context - include DTS if supported in any container
 			dtsOk = !!(dtsObj.mkv || dtsObj.mp4 || dtsObj.ts || dtsObj.avi);
 		} else if (['mkv', 'matroska'].includes(container)) {
 			dtsOk = !!dtsObj.mkv;
@@ -193,18 +193,18 @@ export const getPlayMethod = (mediaSource, capabilities, options = {}) => {
 			hdrOk = capabilities.dolbyVision;
 			if (!hdrOk) console.log('[webosVideo] Pure Dolby Vision not supported (no fallback layer)');
 		} else if (rangeType.includes('DOVIWITH')) {
-			// DV with fallback layer — check if we can play the fallback
+			// DV with fallback layer - check if we can play the fallback
 			if (capabilities.dolbyVision) {
 				hdrOk = true; // Native DV support
 			} else if (rangeType.includes('HDR10') && capabilities.hdr10) {
 				hdrOk = true; // HDR10 fallback layer
-				console.log('[webosVideo] DV with HDR10 fallback — will use HDR10 layer');
+				console.log('[webosVideo] DV with HDR10 fallback - will use HDR10 layer');
 			} else if (rangeType.includes('HLG') && capabilities.hlg) {
 				hdrOk = true; // HLG fallback layer
-				console.log('[webosVideo] DV with HLG fallback — will use HLG layer');
+				console.log('[webosVideo] DV with HLG fallback - will use HLG layer');
 			} else if (rangeType.includes('SDR')) {
 				hdrOk = true; // SDR fallback always works
-				console.log('[webosVideo] DV with SDR fallback — will use SDR layer');
+				console.log('[webosVideo] DV with SDR fallback - will use SDR layer');
 			} else {
 				hdrOk = false;
 				console.log('[webosVideo] DV fallback layer not supported:', rangeType);
@@ -263,7 +263,7 @@ export const getPlayMethod = (mediaSource, capabilities, options = {}) => {
 	}
 
 	// DirectStream remuxes the container but does NOT re-encode any streams.
-	// Both video AND audio must be natively supported — DirectStream cannot
+	// Both video AND audio must be natively supported - DirectStream cannot
 	// transcode unsupported audio. When only audio is incompatible (e.g. TrueHD
 	// as the sole track), we must fall through to Transcode so the server uses
 	// its TranscodingUrl with video passthrough + audio-only transcode, preserving
@@ -435,7 +435,7 @@ export const waitForDecoderRelease = async () => {
 	}
 };
 
-// Singleton video element — reused across Player mounts to avoid
+// Singleton video element reused across Player mounts to avoid
 // exhausting webOS 4's limited hardware decoder pool.
 let _sharedVideoElement = null;
 
@@ -446,11 +446,13 @@ export const getSharedVideoElement = () => {
 		_sharedVideoElement.setAttribute('webkit-playsinline', '');
 		_sharedVideoElement.setAttribute('playsinline', '');
 		_sharedVideoElement.setAttribute('preload', 'auto');
+		_sharedVideoElement.style.position = 'absolute';
 		_sharedVideoElement.style.width = '100%';
 		_sharedVideoElement.style.height = '100%';
-		_sharedVideoElement.style.objectFit = 'contain';
+		_sharedVideoElement.style.left = '0';
+		_sharedVideoElement.style.top = '0';
+		_sharedVideoElement.style.objectFit = 'fill';
 		_sharedVideoElement.style.display = 'block';
-		console.log('[webosVideo] Created shared video element');
 	}
 	return _sharedVideoElement;
 };

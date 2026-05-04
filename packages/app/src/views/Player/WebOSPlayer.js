@@ -39,6 +39,25 @@ import {getVideoDisplayAspectRatio, getZoomDisplayRect} from './aspectRatioUtils
 
 import css from './WebOSPlayer.module.less';
 
+const getWebOSFullscreenRect = () => {
+	if (typeof window === 'undefined') {
+		return {width: 1920, height: 1080};
+	}
+
+	const cssWidth = Math.max(1, Math.round(window.innerWidth || 1920));
+	const cssHeight = Math.max(1, Math.round(window.innerHeight || 1080));
+	const dpr = Math.max(1, window.devicePixelRatio || 1);
+	const physicalWidth = Math.round(cssWidth * dpr);
+	const physicalHeight = Math.round(cssHeight * dpr);
+	const screenWidth = Math.round(window.screen?.width || physicalWidth || 1920);
+	const screenHeight = Math.round(window.screen?.height || physicalHeight || 1080);
+
+	return {
+		width: Math.max(screenWidth, physicalWidth),
+		height: Math.max(screenHeight, physicalHeight)
+	};
+};
+
 const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialSubtitleIndex, initialStartPositionTicks, onEnded, onBack, onPlayNext, onSelectPerson, audioPlaylist, onPausedChange}) => {
 	const {settings} = useSettings();
 	const {isInGroup, lastCommand} = useSyncPlay();
@@ -162,10 +181,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	const applyWebOSZoomWindow = useCallback(() => {
 		if (typeof window === 'undefined' || isAudioMode) return;
 
-		const screenRect = {
-			width: Math.max(1, Math.round(window.innerWidth || 1920)),
-			height: Math.max(1, Math.round(window.innerHeight || 1080))
-		};
+		const screenRect = getWebOSFullscreenRect();
 
 		const decodedAspect = Number.isFinite(decodedAspectRatio) && decodedAspectRatio > 0 ? decodedAspectRatio : null;
 		const targetAspect = Number.isFinite(videoDisplayAspectRatio) && videoDisplayAspectRatio > 0
@@ -175,12 +191,37 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 
 		const sourceWidth = Math.max(1, Math.round(videoRef.current?.videoWidth || screenRect.width));
 		const sourceHeight = Math.max(1, Math.round(videoRef.current?.videoHeight || screenRect.height));
+		const correction = decodedAspect && targetAspect ? (targetAspect / decodedAspect) : 1;
+
+		let sourceX = 0;
+		let sourceY = 0;
+		let sourceW = sourceWidth;
+		let sourceH = sourceHeight;
+
+		if (zoomMode === 'fill' && decodedAspect && targetAspect) {
+			const screenAspect = screenRect.width / screenRect.height;
+			const correctedW = sourceWidth * correction;
+			const correctedH = sourceHeight;
+			const correctedAspect = correctedW / correctedH;
+
+			if (correctedAspect > screenAspect) {
+				const wantedCorrectedW = correctedH * screenAspect;
+				const cropCorrectedX = (correctedW - wantedCorrectedW) / 2;
+				sourceX = Math.max(0, Math.round(cropCorrectedX / correction));
+				sourceW = Math.max(1, Math.round(wantedCorrectedW / correction));
+			} else if (correctedAspect < screenAspect) {
+				const wantedCorrectedH = correctedW / screenAspect;
+				const cropY = (correctedH - wantedCorrectedH) / 2;
+				sourceY = Math.max(0, Math.round(cropY));
+				sourceH = Math.max(1, Math.round(wantedCorrectedH));
+			}
+		}
 
 		setDisplayWindow({
-			x: 0,
-			y: 0,
-			width: sourceWidth,
-			height: sourceHeight,
+			x: sourceX,
+			y: sourceY,
+			width: sourceW,
+			height: sourceH,
 			destX: destRect.x,
 			destY: destRect.y,
 			destWidth: destRect.width,
@@ -230,27 +271,63 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	}, [item]);
 
 	useEffect(() => {
-		const modeToFit = {
-			fit: 'contain',
-			fill: 'cover',
-			stretch: 'fill'
-		};
 		const video = videoRef.current;
-		if (video) {
-			video.style.objectFit = modeToFit[zoomMode] || 'contain';
-			const decodedAspect = Number.isFinite(decodedAspectRatio) && decodedAspectRatio > 0
-				? decodedAspectRatio
-				: null;
-			const targetAspect = Number.isFinite(videoDisplayAspectRatio) && videoDisplayAspectRatio > 0
-				? videoDisplayAspectRatio
-				: decodedAspect;
-			const correction = decodedAspect && targetAspect ? (targetAspect / decodedAspect) : 1;
-			video.style.transformOrigin = 'center center';
-			if (zoomMode !== 'stretch' && Number.isFinite(correction) && Math.abs(correction - 1) > 0.01) {
-				video.style.transform = `scaleX(${Math.max(0.5, Math.min(2.0, correction)).toFixed(4)})`;
+		if (!video) return;
+
+		const sw = window.innerWidth || 1920;
+		const sh = window.innerHeight || 1080;
+
+		const decodedAspect = Number.isFinite(decodedAspectRatio) && decodedAspectRatio > 0
+			? decodedAspectRatio : null;
+		const targetAspect = (Number.isFinite(videoDisplayAspectRatio) && videoDisplayAspectRatio > 0
+			? videoDisplayAspectRatio : decodedAspect) || (sw / sh);
+
+		video.style.position = 'absolute';
+		video.style.objectFit = 'fill';
+		video.style.transform = 'none';
+		video.style.transformOrigin = 'center center';
+
+		if (zoomMode === 'stretch') {
+			video.style.width = `${sw}px`;
+			video.style.height = `${sh}px`;
+			video.style.left = '0px';
+			video.style.top = '0px';
+		} else if (zoomMode === 'fill') {
+			const screenAspect = sw / sh;
+			let vw, vh, vx, vy;
+			if (targetAspect >= screenAspect) {
+				vh = sh;
+				vw = Math.round(sh * targetAspect);
+				vx = -Math.round((vw - sw) / 2);
+				vy = 0;
 			} else {
-				video.style.transform = 'scaleX(1)';
+				vw = sw;
+				vh = Math.round(sw / targetAspect);
+				vx = 0;
+				vy = -Math.round((vh - sh) / 2);
 			}
+			video.style.width = `${vw}px`;
+			video.style.height = `${vh}px`;
+			video.style.left = `${vx}px`;
+			video.style.top = `${vy}px`;
+		} else {
+			const screenAspect = sw / sh;
+			let vw, vh, vx, vy;
+			if (targetAspect >= screenAspect) {
+				vw = sw;
+				vh = Math.round(sw / targetAspect);
+				vx = 0;
+				vy = Math.round((sh - vh) / 2);
+			} else {
+				vh = sh;
+				vw = Math.round(sh * targetAspect);
+				vx = Math.round((sw - vw) / 2);
+				vy = 0;
+			}
+			video.style.width = `${vw}px`;
+			video.style.height = `${vh}px`;
+			video.style.left = `${vx}px`;
+			video.style.top = `${vy}px`;
 		}
 	}, [zoomMode, videoDisplayAspectRatio, decodedAspectRatio]);
 
