@@ -66,8 +66,8 @@ margin-left: 20px;
 
 &:focus {
 outline: none;
-background: @accent;
-border-color: @accent;
+background: var(--theme-button-focused, rgba(var(--theme-accent-rgb, 0, 164, 220), 0.3));
+border-color: var(--theme-focus-border-color, #ffffff);
 transform: scale(1.12);
 }
 }
@@ -170,7 +170,7 @@ transform: scale(1.05);
 z-index: 10;
 
 .poster {
-border-color: var(--theme-focus-border-color, white);
+border-color: var(--theme-focus-border-color, #ffffff);
 }
 }
 }
