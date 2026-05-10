@@ -58,7 +58,7 @@ export const getServerUrl = () => currentServer;
 export const getUserId = () => currentUser;
 export const getApiKey = () => accessToken;
 
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 30000;
 
 const fetchWithTimeout = (url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) => {
 	return Promise.race([
@@ -89,7 +89,7 @@ const request = async (endpoint, options = {}) => {
 				...options.headers
 			},
 			body: options.body ? JSON.stringify(options.body) : undefined
-		});
+		}, options.timeoutMs || DEFAULT_TIMEOUT_MS);
 	} catch (err) {
 		const typed = new Error(err.message);
 		typed.connectionType = classifyError(err);
@@ -441,7 +441,7 @@ export const createApiForServer = (serverUrl, token, userId) => {
 					...options.headers
 				},
 				body: options.body ? JSON.stringify(options.body) : undefined
-			});
+			}, options.timeoutMs || DEFAULT_TIMEOUT_MS);
 		} catch (err) {
 			const typed = new Error(err.message);
 			typed.connectionType = classifyError(err);
