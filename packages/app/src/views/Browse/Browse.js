@@ -9,6 +9,7 @@ import {getImageUrl, getBackdropId, getLogoUrl} from '../../utils/helpers';
 import {getFromStorage, saveToStorage} from '../../services/storage';
 import * as connectionPool from '../../services/connectionPool';
 import {getMoonfinMediaBar} from '../../services/jellyseerrApi';
+import {toCssColor} from '../../theme/themeSpec';
 import DetailSection from './DetailSection';
 import FeaturedBanner from './FeaturedBanner';
 import BackdropLayer from './BackdropLayer';
@@ -104,7 +105,7 @@ const Browse = ({
 	onLeaveThemeMusic
 }) => {
 	const {api, serverUrl, accessToken, hasMultipleServers, user} = useAuth();
-	const {settings} = useSettings();
+	const {settings, activeTheme} = useSettings();
 	const unifiedMode = settings.unifiedLibraryMode && hasMultipleServers;
 	const isLegacy = typeof document !== 'undefined' && (' ' + document.documentElement.className + ' ').indexOf(' legacy ') >= 0;
 	const [state, dispatch] = useReducer(browseReducer, browseInitialState);
@@ -257,48 +258,26 @@ const Browse = ({
 		}
 	}, [api, unifiedMode, saveBrowseCache]); // eslint-disable-line no-use-before-define
 
-	const getUiColorRgb = useCallback((colorKey) => {
-		const colorMap = {
-			dark: '40, 40, 40',
-			black: '0, 0, 0',
-			charcoal: '54, 54, 54',
-			slate: '47, 54, 64',
-			navy: '20, 30, 48',
-			midnight: '25, 25, 65',
-			ocean: '20, 50, 70',
-			teal: '0, 60, 60',
-			forest: '25, 50, 35',
-			olive: '50, 50, 25',
-			purple: '48, 25, 52',
-			plum: '60, 30, 60',
-			wine: '60, 20, 30',
-			maroon: '50, 20, 20',
-			brown: '50, 35, 25'
-		};
-		return colorMap[colorKey] || '0, 0, 0';
-	}, []);
-
 	const uiPanelStyle = useMemo(() => {
-		const rgb = getUiColorRgb(settings.uiColor);
-		const opacity = (settings.uiOpacity || 85) / 100 * 0.6;
-		const useBlur = !isLegacy && settings.uiBlur > 0;
 		return {
-			background: `rgba(${rgb}, ${isLegacy ? Math.min(opacity + 0.2, 0.95) : opacity})`,
-			backdropFilter: useBlur ? `blur(${settings.uiBlur / 2}px)` : 'none',
-			WebkitBackdropFilter: useBlur ? `blur(${settings.uiBlur / 2}px)` : 'none'
+			background: toCssColor(activeTheme.colors.surface),
+			backdropFilter: 'none',
+			WebkitBackdropFilter: 'none',
+			border: 'var(--theme-card-border)',
+			boxShadow: 'var(--theme-focus-glow)'
 		};
-	}, [settings.uiBlur, settings.uiOpacity, settings.uiColor, getUiColorRgb, isLegacy]);
+	}, [activeTheme]);
 
 	const uiButtonStyle = useMemo(() => {
-		const rgb = getUiColorRgb(settings.uiColor);
-		const opacity = (settings.uiOpacity || 85) / 100 * 0.7;
-		const useBlur = !isLegacy && settings.uiBlur > 0;
 		return {
-			background: `rgba(${rgb}, ${isLegacy ? Math.min(opacity + 0.2, 0.95) : opacity})`,
-			backdropFilter: useBlur ? `blur(${settings.uiBlur / 2}px)` : 'none',
-			WebkitBackdropFilter: useBlur ? `blur(${settings.uiBlur / 2}px)` : 'none'
+			background: toCssColor(activeTheme.colors.buttonNormal),
+			color: toCssColor(activeTheme.colors.onButtonNormal),
+			backdropFilter: 'none',
+			WebkitBackdropFilter: 'none',
+			border: 'var(--theme-chip-border)',
+			borderRadius: 'var(--theme-chip-radius)'
 		};
-	}, [settings.uiBlur, settings.uiOpacity, settings.uiColor, getUiColorRgb, isLegacy]);
+	}, [activeTheme]);
 
 	const homeRowsConfig = useMemo(() => {
 		return [...(settings.homeRows || [])].sort((a, b) => a.order - b.order);

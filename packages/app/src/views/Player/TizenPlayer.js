@@ -2048,6 +2048,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 	// Calculate progress - use seekPosition when actively seeking for smooth scrubbing
 	const displayTime = isSeeking ? (seekPosition / 10000000) : currentTime;
 	const progressPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
+	const bufferedPercent = progressPercent;
 
 	// Focus appropriate element when focusRow changes
 	useEffect(() => {
@@ -2237,6 +2238,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				displayTime={displayTime}
 				duration={duration}
 				progressPercent={progressPercent}
+				bufferedPercent={bufferedPercent}
 				isSeeking={isSeeking}
 				seekPosition={seekPosition}
 				item={item}

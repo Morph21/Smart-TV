@@ -1,3 +1,11 @@
+@import '../styles/sandstone-bridge.less';
+
+@font-face {
+	font-family: 'NeonPulseDisplay';
+	src: url('../../resources/fonts/ScienceGothic-Regular.ttf') format('truetype');
+	font-display: swap;
+}
+
 :global(html),
 :global(body),
 :global(#root) {
@@ -7,12 +15,15 @@
 	overflow: hidden;
 	-webkit-text-size-adjust: 100%;
 	text-size-adjust: 100%;
-	background: #000b25;
+	background: var(--theme-background, #000b25);
+	color: var(--theme-on-background, #fff);
+	font-family: var(--theme-font-family, inherit);
 }
 
 .app {
 	height: 100%;
-	background: #000b25;
+	background: var(--theme-background, #000b25);
+	color: var(--theme-on-background, #fff);
 }
 
 // Override Enact neutral skin (minifier converts rgba to 'initial'; fixed post-build for legacy)
@@ -27,7 +38,7 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: linear-gradient(135deg, #1a1a3a 0%, #2a2a5e 50%, #26316e 100%);
+	background: linear-gradient(135deg, var(--theme-background, #1a1a3a) 0%, var(--theme-surface, #2a2a5e) 50%, var(--theme-surface-variant, #26316e) 100%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -39,7 +50,7 @@
 	justify-content: center;
 	height: 100%;
 	width: 100%;
-	background: #000b25;
+	background: var(--theme-background, #000b25);
 }
 
 .connectionBanner {

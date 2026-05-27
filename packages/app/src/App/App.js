@@ -30,6 +30,7 @@ import ComicViewer from '../components/ComicViewer';
 import SettingsPanel from '../components/SettingsPanel';
 import useInactivityTimer from '../hooks/useInactivityTimer';
 import {useThemeMusic} from '../hooks/useThemeMusic';
+import {buildThemeCssVars} from '../theme/themeSpec';
 import Login from '../views/Login';
 import Browse from '../views/Browse';
 
@@ -103,7 +104,7 @@ const PANELS = {
 
 const AppContent = (props) => {
 	const {isAuthenticated, isLoading, logout, serverUrl, serverName, api, user, hasMultipleServers, accessToken, connectionState, revalidateSession} = useAuth();
-	const {settings} = useSettings();
+	const {settings, activeTheme} = useSettings();
 	const themeMusic = useThemeMusic();
 	const {openDialog: openSyncPlay, closeDialog: closeSyncPlay, isDialogOpen: syncPlayDialogOpen, playQueueItem, clearPlayQueueItem, isInGroup: isSyncPlayInGroup, setNewQueue: syncPlaySetNewQueue} = useSyncPlay();
 	const unifiedMode = settings.unifiedLibraryMode && hasMultipleServers;
@@ -176,8 +177,38 @@ const AppContent = (props) => {
 	}, [fetchLibraries]);
 
 	useEffect(() => {
-		document.documentElement.style.setProperty('--accent-color', settings.focusColor || '#00a4dc');
-	}, [settings.focusColor]);
+		const root = document.documentElement;
+		const vars = buildThemeCssVars(activeTheme);
+		for (let index = 0; index < 16; index += 1) {
+			const navVarName = `--theme-nav-color-${index + 1}`;
+			if (!Object.prototype.hasOwnProperty.call(vars, navVarName)) {
+				root.style.removeProperty(navVarName);
+			}
+		}
+		for (const [key, value] of Object.entries(vars)) {
+			root.style.setProperty(key, value);
+		}
+		if (activeTheme?.id) {
+			root.setAttribute('data-theme-id', activeTheme.id);
+		}
+	}, [activeTheme]);
+
+	useEffect(() => {
+		const root = document.documentElement;
+		if (settings.focusBorderColor) {
+			root.style.setProperty('--theme-focus-border-color', settings.focusBorderColor);
+		}
+		root.style.setProperty('--theme-navbar-opacity', ((settings.navbarOpacity ?? 100) / 100).toString());
+		if (settings.navbarColor) {
+			const hex = settings.navbarColor.replace('#', '');
+			const r = parseInt(hex.slice(0, 2), 16);
+			const g = parseInt(hex.slice(2, 4), 16);
+			const b = parseInt(hex.slice(4, 6), 16);
+			root.style.setProperty('--theme-navbar-color-rgb', `${r}, ${g}, ${b}`);
+		} else {
+			root.style.removeProperty('--theme-navbar-color-rgb');
+		}
+	}, [activeTheme, settings.focusBorderColor, settings.navbarOpacity, settings.navbarColor]);
 
 	useEffect(() => {
 		const scale = settings.uiScale || 1.0;
@@ -221,6 +252,19 @@ const AppContent = (props) => {
 			}
 		};
 	}, [settings.uiScale]);
+
+	const THEME_MUSIC_TYPES = ['Movie', 'Series', 'Season', 'Episode'];
+
+	useEffect(() => {
+		if (panelIndex === PANELS.DETAILS && selectedItem && THEME_MUSIC_TYPES.includes(selectedItem.Type)) {
+			themeMusic.playThemeMusic(selectedItem.SeriesId || selectedItem.Id);
+		} else if (panelIndex === PANELS.PLAYER) {
+			themeMusic.stopThemeMusicImmediate();
+		} else if (panelIndex !== PANELS.DETAILS) {
+			themeMusic.cancelDelayed();
+			themeMusic.stopThemeMusic();
+		}
+	}, [panelIndex, selectedItem?.Id]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const performAppCleanup = useCallback(() => {
 		cleanupHandlersRef.current?.();
@@ -568,6 +612,34 @@ const AppContent = (props) => {
 		navigateTo(PANELS.SEARCH);
 	}, [navigateTo]);
 
+	const handleOpenSettings = useCallback(() => {
+		setShowSettingsPanel(true);
+	}, []);
+
+	const handleCloseSettingsPanel = useCallback(() => {
+		setShowSettingsPanel(false);
+	}, []);
+
+	const handleOpenAccountModal = useCallback(() => {
+		setShowAccountModal(true);
+	}, []);
+
+	const handleCloseAccountModal = useCallback(() => {
+		setShowAccountModal(false);
+	}, []);
+
+	const handleCancelExitDialog = useCallback(() => {
+		setShowExitDialog(false);
+	}, []);
+
+	const handleRetryConnection = useCallback(() => {
+		revalidateSession(true);
+	}, [revalidateSession]);
+
+	const handleOpenFavorites = useCallback(() => {
+		navigateTo(PANELS.FAVORITES);
+	}, [navigateTo]);
+
 	const handleOpenGenres = useCallback(() => {
 		navigateTo(PANELS.GENRES);
 	}, [navigateTo]);
@@ -628,34 +700,6 @@ const AppContent = (props) => {
 	const handleOpenJellyseerr = useCallback(() => {
 		navigateTo(PANELS.JELLYSEERR_DISCOVER);
 	}, [navigateTo]);
-
-	const handleOpenFavorites = useCallback(() => {
-		navigateTo(PANELS.FAVORITES);
-	}, [navigateTo]);
-
-	const handleOpenSettings = useCallback(() => {
-		setShowSettingsPanel(true);
-	}, []);
-
-	const handleCloseSettingsPanel = useCallback(() => {
-		setShowSettingsPanel(false);
-	}, []);
-
-	const handleOpenAccountModal = useCallback(() => {
-		setShowAccountModal(true);
-	}, []);
-
-	const handleCloseAccountModal = useCallback(() => {
-		setShowAccountModal(false);
-	}, []);
-
-	const handleCancelExitDialog = useCallback(() => {
-		setShowExitDialog(false);
-	}, []);
-
-	const handleRetryConnection = useCallback(() => {
-		revalidateSession(true);
-	}, [revalidateSession]);
 
 	const handleHome = useCallback(() => {
 		setPanelHistory([]);

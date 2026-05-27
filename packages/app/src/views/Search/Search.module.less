@@ -1,3 +1,5 @@
+@import '../../styles/mixins.less';
+
 /* Search Container */
 .searchContainer {
 	position: absolute;
@@ -7,14 +9,14 @@
 	bottom: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
-	background: #0a0a0a;
+	background: var(--theme-background, #0a0a0a);
 	padding-top: 80px;
 }
 
 /* Search Input Section */
 .searchInputSection {
 	padding: 60px 0 30px;
-	background: linear-gradient(to bottom, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.8) 100%);
+	background: linear-gradient(to bottom, var(--theme-background, rgba(10, 10, 10, 0.98)) 0%, transparent 100%);
 	display: flex;
 	justify-content: center;
 	position: -webkit-sticky;
@@ -28,17 +30,17 @@
 	width: 600px;
 	display: flex;
 	align-items: center;
-	background: rgba(255, 255, 255, 0.1);
-	border: 4px solid rgba(255, 255, 255, 0.2);
+	background: var(--theme-input-background, rgba(255, 255, 255, 0.1));
+	border: 4px solid var(--theme-input-border, rgba(255, 255, 255, 0.2));
 	border-radius: 8px;
 	padding: 10px 16px;
 	transition: all 0.3s ease;
 	height: 50px;
 
 	&:focus-within {
-			border-color: var(--accent-color, #00a4dc);
-		background: rgba(255, 255, 255, 0.15);
-		box-shadow: 0 0 20px rgba(0, 164, 220, 0.3);
+		border-color: var(--theme-focus-border-color, #ffffff);
+		background: var(--theme-input-focused, rgba(255, 255, 255, 0.15));
+		box-shadow: var(--theme-focus-glow, 0 0 20px rgba(0, 164, 220, 0.3));
 	}
 }
 
@@ -47,7 +49,7 @@
 	height: 24px;
 	margin-right: 12px;
 	opacity: 0.6;
-	color: #ffffff;
+	color: var(--theme-on-surface, #ffffff);
 	fill: currentColor;
 }
 
@@ -56,12 +58,12 @@
 	background: transparent;
 	border: none;
 	outline: none;
-	color: #ffffff;
+	color: var(--theme-on-surface, #ffffff);
 	font-size: 1rem;
 	font-weight: 400;
 
 	input::placeholder {
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
 	}
 
 	&:focus {
@@ -72,7 +74,7 @@
 .clearBtn {
 	background: transparent;
 	border: none;
-	color: rgba(255, 255, 255, 0.6);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
 	font-size: 24px;
 	cursor: pointer;
 	padding: 0 8px;
@@ -81,7 +83,7 @@
 
 	&:hover,
 	&:focus {
-		color: #ffffff;
+		color: var(--theme-text-primary, #ffffff);
 		outline: none;
 	}
 }
@@ -108,12 +110,12 @@
 		font-size: 28px;
 		font-weight: 600;
 		margin: 0 0 10px 0;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--theme-text-primary, rgba(255, 255, 255, 0.9));
 	}
 
 	p {
 		font-size: 18px;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
 		margin: 0;
 	}
 }
@@ -125,7 +127,7 @@
 
 	p {
 		font-size: 18px;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
 		margin-top: 20px;
 	}
 }
@@ -143,13 +145,13 @@
 	font-size: 24px;
 	font-weight: 600;
 	margin: 0 0 20px 0;
-	color: #ffffff;
+	color: var(--theme-text-primary, #ffffff);
 }
 
 .rowCount {
 	font-size: 16px;
 	font-weight: 400;
-	color: rgba(255, 255, 255, 0.5);
+	color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
 }
 
 .rowScroller {
@@ -189,7 +191,7 @@
 		z-index: 10;
 
 		.cardImage {
-			border-color: #ffffff;
+			border-color: var(--theme-focus-border-color, #ffffff);
 			border-width: 4px;
 		}
 	}
@@ -203,7 +205,7 @@
 	position: relative;
 	width: 100%;
 	padding-top: 150%;
-	background: rgba(255, 255, 255, 0.1);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
 	overflow: visible;
 	border-radius: 8px;
 }
@@ -226,7 +228,7 @@
 	left: 50%;
 	transform: translate(-50%, -50%);
 	font-size: 48px;
-	color: rgba(255, 255, 255, 0.2);
+	color: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 }
 
 .watchedBadge {
@@ -242,7 +244,7 @@
 	font-size: 16px;
 	font-weight: 600;
 	margin: 0 0 6px 0;
-	color: #ffffff;
+	color: var(--theme-text-primary, #ffffff);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	display: -webkit-box;
@@ -253,7 +255,7 @@
 
 .cardSubtitle {
 	font-size: 14px;
-	color: rgba(255, 255, 255, 0.6);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
 	margin: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -266,10 +268,10 @@
 	top: 8px;
 	right: 8px;
 	padding: 4px 8px;
-	background: rgba(0, 0, 0, 0.75);
-	border-radius: 4px;
+	.theme-chip();
+	background: rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.75);
 	font-size: 12px;
-	color: #ffffff;
+	color: var(--theme-text-primary, #ffffff);
 	font-weight: 500;
 	max-width: 120px;
 	overflow: hidden;
@@ -305,5 +307,23 @@
 .musicCard {
 	.musicImageWrapper {
 		padding-top: 100%; /* 1:1 square aspect ratio */
+	}
+}
+
+:global(html[data-theme-id='neon_pulse']) {
+	.rowTitle,
+	.cardTitle {
+		color: var(--theme-accent, #ff2e92);
+		text-shadow: var(--theme-text-glow, 0 0 8px rgba(255, 46, 146, 0.35));
+	}
+
+	.cardSubtitle,
+	.rowCount {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.card:focus .cardImage {
+		border-color: var(--theme-accent, #ff2e92);
+		box-shadow: 0 0 10px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.3);
 	}
 }

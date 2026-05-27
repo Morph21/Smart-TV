@@ -1,8 +1,8 @@
-@accent: var(--accent-color, #00a4dc);
-@accentHover: #00b4ec;
-@bg1: #1a1a3a;
-@bg2: #2a2a5e;
-@bg3: #26316e;
+@accent: var(--theme-accent, #00a4dc);
+@accentHover: var(--theme-button-focused, #00b4ec);
+@bg1: var(--theme-background, #1a1a3a);
+@bg2: var(--theme-surface, #2a2a5e);
+@bg3: var(--theme-login-gradient-end, #26316e);
 
 .page {
 	position: fixed;
@@ -57,11 +57,11 @@
 }
 
 .contentWrapper {
-	background: rgba(0, 0, 0, 0.75);
+	background: rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.75);
 	backdrop-filter: blur(10px);
 	border-radius: 20px;
 	padding: 50px 40px;
-	border: 3px solid rgba(255, 255, 255, 0.1);
+	border: 3px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
 
 	:global(.legacy) & {
 		padding: 20px 30px;
@@ -70,14 +70,14 @@
 
 .section {
 	h1 {
-		color: #fff;
+		color: var(--theme-text-primary, #fff);
 		font-size: 42px;
 		font-weight: 700;
 		margin: 0 0 10px 0;
 	}
 
 	h2 {
-		color: #fff;
+		color: var(--theme-text-primary, #fff);
 		font-size: 36px;
 		font-weight: 600;
 		margin: 0 0 20px 0;
@@ -85,13 +85,13 @@
 }
 
 .subtitle {
-	color: rgba(255, 255, 255, 0.7);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
 	font-size: 24px;
 	margin: 0 0 30px 0;
 }
 
 .serverLabel {
-	color: rgba(255, 255, 255, 0.5);
+	color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
 	font-size: 20px;
 	font-weight: 400;
 	margin: 0 0 6px 0;
@@ -99,7 +99,7 @@
 }
 
 .serverName {
-	color: rgba(255, 255, 255, 0.6);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
 	font-size: 22px;
 	margin-bottom: 30px;
 }
@@ -110,7 +110,7 @@
 
 	label {
 		display: block;
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--theme-text-primary, rgba(255, 255, 255, 0.8));
 		font-size: 20px;
 		margin-bottom: 10px;
 	}
@@ -120,22 +120,22 @@
 	width: 100%;
 	padding: 20px 24px;
 	font-size: 26px;
-	background: rgba(255, 255, 255, 0.1);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
 	border: 4px solid transparent;
 	border-radius: 12px;
-	color: #fff;
+	color: var(--theme-text-primary, #fff);
 	outline: none;
 	box-sizing: border-box;
 	transition: all 0.2s ease;
 
 	input::placeholder {
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
 	}
 
 	&:focus, &[data-focused] {
 		border-color: @accent;
-		background: rgba(255, 255, 255, 0.15);
-		box-shadow: 0 0 0 4px rgba(0, 164, 220, 0.3);
+		background: var(--theme-input-focused, rgba(255, 255, 255, 0.15));
+		box-shadow: var(--theme-focus-glow, 0 0 0 4px rgba(0, 164, 220, 0.3));
 	}
 }
 
@@ -176,9 +176,9 @@
 }
 
 .btnPrimary {
-	background: rgba(255, 255, 255, 0.15);
-	color: #fff;
-	border: 3px solid rgba(255, 255, 255, 0.2);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
+	color: var(--theme-text-primary, #fff);
+	border: 3px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 
 	&:hover, &:focus {
 		background: @accent;
@@ -187,9 +187,9 @@
 }
 
 .btnSecondary {
-	background: rgba(255, 255, 255, 0.15);
-	color: #fff;
-	border: 3px solid rgba(255, 255, 255, 0.2);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
+	color: var(--theme-text-primary, #fff);
+	border: 3px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 
 	&:hover, &:focus {
 		background: @accent;
@@ -216,7 +216,7 @@
 	}
 
 	&::-webkit-scrollbar-track {
-		background: rgba(255, 255, 255, 0.1);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
 		border-radius: 4px;
 	}
 
@@ -245,7 +245,7 @@
 
 		.userAvatar, .userAvatarPlaceholder {
 			border-color: @accent;
-			box-shadow: 0 0 0 3px rgba(0, 164, 220, 0.4);
+			box-shadow: var(--theme-focus-glow, 0 0 0 3px rgba(0, 164, 220, 0.4));
 		}
 	}
 }
@@ -255,7 +255,7 @@
 	height: 130px;
 	border-radius: 50%;
 	margin-bottom: 14px;
-	border: 3px solid rgba(255, 255, 255, 0.25);
+	border: 3px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.25);
 	transition: all 0.25s ease;
 }
 
@@ -273,11 +273,11 @@
 .placeholderIcon {
 	width: 80px;
 	height: 80px;
-	fill: #FFFFFF;
+	fill: var(--theme-text-primary, #FFFFFF);
 }
 
 .userName {
-	color: rgba(255, 255, 255, 0.85);
+	color: var(--theme-text-primary, rgba(255, 255, 255, 0.85));
 	font-size: 20px;
 	font-weight: 500;
 	margin-top: 2px;
@@ -303,25 +303,25 @@
 }
 
 .selectedAvatarPlaceholder {
-	background: linear-gradient(135deg, @accent, #6366f1);
+	background: linear-gradient(135deg, var(--theme-accent, #00a4dc), var(--theme-login-gradient-end, #6366f1));
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 48px;
 	font-weight: 600;
-	color: #fff;
+	color: var(--theme-on-accent, #fff);
 	border: 3px solid @accent;
 }
 
 .selectedName {
-	color: #fff;
+	color: var(--theme-text-primary, #fff);
 	font-size: 28px;
 	font-weight: 600;
 }
 
 .statusMessage {
-	background: rgba(0, 164, 220, 0.2);
-	border: 3px solid rgba(0, 164, 220, 0.4);
+	background: var(--theme-chip-background, rgba(0, 164, 220, 0.2));
+	border: 3px solid var(--theme-focus-border-color, #ffffff);
 	border-radius: 12px;
 	padding: 16px 24px;
 	margin-bottom: 20px;
@@ -330,12 +330,12 @@
 }
 
 .errorMessage {
-	background: rgba(239, 68, 68, 0.2);
-	border: 3px solid rgba(239, 68, 68, 0.4);
+	background: rgba(var(--theme-recording-active-rgb, 239, 68, 68), 0.2);
+	border: 3px solid rgba(var(--theme-recording-active-rgb, 239, 68, 68), 0.4);
 	border-radius: 12px;
 	padding: 16px 24px;
 	margin-bottom: 20px;
-	color: #ef4444;
+	color: var(--theme-recording-active, #ef4444);
 	font-size: 20px;
 }
 
@@ -345,7 +345,7 @@
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	color: #fff;
+	color: var(--theme-text-primary, #fff);
 	font-size: 24px;
 
 	> * + * {
@@ -356,7 +356,7 @@
 .spinner {
 	width: 60px;
 	height: 60px;
-	border: 4px solid rgba(255, 255, 255, 0.2);
+	border: 4px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 	border-top-color: @accent;
 	border-radius: 50%;
 	animation: spin 1s linear infinite;
@@ -382,13 +382,13 @@
 .quickConnectCodeDisplay {
 	margin: 30px 0;
 	padding: 30px;
-	background: rgba(255, 255, 255, 0.05);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.05);
 	border-radius: 16px;
 	border: 4px solid @accent;
 }
 
 .qcLabel {
-	color: rgba(255, 255, 255, 0.8);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.8));
 	font-size: 20px;
 	margin-bottom: 20px;
 }

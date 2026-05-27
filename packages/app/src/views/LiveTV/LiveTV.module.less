@@ -68,13 +68,13 @@
 
 	&:hover,
 	&:focus {
-		background: var(--accent-color, #00a4dc);
+		background: var(--theme-accent, #00a4dc);
 		outline: none;
 	}
 
 	&.active {
-		background: var(--accent-color, #00a4dc);
-		border-color: var(--accent-color, #00a4dc);
+		background: var(--theme-accent, #00a4dc);
+		border-color: var(--theme-accent, #00a4dc);
 	}
 }
 
@@ -152,19 +152,19 @@
 	position: sticky;
 	left: 0;
 	z-index: 10;
-	box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+	box-shadow: 2px 0 8px rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.3);
 	cursor: pointer;
 	transition: background 0.15s ease;
 	outline: none;
 
 	&:hover {
-		background: lighten(@background-secondary, 8%);
+		background: var(--theme-surface-variant, #252525);
 	}
 
 	&:focus {
 		background: @accent-color;
 		color: @text-primary;
-		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+		box-shadow: 2px 0 8px rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.3);
 		z-index: 11;
 	}
 }
@@ -198,7 +198,7 @@
 	top: 0;
 	bottom: 0;
 	width: 3px;
-	background: var(--accent-color, #00a4dc);
+	background: var(--theme-accent, #00a4dc);
 	z-index: 3;
 	pointer-events: none;
 
@@ -209,7 +209,7 @@
 		left: -5px;
 		width: 13px;
 		height: 13px;
-		background: var(--accent-color, #00a4dc);
+		background: var(--theme-accent, #00a4dc);
 		border-radius: 50%;
 	}
 }
@@ -218,37 +218,37 @@
 	position: absolute;
 	top: 4px;
 	bottom: 4px;
-	background: rgba(50, 50, 70, 0.8);
+	background: rgba(var(--theme-surface-variant-rgb, 37, 37, 37), 0.8);
 	border-radius: 6px;
 	padding: 8px 12px;
 	overflow: hidden;
 	cursor: pointer;
 	transition: all 0.2s;
-	border: 2px solid rgba(100, 100, 120, 0.3);
+	border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 
 	&:hover {
-		background: rgba(70, 70, 90, 0.9);
-		border-color: rgba(150, 150, 170, 0.5);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.14);
+		border-color: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.35);
 	}
 
 	&:focus {
-		background: rgba(30, 30, 50, 0.95);
-		border-color: var(--accent-color, #00a4dc);
+		background: rgba(var(--theme-surface-rgb, 26, 26, 26), 0.95);
+		border-color: var(--theme-accent, #00a4dc);
 		border-width: 3px;
 		outline: none;
 		z-index: 10;
-		box-shadow: 0 0 12px var(--accent-color, #00a4dc);
+		box-shadow: 0 0 12px var(--theme-accent, #00a4dc);
 	}
 
 	&.current {
-		background: fade(@accent-color, 25%);
-		border-color: fade(@accent-color, 60%);
+		background: rgba(var(--theme-accent-rgb, 0, 164, 220), 0.25);
+		border-color: rgba(var(--theme-accent-rgb, 0, 164, 220), 0.6);
 
 		&:focus {
-			background: fade(@accent-color, 35%);
-			border-color: var(--accent-color, #00a4dc);
+			background: rgba(var(--theme-accent-rgb, 0, 164, 220), 0.35);
+			border-color: var(--theme-accent, #00a4dc);
 			border-width: 3px;
-			box-shadow: 0 0 16px var(--accent-color, #00a4dc);
+			box-shadow: 0 0 16px var(--theme-accent, #00a4dc);
 		}
 	}
 }
@@ -289,13 +289,13 @@
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	background: fade(@background-primary, 95%);
+	background: rgba(var(--theme-background-rgb, 16, 16, 16), 0.95);
 	padding: 48px 80px;
 	border-radius: 16px;
 	font-size: 72px;
 	font-weight: 600;
 	z-index: 100;
-	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+	box-shadow: 0 8px 32px rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.5);
 }
 
 .programPopup {
@@ -304,7 +304,7 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: fade(@background-primary, 90%);
+	background: rgba(var(--theme-background-rgb, 16, 16, 16), 0.9);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -320,7 +320,7 @@
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
-	box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+	box-shadow: 0 12px 48px rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.6);
 }
 
 .popupHeader {
@@ -424,8 +424,8 @@
 .popupBtn {
 	padding: 16px 32px;
 	font-size: 18px;
-	background: rgba(255, 255, 255, 0.15);
-	border: 2px solid rgba(255, 255, 255, 0.2);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
+	border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 	border-radius: 8px;
 	color: @text-primary;
 	cursor: pointer;
@@ -433,8 +433,8 @@
 
 	&:hover,
 	&:focus {
-		background: var(--accent-color, #00a4dc);
-		border-color: var(--accent-color, #00a4dc);
+		background: var(--theme-accent, #00a4dc);
+		border-color: var(--theme-accent, #00a4dc);
 		outline: none;
 	}
 

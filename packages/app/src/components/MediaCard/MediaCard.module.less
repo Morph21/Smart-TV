@@ -1,4 +1,4 @@
-@accent: var(--accent-color, #00a4dc);
+@accent: var(--theme-accent, #00a4dc);
 
 .card {
 	flex: 0 0 auto;
@@ -17,7 +17,8 @@
 
 		.image {
 			border-color: #ffffff;
-			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+			border-color: var(--theme-focus-border-color);
+			box-shadow: var(--theme-focus-glow, 0 8px 24px rgba(0, 0, 0, 0.6));
 			border-width: 4px;
 		}
 	}
@@ -70,8 +71,8 @@
 	width: 100%;
 	object-fit: cover;
 	display: block;
-	border-radius: 20px;
-	border: 4px solid transparent;
+	border-radius: var(--theme-card-radius, 20px);
+	border: var(--theme-card-border, 4px solid transparent);
 	transition: border-color 0.2s;
 	box-sizing: border-box; // Ensure padding and border are included in the elements total width and height
 }
@@ -81,17 +82,17 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: #2a2a4e;
+	background: var(--theme-surface-variant, #2a2a4e);
 	font-size: 64px;
-	color: #666;
-	border-radius: 20px;
-	border: 4px solid transparent;
+	color: var(--theme-text-muted, #666);
+	border-radius: var(--theme-card-radius, 20px);
+	border: var(--theme-card-border, 4px solid transparent);
 	box-sizing: border-box;
 }
 
 .imageContainer {
 	position: relative;
-	border-radius: 20px;
+	border-radius: var(--theme-card-radius, 20px);
 	overflow: hidden;
 
 	&::after {
@@ -101,7 +102,7 @@
 		left: 4px;
 		right: 4px;
 		height: 30%;
-		background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 100%);
+		background: linear-gradient(to top, rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.75) 0%, transparent 100%);
 		pointer-events: none;
 		border-radius: 0 0 16px 16px;
 	}
@@ -115,6 +116,7 @@
 	font-size: 20px;
 	font-weight: 500;
 	color: #ffffff;
+	color: var(--theme-text-primary);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -124,6 +126,7 @@
 	font-size: 20px;
 	font-weight: 600;
 	color: #ffffff;
+	color: var(--theme-text-primary);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -134,6 +137,7 @@
 	font-size: 16px;
 	font-weight: 400;
 	color: #b3b3b3;
+	color: var(--theme-text-secondary);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -147,6 +151,7 @@
 	width: auto;
 	height: 8px;
 	background: rgba(100, 100, 100, 0.7);
+	background: var(--theme-range-track);
 	border-radius: 999px;
 	overflow: hidden;
 	backdrop-filter: blur(4px);
@@ -156,7 +161,8 @@
 
 .progress {
 	height: 100%;
-	background: rgb(255, 255, 255);
+	background: #00a4dc;
+	background: var(--theme-range-progress);
 	transition: width 0.25s ease;
 	border-radius: inherit;
 }
@@ -166,10 +172,11 @@
 	top: 8px;
 	right: 8px;
 	padding: 4px 8px;
-	background: rgba(0, 0, 0, 0.75);
+	background: var(--theme-surface, rgba(0, 0, 0, 0.75));
 	border-radius: 4px;
 	font-size: 12px;
 	color: #ffffff;
+	color: var(--theme-text-primary);
 	font-weight: 500;
 	max-width: 120px;
 	overflow: hidden;
@@ -183,6 +190,7 @@
 	font-size: 15px;
 	font-weight: 400;
 	color: rgba(255, 255, 255, 0.5);
+	color: var(--theme-text-secondary);
 	margin-top: 6px;
 	line-height: 1.4;
 	display: -webkit-box;
@@ -196,4 +204,21 @@
 .watchedBadge {
 	@import '../../styles/mixins.less';
 	.watched-badge();
+}
+
+:global(html[data-theme-id='neon_pulse']) {
+	.title,
+	.seriesName {
+		color: var(--theme-accent, #ff2e92);
+		text-shadow: var(--theme-text-glow, 0 0 8px rgba(255, 46, 146, 0.35));
+	}
+
+	.episodeInfo {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.card:focus .image {
+		border-color: var(--theme-accent, #ff2e92);
+		box-shadow: 0 0 14px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.35);
+	}
 }

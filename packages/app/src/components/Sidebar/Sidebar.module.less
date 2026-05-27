@@ -1,4 +1,3 @@
-@accent: var(--accent-color, #00a4dc);
 @sidebar-collapsed-width: 78px;
 @sidebar-expanded-width: 280px;
 
@@ -18,7 +17,7 @@
 
 .sidebar.expanded {
 	width: @sidebar-expanded-width;
-	background: linear-gradient(to right, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.55), transparent);
+	background: linear-gradient(to right, rgba(var(--theme-background-rgb, 0, 0, 0), 0.96), rgba(var(--theme-background-rgb, 0, 0, 0), 0.88), rgba(var(--theme-background-rgb, 0, 0, 0), 0.55), transparent);
 }
 
 .userSection {
@@ -45,13 +44,13 @@
 	height: 50px;
 	min-width: 50px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, @accent, #0077b6);
+	background: linear-gradient(135deg, var(--theme-accent, #00a4dc), var(--theme-accent-secondary, #0077b6));
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 24px;
 	font-weight: 600;
-	color: #fff;
+	color: var(--theme-on-accent, #fff);
 	line-height: 1;
 	margin-right: 14px;
 }
@@ -77,11 +76,11 @@
 	margin: 3px 0;
 	background: transparent;
 	border: 2px solid transparent;
-	color: rgba(255, 255, 255, 0.6);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
 	cursor: pointer;
 	transition: all 0.15s ease;
 	outline: none !important;
-	border-radius: 28px;
+	border-radius: var(--theme-chip-radius, 28px);
 	min-height: 56px;
 	width: 100%;
 	text-align: left;
@@ -91,21 +90,21 @@
 	}
 
 	&:hover {
-		color: #ffffff;
-		background: rgba(255, 255, 255, 0.1);
+		color: var(--theme-text-primary, #ffffff);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
 	}
 
 	&:focus {
-		color: #ffffff;
-		background: rgba(255, 255, 255, 0.14);
-		border-color: rgba(255, 255, 255, 0.7);
-		box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+		color: var(--theme-text-primary, #ffffff);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.14);
+		border-color: var(--theme-focus-border-color, #ffffff);
+		box-shadow: var(--theme-focus-glow, 0 0 0 1px rgba(255, 255, 255, 0.15));
 	}
 }
 
 .active {
-	color: #ffffff;
-	background: rgba(255, 255, 255, 0.12);
+	color: var(--theme-text-primary, #ffffff);
+	background: rgba(var(--theme-navbar-color-rgb, var(--theme-accent-rgb, 0, 164, 220)), 0.24);
 }
 
 .sidebarIcon {
@@ -169,11 +168,11 @@
 	padding: 10px 14px 10px 64px;
 	background: transparent;
 	border: 2px solid transparent;
-	color: rgba(255, 255, 255, 0.5);
+	color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
 	cursor: pointer;
 	transition: all 0.15s ease;
 	outline: none !important;
-	border-radius: 24px;
+	border-radius: var(--theme-chip-radius, 24px);
 	width: 100%;
 	text-align: left;
 	font-size: 20px;
@@ -186,14 +185,14 @@
 	}
 
 	&:hover {
-		color: #ffffff;
-		background: rgba(255, 255, 255, 0.1);
+		color: var(--theme-text-primary, #ffffff);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
 	}
 
 	&:focus {
-		color: #ffffff;
-		background: rgba(255, 255, 255, 0.14);
-		border-color: rgba(255, 255, 255, 0.7);
+		color: var(--theme-text-primary, #ffffff);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.14);
+		border-color: var(--theme-focus-border-color, #ffffff);
 	}
 }
 
@@ -218,7 +217,8 @@
 	text-align: center;
 	font-size: 18px;
 	font-weight: 500;
-	color: rgba(255, 255, 255, 0.5);
+	color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+	text-shadow: var(--theme-text-glow, none);
 	white-space: nowrap;
 	opacity: 0;
 	transition: opacity 0.15s ease;
@@ -226,4 +226,27 @@
 
 .sidebar.expanded .clock {
 	opacity: 1;
+}
+
+:global(html[data-theme-id='neon_pulse']) {
+	.sidebar.expanded {
+		border-right: 1.2px solid var(--theme-accent, #ff2e92);
+		box-shadow: 2px 0 12px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.4),
+			1px 0 10px rgba(var(--theme-on-surface-rgb, 0, 229, 255), 0.33);
+	}
+
+	.navSection .sidebarItem,
+	.navSection .libraryItem {
+		color: var(--theme-accent, #ff2e92);
+	}
+
+	.navSection .sidebarItem:nth-of-type(even),
+	.navSection .libraryItem:nth-of-type(even) {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.clock {
+		color: var(--theme-on-surface, #00e5ff);
+		text-shadow: 0 0 8px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.35);
+	}
 }

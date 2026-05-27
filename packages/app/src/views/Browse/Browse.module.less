@@ -1,4 +1,4 @@
-@accent: var(--accent-color, #00a4dc);
+@accent: var(--theme-accent, #00a4dc);
 
 .page {
 	position: fixed;
@@ -6,7 +6,7 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: #0a0a0a;
+	background: var(--theme-background, #0a0a0a);
 	overflow: hidden;
 }
 
@@ -40,7 +40,7 @@
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: rgba(10, 10, 10, 0.75);
+	background: var(--theme-scrim, rgba(10, 10, 10, 0.75));
 }
 
 /* Main Content */
@@ -75,7 +75,7 @@
 	p {
 		margin-top: 30px;
 		font-size: 28px;
-		color: #b3b3b3;
+		color: var(--theme-text-secondary, #b3b3b3);
 	}
 }
 
@@ -164,7 +164,7 @@
 }
 
 .featuredInfoBox {
-	background: rgba(0, 0, 0, 0.5);
+	background: rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.55);
 	border-radius: 16px;
 	padding: 24px 28px;
 	width: 100%;
@@ -195,7 +195,7 @@
 	font-size: 56px;
 	font-weight: 700;
 	margin: 0 0 16px 0;
-	color: #fff;
+	color: var(--theme-text-primary, #fff);
 	text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.9);
 	line-height: 1.1;
 	width: 100%;
@@ -221,19 +221,19 @@
 
 .metaItem {
 	font-size: 20px;
-	color: rgba(255, 255, 255, 0.9);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.9));
 
 	&:not(:last-child)::after {
 		content: '•';
 		margin-left: 15px;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
 	}
 }
 
 .featuredOverview {
 	font-size: 22px;
 	line-height: 1.5;
-	color: rgba(255, 255, 255, 0.95);
+	color: var(--theme-text-primary, rgba(255, 255, 255, 0.95));
 	margin: 0;
 	text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9);
 	display: -webkit-box;
@@ -263,10 +263,10 @@
 	-webkit-justify-content: center;
 	justify-content: center;
 	outline: none;
-	color: #fff;
+	color: var(--theme-text-primary, #fff);
 
 	&:focus {
-		background: rgba(0, 0, 0, 0.8);
+		background: rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.85);
 		transform: translateY(-50%) scale(1.1);
 	}
 }
@@ -288,7 +288,7 @@
 	display: -webkit-flex;
 	display: flex;
 	z-index: 10;
-	background: rgba(0, 0, 0, 0.5);
+	background: rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.55);
 	padding: 12px 20px;
 	border-radius: 25px;
 
@@ -301,11 +301,11 @@
 	width: 10px;
 	height: 10px;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.3);
+	background: var(--theme-text-muted, rgba(255, 255, 255, 0.3));
 	transition: background 0.3s ease;
 
 	&.active {
-		background: #ffffff;
+		background: var(--theme-focus-border-color, #ffffff);
 	}
 }
 
@@ -339,7 +339,7 @@
 	
 	p {
 		font-size: 24px;
-		color: #888;
+		color: var(--theme-text-secondary, #888);
 		margin: 0;
 	}
 }
@@ -348,7 +348,7 @@
 	font-size: 42px;
 	font-weight: 700;
 	margin: 0 0 12px 0;
-	color: #ffffff;
+	color: var(--theme-text-primary, #ffffff);
 	text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 	white-space: nowrap;
 	overflow: hidden;
@@ -375,17 +375,17 @@
 
 .infoBadge {
 	padding: 5px 12px;
-	background: rgba(255, 255, 255, 0.15);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
 	border-radius: 4px;
 	font-size: 20px;
 	font-weight: 600;
-	color: rgba(255, 255, 255, 0.9);
+	color: var(--theme-text-primary, rgba(255, 255, 255, 0.9));
 }
 
 .detailSummary {
 	font-size: 24px;
 	line-height: 1.5;
-	color: rgba(255, 255, 255, 0.85);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.85));
 	margin: 0;
 	text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
 	display: -webkit-box;
@@ -436,5 +436,36 @@
 	justify-content: center;
 	height: 300px;
 	font-size: 32px;
-	color: #888;
+	color: var(--theme-text-secondary, #888);
+}
+
+:global(html[data-theme-id='neon_pulse']) {
+	.featuredInfoBox {
+		background: rgba(var(--theme-surface-rgb, 30, 10, 63), 0.45);
+		border: 1px solid rgba(var(--theme-accent-rgb, 255, 46, 146), 0.45);
+		box-shadow: 0 0 14px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.2);
+	}
+
+	.featuredTitle,
+	.detailTitle {
+		color: var(--theme-accent, #ff2e92);
+		text-shadow: var(--theme-text-glow, 0 0 8px rgba(255, 46, 146, 0.35));
+	}
+
+	.metaItem,
+	.detailSummary,
+	.featuredOverview {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.infoBadge {
+		background: rgba(var(--theme-on-surface-rgb, 0, 229, 255), 0.15);
+		color: var(--theme-on-surface, #00e5ff);
+		border: 1px solid rgba(var(--theme-accent-rgb, 255, 46, 146), 0.5);
+	}
+
+	.indicatorDot.active {
+		background: var(--theme-accent, #ff2e92);
+		box-shadow: 0 0 6px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.5);
+	}
 }

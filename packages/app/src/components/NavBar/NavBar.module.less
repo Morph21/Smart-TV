@@ -1,5 +1,3 @@
-@accent: var(--accent-color, #00a4dc);
-
 .topNav {
 	position: fixed;
 	top: 30px;
@@ -30,7 +28,8 @@
 .navPill {
 	display: flex;
 	align-items: center;
-	background: rgba(40, 40, 40, 0.85);
+	background: var(--theme-nav-surface, rgba(40, 40, 40, 0.85));
+	border: var(--theme-nav-border, none);
 	border-radius: 40px;
 	padding: 10px;
 	max-width: 1400px;
@@ -38,6 +37,7 @@
 	overflow-y: hidden;
 	scroll-behavior: smooth;
 	scrollbar-width: none;
+	opacity: var(--theme-navbar-opacity, 1);
 
 	&::-webkit-scrollbar {
 		display: none;
@@ -61,7 +61,7 @@
 	padding: 12px 20px;
 	background: transparent;
 	border: none;
-	color: rgba(255, 255, 255, 0.6);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
 	font-size: 22px;
 	font-weight: 500;
 	cursor: pointer;
@@ -79,8 +79,8 @@
 
 	&:hover,
 	&:focus {
-		color: #ffffff;
-		background: rgba(255, 255, 255, 0.12);
+		color: var(--theme-text-primary, #ffffff);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.14);
 		transform: scale(1.05);
 	}
 }
@@ -108,14 +108,14 @@
 }
 
 .active {
-	color: #ffffff;
-	background: rgba(255, 255, 255, 0.22);
+	color: var(--theme-text-primary, #ffffff);
+	background: rgba(var(--theme-navbar-color-rgb, var(--theme-accent-rgb, 0, 164, 220)), 0.28);
 }
 
 .clock {
 	font-size: 26px;
 	font-weight: 500;
-	color: rgba(255, 255, 255, 0.9);
+	color: var(--theme-text-primary, rgba(255, 255, 255, 0.9));
 	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -130,13 +130,13 @@
 	width: 56px;
 	height: 56px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, @accent, #0077b6);
+	background: linear-gradient(135deg, var(--theme-accent, #00a4dc), var(--theme-accent-secondary, #0077b6));
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 28px;
 	font-weight: 600;
-	color: #fff;
+	color: var(--theme-on-accent, #fff);
 }
 
 .expandableBtn {
@@ -188,4 +188,23 @@
 	min-height: 50px;
 	font-size: 18px;
 	margin-left: 4px;
+}
+
+:global(html[data-theme-id='neon_pulse']) {
+	.navPill {
+		box-shadow: 0 0 6px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.35);
+	}
+
+	.navPill .navBtn {
+		color: var(--theme-accent, #ff2e92);
+	}
+
+	.navPill .navBtn:nth-of-type(even) {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.clock {
+		color: var(--theme-on-surface, #00e5ff);
+		text-shadow: 0 0 8px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.35);
+	}
 }

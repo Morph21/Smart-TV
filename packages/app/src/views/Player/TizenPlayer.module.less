@@ -257,7 +257,7 @@
 .skipButton:hover,
 .skipButton:focus {
 	background: #fff;
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 	transform: scale(1.05);
 	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.8);
 	outline: none;
@@ -477,7 +477,7 @@
 .progressBar {
 	position: relative;
 	height: 8px;
-	background: rgba(255, 255, 255, 0.3);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.18);
 	border-radius: 4px;
 	overflow: visible;
 	margin-bottom: 10px;
@@ -488,16 +488,32 @@
 
 .progressBar:focus {
 	height: 12px;
-	background: rgba(255, 255, 255, 0.5);
-	box-shadow: 0 0 0 3px rgba(0, 164, 220, 0.5);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.3);
+	box-shadow: var(--theme-focus-glow, 0 0 0 3px rgba(var(--theme-accent-rgb, 0, 164, 220), 0.5));
+}
+
+.progressBuffered {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 0%;
+	background: var(--theme-seekbar-buffered, rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.45));
+	border-radius: 4px;
+	transition: width 0.15s linear;
+	z-index: 0;
 }
 
 .progressFill {
+	position: absolute;
+	top: 0;
+	left: 0;
 	height: 100%;
-	background: var(--accent-color, #00a4dc);
+	background: var(--theme-range-progress, var(--theme-accent, #00a4dc));
 	width: 0%;
 	transition: width 0.1s linear;
 	border-radius: 4px;
+	z-index: 1;
 }
 
 .seekIndicator {
@@ -506,7 +522,7 @@
 	left: 0%;
 	width: 16px;
 	height: 16px;
-	background: #ffffff;
+	background: var(--theme-range-thumb, #ffffff);
 	border-radius: 50%;
 	transform: translate(-50%, -50%);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -614,6 +630,88 @@
 	to { opacity: 1; }
 }
 
+:global(html[data-theme-id='neon_pulse']) {
+	.audioModeBackground {
+		background: linear-gradient(
+			135deg,
+			var(--theme-background, #0b0420) 0%,
+			var(--theme-surface, #1e0a3f) 55%,
+			var(--theme-surface-variant, #1e0a3f) 100%
+		);
+	}
+
+	.audioTrackTitle,
+	.nextTitle,
+	.settingValue,
+	.sliderValue {
+		color: var(--theme-accent, #ff2e92);
+		text-shadow: var(--theme-text-glow, 0 0 8px rgba(255, 46, 146, 0.35));
+	}
+
+	.audioTrackArtist,
+	.audioTrackAlbum,
+	.nextMeta,
+	.nextLabel,
+	.modalFooter,
+	.pauseDescriptionText,
+	.settingLabel,
+	.loadingIndicator p {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.progressBar,
+	.skipButton,
+	.nextPlayBtn,
+	.nextCancelBtn,
+	.offsetBtn,
+	.actionBtn,
+	.settingItem,
+	.sliderItem {
+		border-color: rgba(var(--theme-accent-rgb, 255, 46, 146), 0.55);
+		box-shadow: 0 0 10px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.2);
+	}
+
+	.progressFill,
+	.nextProgressFill,
+	.spinner {
+		background: var(--theme-accent, #ff2e92);
+		border-top-color: var(--theme-accent, #ff2e92);
+	}
+
+	.progressBar:focus,
+	.skipButton:focus,
+	.nextPlayBtn:focus,
+	.nextCancelBtn:focus,
+	.offsetBtn:focus,
+	.actionBtn:focus,
+	.settingItem:focus,
+	.sliderItem:focus-within {
+		border-color: var(--theme-on-surface, #00e5ff);
+		background: rgba(var(--theme-on-surface-rgb, 0, 229, 255), 0.14);
+	}
+
+	.subtitleText {
+		color: var(--theme-on-surface, #00e5ff);
+		text-shadow:
+			0 0 2px rgba(0, 0, 0, 0.9),
+			0 0 10px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.45);
+	}
+
+	.castName {
+		color: var(--theme-accent, #ff2e92);
+		text-shadow: var(--theme-text-glow, 0 0 8px rgba(255, 46, 146, 0.35));
+	}
+
+	.castRole {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.castCard:focus .castPhotoWrap {
+		border-color: var(--theme-accent, #ff2e92);
+		box-shadow: 0 0 10px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.3);
+	}
+}
+
 .modalContent {
 	background: rgba(30, 30, 30, 0.98);
 	border-radius: 16px;
@@ -677,21 +775,21 @@
 .trackItem:hover,
 .trackItem:focus {
 	background: rgba(0, 164, 220, 0.3);
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 	transform: translateX(12px) scale(1.02);
 	box-shadow: 0 4px 15px rgba(0, 164, 220, 0.4);
 }
 
 .trackItem.selected {
 	background: rgba(0, 164, 220, 0.3);
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 	border-width: 3px;
 }
 
 .trackItem.selected::after {
 	content: '✓';
 	font-size: 28px;
-	color: var(--accent-color, #00a4dc);
+	color: var(--theme-accent, #00a4dc);
 	margin-left: 20px;
 	font-weight: 700;
 }
@@ -883,7 +981,7 @@
 .chapterItem:hover,
 .chapterItem:focus {
 	background: rgba(0, 164, 220, 0.3);
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 	transform: scale(1.03) translateX(8px);
 	box-shadow: 0 6px 20px rgba(0, 164, 220, 0.5);
 }
@@ -896,7 +994,7 @@
 .chapterTime {
 	font-size: 26px;
 	font-weight: 700;
-	color: var(--accent-color, #00a4dc);
+	color: var(--theme-accent, #00a4dc);
 	min-width: 120px;
 	margin-right: 30px;
 }
@@ -936,14 +1034,14 @@
 }
 
 .infoSection:focus {
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 	background: rgba(0, 164, 220, 0.1);
 }
 
 .infoHeader {
 	font-size: 26px;
 	font-weight: 700;
-	color: var(--accent-color, #00a4dc);
+	color: var(--theme-accent, #00a4dc);
 	margin-bottom: 15px;
 	border-bottom: 2px solid rgba(0, 164, 220, 0.3);
 	padding-bottom: 10px;
@@ -1111,7 +1209,7 @@
 
 .nextPlayBtn:focus {
 	transform: scale(1.05);
-	background: var(--accent-color, #00a4dc);
+	background: var(--theme-accent, #00a4dc);
 	color: #fff;
 }
 
@@ -1134,7 +1232,7 @@
 
 .nextProgressFill {
 	height: 100%;
-	background: var(--accent-color, #00a4dc);
+	background: var(--theme-accent, #00a4dc);
 	border-radius: 0 0 0 8px;
 	animation: fillProgress var(--countdown-duration, 7s) linear forwards;
 }
@@ -1163,7 +1261,7 @@
 	width: 80px;
 	height: 80px;
 	border: 6px solid rgba(255, 255, 255, 0.2);
-	border-top-color: var(--accent-color, #00a4dc);
+	border-top-color: var(--theme-accent, #00a4dc);
 	border-radius: 50%;
 	animation: spin 1s linear infinite;
 }
@@ -1257,7 +1355,7 @@
 .offsetBtn:hover,
 .offsetBtn:focus {
 	background: rgba(0, 164, 220, 0.3);
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 	transform: scale(1.1);
 }
 
@@ -1297,7 +1395,7 @@
 .actionBtn:hover,
 .actionBtn:focus {
 	background: rgba(0, 164, 220, 0.3);
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 }
 
 .closeBtn {
@@ -1342,7 +1440,7 @@
 .settingItem:hover,
 .settingItem:focus {
 	background: rgba(0, 164, 220, 0.3);
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 	transform: scale(1.02);
 }
 
@@ -1354,7 +1452,7 @@
 
 .settingValue {
 	font-size: 24px;
-	color: var(--accent-color, #00a4dc);
+	color: var(--theme-accent, #00a4dc);
 	font-weight: 700;
 }
 
@@ -1376,7 +1474,7 @@
 
 .sliderItem:focus-within {
 	background: rgba(0, 164, 220, 0.15);
-	border-color: var(--accent-color, #00a4dc);
+	border-color: var(--theme-accent, #00a4dc);
 }
 
 .sliderLabel {
@@ -1390,13 +1488,13 @@
 }
 
 .sliderValue {
-	color: var(--accent-color, #00a4dc);
+	color: var(--theme-accent, #00a4dc);
 	font-weight: 700;
 }
 
 .settingsSlider {
 	width: 100%;
-	--slider-active-bg-color: var(--accent-color, #00a4dc);
+	--slider-active-bg-color: var(--theme-accent, #00a4dc);
 	--slider-knob-bg-color: #fff;
 }
 

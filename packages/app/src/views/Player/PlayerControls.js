@@ -166,6 +166,7 @@ const PlayerControls = ({
 	displayTime,
 	duration,
 	progressPercent,
+	bufferedPercent,
 	isSeeking,
 	seekPosition,
 	item,
@@ -252,6 +253,13 @@ const PlayerControls = ({
 		handleSelectCastMember?.(person);
 	}, [castMembers, handleSelectCastMember]);
 
+	const clampedProgress = Number.isFinite(progressPercent)
+		? Math.max(0, Math.min(100, progressPercent))
+		: 0;
+	const clampedBuffered = Number.isFinite(bufferedPercent)
+		? Math.max(clampedProgress, Math.min(100, bufferedPercent))
+		: clampedProgress;
+
 	return (
 		<>
 			{showSkipIntro && !isAudioMode && !isLiveTV && !activeModal && !controlsVisible && (
@@ -310,15 +318,16 @@ const PlayerControls = ({
 							spotlightDisabled={focusRow !== 'progress'}
 							spotlightId="progress-bar"
 						>
-							<div className={css.progressFill} style={{width: `${progressPercent}%`}} />
-							<div className={css.seekIndicator} style={{left: `${progressPercent}%`}} />
+							<div className={css.progressBuffered} style={{width: `${clampedBuffered}%`}} />
+							<div className={css.progressFill} style={{width: `${clampedProgress}%`}} />
+							<div className={css.seekIndicator} style={{left: `${clampedProgress}%`}} />
 							{isSeeking && !isAudioMode && (
 								<TrickplayPreview
 									itemId={item.Id}
 									mediaSourceId={mediaSourceId}
 									positionTicks={seekPosition}
 									visible
-									style={{left: `${progressPercent}%`}}
+									style={{left: `${clampedProgress}%`}}
 								/>
 							)}
 						</SpottableDiv>

@@ -57,13 +57,13 @@
 
 	&:hover,
 	&:focus {
-		background: var(--accent-color, #00a4dc);
+		background: var(--theme-accent, #00a4dc);
 		outline: none;
 	}
 
 	&.active {
-		background: var(--accent-color, #00a4dc);
-		border-color: var(--accent-color, #00a4dc);
+		background: var(--theme-accent, #00a4dc);
+		border-color: var(--theme-accent, #00a4dc);
 	}
 }
 
@@ -94,7 +94,7 @@
 
 	&:hover,
 	&:focus {
-		border-color: var(--accent-color, #00a4dc);
+		border-color: var(--theme-accent, #00a4dc);
 		outline: none;
 		transform: scale(1.02);
 	}
@@ -145,7 +145,7 @@
 
 .cardSchedule {
 	font-size: 13px;
-	color: var(--accent-color, #00a4dc);
+	color: var(--theme-accent, #00a4dc);
 	margin-top: 6px;
 }
 
@@ -163,7 +163,7 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: fade(@background-primary, 90%);
+	background: rgba(var(--theme-background-rgb, 16, 16, 16), 0.9);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -179,7 +179,7 @@
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
-	box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+	box-shadow: 0 12px 48px rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.6);
 }
 
 .popupHeader {
@@ -237,8 +237,8 @@
 .popupBtn {
 	padding: 16px 32px;
 	font-size: 18px;
-	background: rgba(255, 255, 255, 0.15);
-	border: 2px solid rgba(255, 255, 255, 0.2);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
+	border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 	border-radius: 8px;
 	color: @text-primary;
 	cursor: pointer;
@@ -246,14 +246,14 @@
 
 	&:hover,
 	&:focus {
-		background: var(--accent-color, #00a4dc);
-		border-color: var(--accent-color, #00a4dc);
+		background: var(--theme-accent, #00a4dc);
+		border-color: var(--theme-accent, #00a4dc);
 		outline: none;
 	}
 
 	&.danger {
-		background: rgba(255, 255, 255, 0.15);
-		border: 2px solid rgba(255, 255, 255, 0.2);
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
+		border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 
 		&:hover,
 		&:focus {
@@ -270,5 +270,25 @@
 		&:focus {
 			background: @background-tertiary;
 		}
+	}
+}
+
+:global(html[data-theme-id='neon_pulse']) {
+	.title,
+	.popupTitle,
+	.cardTitle {
+		color: var(--theme-accent, #ff2e92);
+		text-shadow: var(--theme-text-glow, 0 0 8px rgba(255, 46, 146, 0.35));
+	}
+
+	.cardSubtitle,
+	.cardMeta,
+	.popupSubtitle {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.card:focus {
+		border-color: var(--theme-accent, #ff2e92);
+		box-shadow: 0 0 10px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.3);
 	}
 }

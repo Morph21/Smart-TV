@@ -2246,6 +2246,28 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 
 	const displayTime = isSeeking ? (seekPosition / 10000000) : currentTime;
 	const progressPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
+	const bufferedPercent = useMemo(() => {
+		if (duration <= 0) return progressPercent;
+		const video = videoRef.current;
+		if (!video || !video.buffered || video.buffered.length === 0) return progressPercent;
+
+		let bufferedEnd = displayTime;
+		try {
+			for (let i = 0; i < video.buffered.length; i += 1) {
+				const start = video.buffered.start(i);
+				const end = video.buffered.end(i);
+				bufferedEnd = Math.max(bufferedEnd, end);
+				if (displayTime >= start && displayTime <= end + 0.1) {
+					break;
+				}
+			}
+		} catch {
+			return progressPercent;
+		}
+
+		const percent = (bufferedEnd / duration) * 100;
+		return Math.max(progressPercent, Math.min(100, percent));
+	}, [displayTime, duration, progressPercent]);
 
 	useEffect(() => {
 		if (!controlsVisible) return;
@@ -2450,6 +2472,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				displayTime={displayTime}
 				duration={duration}
 				progressPercent={progressPercent}
+				bufferedPercent={bufferedPercent}
 				isSeeking={isSeeking}
 				seekPosition={seekPosition}
 				item={item}

@@ -3,7 +3,7 @@
 	flex-direction: row;
 	align-items: center;
 	padding: 1rem;
-	background: rgba(255, 255, 255, 0.05);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.05);
 	border-radius: 8px;
 	margin: 0.5rem 1rem;
 	cursor: pointer;
@@ -14,8 +14,8 @@
 	}
 
 	&:focus {
-		background: rgba(255, 255, 255, 0.15);
-		outline: 4px solid #fff;
+		background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
+		outline: 4px solid var(--theme-focus-border-color, #fff);
 		transform: scale(1.02);
 	}
 }
@@ -65,37 +65,37 @@
 .chipPending {
 	background: rgba(156, 163, 175, 0.2);
 	border-color: rgba(156, 163, 175, 0.4);
-	color: #9ca3af;
+	color: var(--theme-text-secondary, #9ca3af);
 }
 
 .chipApproved {
 	background: rgba(59, 130, 246, 0.2);
 	border-color: rgba(59, 130, 246, 0.4);
-	color: #3b82f6;
+	color: var(--theme-status-downloading, #3b82f6);
 }
 
 .chipDeclined {
 	background: rgba(239, 68, 68, 0.2);
 	border-color: rgba(239, 68, 68, 0.4);
-	color: #ef4444;
+	color: var(--theme-recording-active, #ef4444);
 }
 
 .chipAvailable {
 	background: rgba(34, 197, 94, 0.2);
 	border-color: rgba(34, 197, 94, 0.4);
-	color: #22c55e;
+	color: var(--theme-status-available, #22c55e);
 }
 
 .chipPartial {
 	background: rgba(245, 158, 11, 0.2);
 	border-color: rgba(245, 158, 11, 0.4);
-	color: #f59e0b;
+	color: var(--theme-status-pending, #f59e0b);
 }
 
 .chipDownloading {
 	background: rgba(99, 102, 241, 0.2);
 	border-color: rgba(99, 102, 241, 0.4);
-	color: #6366f1;
+	color: var(--theme-status-downloading, #6366f1);
 }
 
 .date {

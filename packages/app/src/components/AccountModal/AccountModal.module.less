@@ -1,4 +1,4 @@
-@accent: var(--accent-color, #00a4dc);
+@accent: var(--theme-accent, #00a4dc);
 
 .modal {
 	padding: 28px 32px;
@@ -6,7 +6,7 @@
 	max-width: 800px;
 	max-height: 80vh;
 	overflow-y: auto;
-	background: #1a1a1a;
+	background: var(--theme-surface, #1a1a1a);
 	border-radius: 16px;
 }
 
@@ -20,7 +20,7 @@
 .title {
 	font-size: 28px;
 	font-weight: 600;
-	color: #fff;
+	color: var(--theme-text-primary, #fff);
 	margin: 0;
 }
 
@@ -30,10 +30,10 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(255, 255, 255, 0.1);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
 	border: none;
 	border-radius: 50%;
-	color: rgba(255, 255, 255, 0.7);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
 	cursor: pointer;
 	transition: all 0.2s;
 	padding: 0;
@@ -46,7 +46,7 @@
 	&:focus {
 		outline: none;
 		background: @accent;
-		color: #fff;
+		color: var(--theme-on-accent, #fff);
 		transform: scale(1.1);
 	}
 }
@@ -94,7 +94,7 @@
 	height: 130px;
 	border-radius: 50%;
 	object-fit: cover;
-	border: 3px solid rgba(255, 255, 255, 0.15);
+	border: 3px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
 	transition: border-color 0.2s;
 }
 
@@ -102,11 +102,12 @@
 	width: 130px;
 	height: 130px;
 	border-radius: 50%;
-	background: #2a2a2a;
+	background: var(--theme-surface-variant, #2a2a2a);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border: 3px solid rgba(255, 255, 255, 0.15);
+	border: 3px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.15);
 	transition: border-color 0.2s;
 }
 
@@ -120,7 +121,7 @@
 	margin-top: 12px;
 	font-size: 20px;
 	font-weight: 500;
-	color: rgba(255, 255, 255, 0.85);
+	color: var(--theme-text-primary, rgba(255, 255, 255, 0.85));
 	text-align: center;
 	white-space: nowrap;
 	overflow: hidden;
@@ -130,7 +131,7 @@
 
 .userServerName {
 	font-size: 14px;
-	color: rgba(255, 255, 255, 0.45);
+	color: var(--theme-text-muted, rgba(255, 255, 255, 0.45));
 	text-align: center;
 	margin-top: 2px;
 	white-space: nowrap;
@@ -155,9 +156,9 @@
 	width: 28px;
 	height: 28px;
 	border-radius: 50%;
-	background: rgba(0, 0, 0, 0.7);
-	border: 2px solid rgba(255, 255, 255, 0.2);
-	color: rgba(255, 255, 255, 0.6);
+	background: rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.7);
+	border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
 	font-size: 18px;
 	line-height: 1;
 	display: flex;
@@ -188,7 +189,7 @@
 
 		.addUserCircle {
 			border-color: @accent;
-			background: rgba(0, 164, 220, 0.15);
+			background: rgba(var(--theme-accent-rgb, 0, 164, 220), 0.15);
 			color: @accent;
 		}
 	}
@@ -198,12 +199,12 @@
 	width: 130px;
 	height: 130px;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.06);
-	border: 3px dashed rgba(255, 255, 255, 0.25);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.06);
+	border: 3px dashed rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.25);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: rgba(255, 255, 255, 0.5);
+	color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
 	transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 
@@ -234,34 +235,36 @@
 	padding: 14px 20px;
 	font-size: 17px;
 	font-weight: 500;
-	background: rgba(255, 255, 255, 0.08);
-	border: 2px solid rgba(255, 255, 255, 0.12);
+	background: var(--theme-button-normal, rgba(255, 255, 255, 0.08));
+	border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.12);
 	border-radius: 8px;
-	color: #fff;
+	color: var(--theme-on-button-normal, #fff);
 	cursor: pointer;
 	text-align: center;
 	transition: background 0.2s, border-color 0.2s, transform 0.2s;
 
 	&:focus {
 		outline: none;
-		background: @accent;
-		border-color: @accent;
+		background: var(--theme-button-focused, @accent);
+		border-color: var(--theme-focus-border-color, @accent);
+		color: var(--theme-on-button-focused, #fff);
 		transform: scale(1.03);
-		box-shadow: 0 0 0 3px rgba(0, 164, 220, 0.4);
+		box-shadow: var(--theme-focus-glow, 0 0 0 3px rgba(var(--theme-accent-rgb, 0, 164, 220), 0.4));
 	}
 }
 
 .dangerBtn {
 	&:focus {
-		background: #c62828 !important;
-		border-color: #c62828 !important;
-		box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.4) !important;
+		background: var(--theme-recording-active, #c62828) !important;
+		border-color: var(--theme-recording-active, #c62828) !important;
+		color: var(--theme-on-badge, #fff) !important;
+		box-shadow: 0 0 0 3px rgba(var(--theme-recording-active-rgb, 198, 40, 40), 0.4) !important;
 	}
 }
 
 .divider {
 	height: 1px;
-	background: #333;
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.16);
 	margin: 4px 0;
 }
 
@@ -271,20 +274,20 @@
 	padding: 24px;
 	min-width: 460px;
 	max-width: 560px;
-	background: #1a1a1a;
+	background: var(--theme-surface, #1a1a1a);
 	border-radius: 12px;
 }
 
 .confirmText {
 	font-size: 16px;
-	color: #ccc;
+	color: var(--theme-text-secondary, #ccc);
 	margin-bottom: 12px;
 }
 
 .confirmWarning {
 	font-size: 14px;
-	color: #ff9800;
-	background: rgba(255, 152, 0, 0.1);
+	color: var(--theme-status-pending, #ff9800);
+	background: var(--theme-status-pending-20, rgba(255, 152, 0, 0.1));
 	padding: 10px 14px;
 	border-radius: 6px;
 	margin-bottom: 20px;

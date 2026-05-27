@@ -231,6 +231,15 @@ const UI_OPACITY_OPTIONS = [
 	{ value: 95, label: '95%' }
 ];
 
+const USER_OPACITY_OPTIONS = [
+	{ value: 0, label: '0%' },
+	{ value: 50, label: '50%' },
+	{ value: 65, label: '65%' },
+	{ value: 75, label: '75%' },
+	{ value: 85, label: '85%' },
+	{ value: 95, label: '95%' }
+];
+
 const getUiColorOptions = () => [
 	{ value: 'gray', label: $L('Gray'), rgb: '128, 128, 128' },
 	{ value: 'black', label: $L('Black'), rgb: '0, 0, 0' },
@@ -246,6 +255,17 @@ const getUiColorOptions = () => [
 	{ value: 'indigo', label: $L('Indigo'), rgb: '30, 58, 138' }
 ];
 
+const getUiScaleOptions = () => [
+	{ value: 0.85, label: $L('Compact') },
+	{ value: 0.9, label: $L('Small') },
+	{ value: 0.95, label: $L('Slightly Small') },
+	{ value: 1.0, label: $L('Default') },
+	{ value: 1.05, label: $L('Slightly Large') },
+	{ value: 1.1, label: $L('Large') },
+	{ value: 1.15, label: $L('Extra Large') },
+	{ value: 1.2, label: $L('Huge') },
+	{ value: 1.3, label: $L('Maximum') }
+];
 const getScreensaverModeOptions = () => [
 	{ value: 'library', label: $L('Library Backdrops') },
 	{ value: 'logo', label: $L('Moonfin Logo') }
@@ -299,6 +319,21 @@ const getImageTypeOptions = () => [
 	{ value: 'thumb', label: $L('Thumb') }
 ];
 
+const LANGUAGE_OPTIONS = [
+	{ value: 'en-US', label: $L('English') },
+	{ value: 'de', label: $L('German') },
+	{ value: 'es', label: $L('Spanish') },
+	{ value: 'fr', label: $L('French') },
+	{ value: 'pl', label: $L('Polish') },
+	{ value: 'pt-BR', label: $L('Portuguese (Brazil)') },
+	{ value: 'ru', label: $L('Russian') }
+];
+
+const getMediaBarSourceOptions = () => [
+	{ value: 'library', label: $L('Libraries') },
+	{ value: 'collection', label: $L('Collections') }
+];
+
 const getFocusColorOptions = () => [
 	{ value: '#00a4dc', label: $L('Blue') },
 	{ value: '#ffffff', label: $L('White') },
@@ -333,6 +368,35 @@ const getSeasonalThemeOptions = () => [
 	{ value: 'halloween', label: $L('Halloween') }
 ];
 
+const ACCENT_COLOR_OPTIONS = [
+	{ value: '', label: $L('Theme Default') },
+	{ value: '#ffffff', label: $L('White') },
+	{ value: '#000000', label: $L('Black') },
+	{ value: '#808080', label: $L('Gray') },
+	{ value: '#003366', label: $L('Dark Blue') },
+	{ value: '#6a0dad', label: $L('Purple') },
+	{ value: '#008080', label: $L('Teal') },
+	{ value: '#000080', label: $L('Navy') },
+	{ value: '#36454f', label: $L('Charcoal') },
+	{ value: '#8b4513', label: $L('Brown') },
+	{ value: '#8b0000', label: $L('Dark Red') },
+	{ value: '#006400', label: $L('Dark Green') },
+	{ value: '#708090', label: $L('Slate') },
+	{ value: '#4b0082', label: $L('Indigo') },
+	{ value: '#00a4dc', label: $L('Moonfin Cyan') },
+	{ value: '#ff2e92', label: $L('Neon Magenta') }
+];
+
+const hexToRgba = (hex) => {
+	const clean = hex.replace('#', '');
+	const a = parseInt(clean.slice(0, 2), 16) / 255;
+	const r = parseInt(clean.slice(2, 4), 16);
+	const g = parseInt(clean.slice(4, 6), 16);
+	const b = parseInt(clean.slice(6, 8), 16);
+	if (a >= 0.999) return `rgb(${r}, ${g}, ${b})`;
+	return `rgba(${r}, ${g}, ${b}, ${a.toFixed(3)})`;
+};
+
 const AGE_RATING_OPTIONS = [
 	{ value: 0, label: 'G' },
 	{ value: 7, label: 'PG' },
@@ -366,7 +430,7 @@ const renderChevron = () => (
 
 const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const { api, serverUrl, accessToken, hasMultipleServers, logoutAll } = useAuth();
-	const { settings, updateSetting, resetSettings } = useSettings();
+	const { settings, updateSetting, resetSettings, availableThemes, activeThemeId, selectThemeById } = useSettings();
 	const { capabilities } = useDeviceInfo();
 	const jellyseerr = useJellyseerr();
 	const isSeerr = jellyseerr.isMoonfin && jellyseerr.variant === 'seerr';
@@ -401,6 +465,9 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const [librarySaving, setLibrarySaving] = useState(false);
 	const [serverConfigs, setServerConfigs] = useState([]);
 	const [clearDataDialogOpen, setClearDataDialogOpen] = useState(false);
+	const [moonfinStatus, setMoonfinStatus] = useState('');
+	const [moonfinConnecting, setMoonfinConnecting] = useState(false);
+	const languageChanged = settings.uiLanguage && settings.uiLanguage !== 'en-US';
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -420,6 +487,9 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			} else if (cv.view === 'options') {
 				const idx = cv.options?.findIndex((o) => o.value === settings[cv.settingKey]);
 				Spotlight.focus(idx >= 0 ? `opt-${idx}` : 'opt-0');
+			} else if (cv.view === 'themes') {
+				const selectedId = availableThemes.find((t) => t.id === activeThemeId)?.id;
+				Spotlight.focus(selectedId ? `theme-card-${selectedId}` : 'themes-view');
 			} else if (cv.view === 'homeRows') {
 				Spotlight.focus('homerows-view');
 			} else if (cv.view === 'libraries') {
@@ -463,19 +533,60 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		[settings, updateSetting]
 	);
 
-	const toggleExperimentalTruehd = useCallback(() => {
+	const toggleExperimentalTruehd = useCallback(() => { // eslint-disable-line no-unused-vars
 		updateSetting('experimentalTruehd', !settings.experimentalTruehd);
 		clearCapabilitiesCache();
 	}, [settings.experimentalTruehd, updateSetting]);
 
 	const handleOptionSelect = useCallback(
 		(settingKey, value) => {
+			if (settingKey === '__themeSelection') {
+				selectThemeById(value);
+				popView();
+				return;
+			}
 			updateSetting(settingKey, value);
 			popView();
 		},
-		[updateSetting, popView]
+		[updateSetting, popView, selectThemeById]
 	);
 
+	const handleMoonfinToggle = useCallback(async () => {
+		const enabling = !settings.useMoonfinPlugin;
+		updateSetting('useMoonfinPlugin', enabling);
+		if (enabling) {
+			if (!serverUrl || !accessToken) {
+				setMoonfinStatus($L('Not connected to a Jellyfin server'));
+				return;
+			}
+			setMoonfinConnecting(true);
+			setMoonfinStatus($L('Checking Moonfin plugin...'));
+			try {
+				const result = await jellyseerr.configureWithMoonfin(serverUrl, accessToken);
+				if (result.authenticated) {
+					setMoonfinStatus($L('Connected via Moonfin!'));
+				} else {
+					setMoonfinStatus($L('Moonfin plugin found but no session. Please log in.'));
+				}
+			} catch (err) {
+				setMoonfinStatus(`${$L('Moonfin connection failed:')} ${err.message}`);
+			} finally {
+				setMoonfinConnecting(false);
+			}
+		} else {
+			jellyseerr.disable();
+			setMoonfinStatus('');
+		}
+	}, [settings.useMoonfinPlugin, updateSetting, serverUrl, accessToken, jellyseerr]);
+
+	const handleJellyseerrDisconnect = useCallback(() => {
+		jellyseerr.disable();
+		setMoonfinStatus('');
+	}, [jellyseerr]);
+
+	const openThemes = useCallback(() => {
+		pushView({ view: 'themes', returnFocusTo: 'setting-themeSelection' });
+	}, [pushView]);
 	const openHomeRows = useCallback(() => {
 		setTempHomeRows([...(settings.homeRows || DEFAULT_HOME_ROWS)].sort((a, b) => a.order - b.order));
 		pushView({ view: 'homeRows', returnFocusTo: 'setting-homeRows' });
@@ -645,6 +756,35 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		</SpottableDiv>
 	);
 
+	const renderThemePreviewCards = () => (
+		<div className={css.themeCardList}>
+			{availableThemes.map((theme) => {
+				const isSelected = theme.id === activeThemeId;
+				const bg = hexToRgba(theme.colors.background);
+				const surface = hexToRgba(theme.colors.surface);
+				const accent = hexToRgba(theme.colors.accent);
+				const progress = hexToRgba(theme.colors.rangeProgress);
+				return (
+					<SpottableDiv
+						key={theme.id}
+						className={`${css.themeCard}${isSelected ? ` ${css.themeCardSelected}` : ''}`}
+						onClick={() => selectThemeById(theme.id)}
+						spotlightId={`theme-card-${theme.id}`}
+					>
+						<div className={css.themeCardHeader}>
+							<div className={css.themeCardName}>{theme.displayName}</div>
+							{isSelected && <div className={css.themeCardCheck}>✓</div>}
+						</div>
+						<div
+							className={css.themeCardStripe}
+							style={{background: `linear-gradient(to right, ${bg}, ${surface}, ${accent}, ${progress})`}}
+						/>
+					</SpottableDiv>
+				);
+			})}
+		</div>
+	);
+
 	const renderInfoItem = (id, label, value, iconName) => (
 		<SpottableDiv className={css.listItem} spotlightId={`info-${id}`}>
 			{renderSettingsIcon(iconName)}
@@ -686,7 +826,73 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			/>
 		</div>
 	);
+	const renderGeneralApplication = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{/* Fallback 'English' is intentionally not wrapped with $L() — it matches the raw stored value, not a translated display string */}
+			{renderOptionItem('uiLanguage', $L('Language'), LANGUAGE_OPTIONS, 'English')}
+			{languageChanged && (
+				<div className={css.listItem}>
+					<div className={css.listItemBody}>
+						<div className={css.listItemCaption}>{$L('Restart the app to apply the new language')}</div>
+					</div>
+				</div>
+			)}
+			{renderOptionItem('clockDisplay', $L('Clock Display'), getClockDisplayOptions(), $L('24-Hour'))}
+			{renderToggleItem('showClock', $L('Show Clock'), $L('Show or hide clock on home screen'))}
+			{renderToggleItem('autoLogin', $L('Auto Login'), $L('Automatically sign in on app launch'))}
+			{renderOptionItem('watchedIndicatorBehavior', $L('Watched Indicators'), getWatchedIndicatorOptions(), $L('Always'))}
+		</>
+	);
 
+	const renderGeneralMultiServer = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderToggleItem(
+				'unifiedLibraryMode',
+				$L('Unified Library Mode'),
+				$L('Combine content from all servers into a single view')
+			)}
+		</>
+	);
+
+	const renderGeneralNavbar = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderOptionItem('navbarPosition', $L('Navigation Style'), getNavPositionOptions(), $L('Top Bar'))}
+			{renderToggleItem('showShuffleButton', $L('Show Shuffle Button'), $L('Show shuffle button in navigation bar'))}
+			{settings.showShuffleButton &&
+				renderOptionItem('shuffleContentType', $L('Shuffle Content Type'), getContentTypeOptions(), $L('Movies & TV Shows'))}
+			{renderToggleItem('showGenresButton', $L('Show Genres Button'), $L('Show genres button in navigation bar'))}
+			{renderToggleItem('showFavoritesButton', $L('Show Favorites Button'), $L('Show favorites button in navigation bar'))}
+			{renderToggleItem(
+				'showLibrariesInToolbar',
+				$L('Show Libraries in Toolbar'),
+				$L('Show library shortcuts in navigation bar')
+			)}
+		</>
+	);
+
+	const renderGeneralHomeScreen = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderToggleItem(
+				'mergeContinueWatchingNextUp',
+				$L('Merge Continue Watching & Next Up'),
+				$L('Combine into a single row')
+			)}
+			{renderToggleItem(
+				'useSeriesThumbnails',
+				$L('Use Series Thumbnails'),
+				$L('Show series artwork instead of individual episode images')
+			)}
+			{renderOptionItem('homeRowsPosterSize', $L('Poster Size'), getPosterSizeOptions(), $L('Default'))}
+			{renderOptionItem('homeRowsImageType', $L('Image Type'), getImageTypeOptions(), $L('Poster'))}
+			{renderNavItem('homeRows', $L('Configure Home Rows'), $L('Customize which rows appear on home screen'), openHomeRows)}
+			{renderNavItem(
+				'hideLibraries',
+				$L('Hide Libraries'),
+				$L('Choose which libraries to hide (syncs across all clients)'),
+				openLibraries
+			)}
+		</>
+	);
 	const renderPlaybackVideo = () => (
 		<>
 			{renderOptionItem('introAction', $L('Intro Action'), getMediaSegmentActionOptions(), $L('Ask to Skip'), 'skip')}
@@ -729,6 +935,88 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		</>
 	);
 
+	const renderDisplayBackdrop = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderToggleItem(
+				'showHomeBackdrop',
+				$L('Home Row Backdrops'),
+				$L('Show background art when browsing rows on the home screen')
+			)}
+			{renderOptionItem('backdropBlurHome', $L('Home Backdrop Blur'), getBlurOptions(), $L('Medium'))}
+			{renderOptionItem('backdropBlurDetail', $L('Details Backdrop Blur'), getBlurOptions(), $L('Medium'))}
+		</>
+	);
+
+	const renderDisplayUI = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderOptionItem('uiScale', $L('UI Scale'), getUiScaleOptions(), $L('Default'))}
+			{renderOptionItem('userOpacity', $L('User Avatar Opacity'), USER_OPACITY_OPTIONS, '85%')}
+			{renderToggleItem('cardFocusZoom', $L('Card Focus Zoom'), $L('Slightly enlarge cards when focused'))}
+		</>
+	);
+
+	const renderDisplayFeatured = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderToggleItem('showFeaturedBar', $L('Show Featured Bar'), $L('Display the featured media bar on home screen'))}
+			{renderOptionItem('featuredContentType', $L('Content Type'), getContentTypeOptions(), $L('Movies & TV Shows'))}
+			{renderOptionItem('featuredItemCount', $L('Item Count'), getFeaturedItemCountOptions(), $L('10 items'))}
+			{renderOptionItem('mediaBarSourceType', $L('Source'), getMediaBarSourceOptions(), $L('Libraries'))}
+			{renderToggleItem(
+				'featuredTrailerPreview',
+				$L('Trailer Preview'),
+				$L('Automatically play trailer previews in the featured media bar')
+			)}
+			{settings.featuredTrailerPreview &&
+				renderToggleItem('featuredTrailerMuted', $L('Mute Trailers'), $L('Mute trailer previews in the featured media bar'))}
+		</>
+	);
+
+	const renderPlaybackNextUp = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderOptionItem('nextUpBehavior', $L('Next Up Behavior'), getNextUpBehaviorOptions(), $L('Extended'))}
+			{settings.nextUpBehavior !== 'disabled' &&
+				renderSliderItem('nextUpTimeout', $L('Countdown Timer'), 0, 30, 1, (v) => (v === 0 ? $L('Instant') : `${v}s`))}
+		</>
+	);
+
+	const renderDisplayThemes = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderOptionItem('seasonalTheme', $L('Seasonal Effect'), getSeasonalThemeOptions(), $L('None'))}
+			{renderToggleItem('themeMusicEnabled', $L('Theme Music'), $L('Play background music on detail pages'))}
+			{settings.themeMusicEnabled &&
+				renderSliderItem('themeMusicVolume', $L('Theme Music Volume'), 0, 100, 5, (v) => `${v}%`)}
+			{settings.themeMusicEnabled &&
+				renderToggleItem(
+					'themeMusicOnHomeRows',
+					$L('Theme Music on Home Rows'),
+					$L('Play theme music when browsing home screen items')
+				)}
+		</>
+	);
+
+	const renderDisplayScreensaver = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderToggleItem(
+				'screensaverEnabled',
+				$L('Enable Screensaver'),
+				$L('Reduce brightness after inactivity to prevent screen burn-in')
+			)}
+			{settings.screensaverEnabled &&
+				renderOptionItem('screensaverMode', $L('Screensaver Type'), getScreensaverModeOptions(), $L('Library Backdrops'))}
+			{settings.screensaverEnabled &&
+				renderOptionItem('screensaverTimeout', $L('Timeout'), getScreensaverTimeoutOptions(), $L('90 seconds'))}
+			{settings.screensaverEnabled &&
+				renderOptionItem('screensaverDimmingLevel', $L('Dimming Level'), getScreensaverDimmingOptions(), '50%')}
+			{settings.screensaverEnabled &&
+				renderToggleItem('screensaverShowClock', $L('Show Clock'), $L('Display a moving clock during screensaver'))}
+			{settings.screensaverEnabled &&
+				renderToggleItem('screensaverAgeFilter', $L('Age Rating Filter'), $L('Only show age-appropriate backdrops'))}
+			{settings.screensaverEnabled &&
+				settings.screensaverAgeFilter &&
+				renderOptionItem('screensaverMaxRating', $L('Max Rating'), AGE_RATING_OPTIONS, 'PG-13')}
+		</>
+	);
+
 	const renderAccountAuthentication = () => (
 		<>
 			{renderToggleItem('autoLogin', $L('Auto Sign In'), $L('Automatically sign in on app launch'), 'profile')}
@@ -747,16 +1035,23 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 
 	const renderPersonalizationGeneralStyle = () => (
 		<>
+			{renderNavItem(
+				'themeSelection',
+				$L('Theme'),
+				availableThemes.find((t) => t.id === activeThemeId)?.displayName || $L('Default'),
+				openThemes
+			)}
 			{renderMissingItem('appearance-theme', $L('Theme'), undefined, 'colorpicker')}
 			{renderOptionItem('focusColor', $L('Focus Border Color'), getFocusColorOptions(), $L('Blue'), 'edit')}
-			{renderOptionItem('clockDisplay', $L('Clock Display'), getClockDisplayOptions(), $L('24-Hour'), 'timer')}
-			{renderMissingItem('24-hour-clock', $L('24-Hour Clock'), $L('Handled via Clock Display on Smart-TV'), 'scheduler')}
-			{renderToggleItem('cardFocusZoom', $L('Card Focus Expansion'), $L('Slightly enlarge cards when focused'), 'zoomin')}
-			{renderToggleItem('showHomeBackdrop', $L('Show Backdrops'), $L('Show background art while browsing'), 'picture')}
-			{renderOptionItem('backdropBlurHome', $L('Browsing Blur'), getBlurOptions(), $L('Medium'), 'background')}
-			{renderOptionItem('backdropBlurDetail', $L('Details Blur'), getBlurOptions(), $L('Medium'), 'background')}
-			{renderOptionItem('watchedIndicatorBehavior', $L('Watched Indicators'), getWatchedIndicatorOptions(), $L('Always'), 'check')}
-			{renderToggleItem('themeMusicEnabled', $L('Theme Music'), $L('Play background music on detail pages'), 'music')}
+			{renderOptionItem('focusBorderColor', $L('Focus Border Color'), ACCENT_COLOR_OPTIONS, $L('Theme Default'))}
+			{renderOptionItem('clockDisplay', $L('Clock Display'), getClockDisplayOptions(), $L('24-Hour'))}
+			{renderMissingItem('24-hour-clock', $L('24-Hour Clock'), $L('Handled via Clock Display on Smart-TV'))}
+			{renderToggleItem('cardFocusZoom', $L('Card Focus Expansion'), $L('Slightly enlarge cards when focused'))}
+			{renderToggleItem('showHomeBackdrop', $L('Show Backdrops'), $L('Show background art while browsing'))}
+			{renderOptionItem('backdropBlurHome', $L('Browsing Blur'), getBlurOptions(), $L('Medium'))}
+			{renderOptionItem('backdropBlurDetail', $L('Details Blur'), getBlurOptions(), $L('Medium'))}
+			{renderOptionItem('watchedIndicatorBehavior', $L('Watched Indicators'), getWatchedIndicatorOptions(), $L('Always'))}
+			{renderToggleItem('themeMusicEnabled', $L('Theme Music'), $L('Play background music on detail pages'))}
 			{settings.themeMusicEnabled &&
 				renderSliderItem('themeMusicVolume', $L('Theme Music Volume'), 0, 100, 5, (v) => `${v}%`, 'sound')}
 		</>
@@ -767,7 +1062,9 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{renderOptionItem('navbarPosition', $L('Navbar Position'), getNavPositionOptions(), $L('Top Bar'), 'browser')}
 			{renderOptionItem('uiColor', $L('Navbar Color'), getUiColorOptions(), $L('Gray'), 'colorpicker')}
 			{renderOptionItem('uiOpacity', $L('Navbar Opacity'), UI_OPACITY_OPTIONS, '85%', 'contrast')}
-			{renderToggleItem('showShuffleButton', $L('Shuffle Button'), $L('Show shuffle button in navigation bar'), 'shuffle')}
+			{renderSliderItem('navbarOpacity', $L('Navbar Opacity'), 0, 100, 5, (v) => `${v}%`)}
+			{renderOptionItem('navbarColor', $L('Navbar Color'), ACCENT_COLOR_OPTIONS, $L('Theme Default'))}
+			{renderToggleItem('showShuffleButton', $L('Shuffle Button'), $L('Show shuffle button in navigation bar'))}
 			{settings.showShuffleButton &&
 				renderOptionItem('shuffleContentType', $L('Shuffle Content Type'), getContentTypeOptions(), $L('Movies & TV Shows'), 'shuffle')}
 			{renderToggleItem('showGenresButton', $L('Genres Button'), $L('Show genres button in navigation bar'), 'movies')}
@@ -834,10 +1131,10 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 
 	const renderIntegrationsPlugin = () => (
 		<>
-			{renderToggleItem('useMoonfinPlugin', $L('Plugin Sync Enabled'), $L('Enable Moonfin plugin integration'), 'refresh')}
-			{renderMissingItem('customization-profile', $L('Customization Profile'), undefined, 'circle')}
-			{renderMissingItem('load-profile', $L('Load Profile'), undefined, 'download')}
-			{renderMissingItem('save-profile', $L('Save Profile'), undefined, 'download')}
+			{/* eslint-disable-next-line no-use-before-define */}
+			{renderPluginMoonfin()}
+			{/* eslint-disable-next-line no-use-before-define */}
+			{renderPluginStatus()}
 		</>
 	);
 
@@ -853,10 +1150,8 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 
 	const renderIntegrationsSeerr = () => (
 		<>
-			{renderMissingItem('enable-seerr', $L('Enable Seerr'), undefined, 'movies')}
-			{renderMissingItem('nsfw-filter', $L('NSFW Filter'), undefined, 'hide')}
-			{renderMissingItem('logged-in-as', $L('Logged In As'), undefined, 'profile')}
-			{renderMissingItem('discover-rows', $L('Discover Rows'), undefined, 'appscontents')}
+			{/* eslint-disable-next-line no-use-before-define */}
+			{renderPluginSeerr()}
 		</>
 	);
 
@@ -931,16 +1226,89 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		</>
 	);
 
-	const renderAboutAppInfo = () => (
+	const renderAboutApp = () => (
 		<>
-			{renderInfoItem('appVersion', $L('App Version'), process.env.REACT_APP_VERSION || '0.0.0', 'info')}
+			{renderInfoItem('appVersion', $L('App Version'), process.env.REACT_APP_VERSION || '0.0.0')}
 			{renderInfoItem(
 				'platform',
 				$L('Platform'),
-				capabilities?.tizenVersionDisplay ? 'Tizen' : capabilities?.webosVersionDisplay ? 'webOS' : $L('Unknown'),
-				'gear'
+				capabilities?.tizenVersionDisplay ? 'Tizen' : capabilities?.webosVersionDisplay ? 'webOS' : $L('Unknown')
 			)}
+		</>
+	);
+
+	const renderAboutAppInfo = () => (
+		<>
+			{renderAboutApp()}
 			{renderMissingItem('update-notifications', $L('Update Notifications'), undefined, 'download')}
+		</>
+	);
+
+	const renderPluginMoonfin = () => ( // eslint-disable-line no-unused-vars
+		<>
+			<SpottableDiv className={css.listItem} onClick={handleMoonfinToggle} spotlightId='setting-useMoonfinPlugin'>
+				<div className={css.listItemBody}>
+					<div className={css.listItemHeading}>{$L('Enable Plugin')}</div>
+					<div className={css.listItemCaption}>{$L('Connect for ratings, sync, and {seerrLabel} proxy').replace('{seerrLabel}', seerrLabel)}</div>
+				</div>
+				<div className={css.listItemTrailing}>{renderToggle(settings.useMoonfinPlugin)}</div>
+			</SpottableDiv>
+			{settings.useMoonfinPlugin && moonfinStatus && <div className={css.statusMessage}>{moonfinStatus}</div>}
+			{moonfinConnecting && <div className={css.authHint}>{$L('Connecting to Moonfin...')}</div>}
+			{!settings.useMoonfinPlugin && (
+				<div className={css.authHint}>
+					{$L('Enable the Moonfin plugin to access ratings, settings sync, and {seerrLabel} proxy features. The plugin must be installed on your Jellyfin server.').replace('{seerrLabel}', seerrLabel)}
+				</div>
+			)}
+		</>
+	);
+
+	const renderPluginStatus = () => { // eslint-disable-line no-unused-vars
+		const info = jellyseerr.pluginInfo;
+		return (
+			<>
+				{renderInfoItem('pluginVersion', $L('Plugin Version'), info?.version || $L('Unknown'))}
+				{renderInfoItem('settingsSync', $L('Settings Sync'), info?.settingsSyncEnabled ? $L('Available') : $L('Not Available'))}
+				{renderInfoItem('seerrStatus', seerrLabel, info?.jellyseerrEnabled ? $L('Enabled by Admin') : $L('Disabled by Admin'))}
+				{isSeerr && renderInfoItem('seerrVariant', $L('Detected Variant'), $L('{seerrLabel} (Seerr v3+)').replace('{seerrLabel}', seerrLabel))}
+			</>
+		);
+	};
+
+	const renderPluginMDBList = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{renderToggleItem('mdblistEnabled', $L('Enable Ratings'), $L('Show MDBList ratings on media details and featured bar'))}
+			{settings.mdblistEnabled &&
+				renderToggleItem('showRatingLabels', $L('Show Rating Labels'), $L('Display source names below rating scores'))}
+		</>
+	);
+
+	const renderPluginTMDB = () => ( // eslint-disable-line no-unused-vars
+		<>{renderToggleItem('tmdbEpisodeRatingsEnabled', $L('Episode Ratings'), $L('Show TMDB ratings on individual episodes'))}</>
+	);
+
+	const renderPluginSeerr = () => ( // eslint-disable-line no-unused-vars
+		<>
+			{jellyseerr.isEnabled && jellyseerr.isAuthenticated && jellyseerr.isMoonfin ? (
+				<>
+					{renderInfoItem('seerrConnStatus', $L('Status'), $L('Connected via Moonfin'))}
+					{jellyseerr.serverUrl && renderInfoItem('seerrUrl', $L('{seerrLabel} URL').replace('{seerrLabel}', seerrLabel), jellyseerr.serverUrl)}
+					{jellyseerr.user && renderInfoItem('seerrUser', $L('User'), jellyseerr.user.displayName || $L('Moonfin User'))}
+					<div className={css.actionBarInline}>
+						<SpottableButton
+							className={`${css.actionButton} ${css.dangerButton}`}
+							onClick={handleJellyseerrDisconnect}
+							spotlightId='jellyseerr-disconnect'
+						>
+							{$L('Disconnect')}
+						</SpottableButton>
+					</div>
+				</>
+			) : (
+				<div className={css.authHint}>
+					{$L('{seerrLabel} connection is managed through the Moonfin plugin. Log in above if prompted.').replace('{seerrLabel}', seerrLabel)}
+				</div>
+			)}
 		</>
 	);
 
@@ -1234,7 +1602,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 
 	const renderOptionsView = () => {
 		const { title, options, settingKey } = currentView;
-		const currentValue = settings[settingKey];
+		const currentValue = settingKey === '__themeSelection' ? activeThemeId : settings[settingKey];
 		return (
 			<ViewContainer className={css.viewContainer} spotlightId='options-view'>
 				<div className={css.listContent} onFocus={handleListFocus}>
@@ -1272,6 +1640,17 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			</ViewContainer>
 		);
 	};
+
+	const renderThemesView = () => (
+		<ViewContainer className={css.viewContainer} spotlightId='themes-view'>
+			<div className={css.listContent} onFocus={handleListFocus}>
+				<div className={css.listInner}>
+					{renderSectionTitle($L('Theme'))}
+					{renderThemePreviewCards()}
+				</div>
+			</div>
+		</ViewContainer>
+	);
 
 	const renderHomeRowsView = () => (
 		<ViewContainer className={css.viewContainer} spotlightId='homerows-view'>
@@ -1380,6 +1759,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{currentView.view === 'category' && renderCategoryView()}
 			{currentView.view === 'subcategory' && renderSubcategoryView()}
 			{currentView.view === 'options' && renderOptionsView()}
+			{currentView.view === 'themes' && renderThemesView()}
 			{currentView.view === 'homeRows' && renderHomeRowsView()}
 			{currentView.view === 'libraries' && renderLibrariesView()}
 			<ClearDataDialog

@@ -16,15 +16,15 @@
 
 .scrim {
 	flex: 1;
-	background: rgba(0, 0, 0, 0.6);
+	background: rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.6);
 	cursor: pointer;
 }
 
 .panel {
 	width: 30rem;
 	height: 100%;
-	background: #0a0a0a;
-	border-left: 1px solid rgba(255, 255, 255, 0.08);
+	background: var(--theme-background, #0a0a0a);
+	border-left: 1px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.08);
 	position: relative;
 	overflow: hidden;
 	flex-shrink: 0;

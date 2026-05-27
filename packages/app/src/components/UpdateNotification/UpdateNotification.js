@@ -73,8 +73,7 @@ const UpdateNotification = ({updateInfo, formattedNotes, onDismiss}) => {
 					className={css.modal}
 					style={{
 						width: '1400px',
-						minWidth: '1200px',
-						background: '#000000'
+						minWidth: '1200px'
 					}}
 				>
 					<Heading size="small" className={css.title}>

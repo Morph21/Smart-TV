@@ -3,8 +3,8 @@
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	background: #111827;
-	color: #ffffff;
+	background: var(--theme-background, #111827);
+	color: var(--theme-text-primary, #ffffff);
 }
 
 // Main Content
@@ -41,13 +41,13 @@
 .profilePlaceholder {
 	width: 100%;
 	height: 330px;
-	background: #333;
+	background: var(--theme-surface-variant, #333);
 	border-radius: 12px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 72px;
-	color: #666;
+	color: var(--theme-text-muted, #666);
 }
 
 // Info Container
@@ -66,7 +66,7 @@
 	display: flex;
 	flex-direction: column;
 	font-size: 20px;
-	color: rgba(255, 255, 255, 0.8);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.8));
 
 	> * + * {
 		margin-top: 12px;
@@ -84,7 +84,7 @@
 	font-size: 32px;
 	font-weight: 600;
 	margin: 0 0 20px 0;
-	color: #ffffff;
+	color: var(--theme-text-primary, #ffffff);
 }
 
 // Biography Section
@@ -95,7 +95,7 @@
 .biographyText {
 	font-size: 20px;
 	line-height: 1.6;
-	color: rgba(255, 255, 255, 0.8);
+	color: var(--theme-text-secondary, rgba(255, 255, 255, 0.8));
 	margin: 0 0 16px 0;
 	display: -webkit-box;
 	-webkit-line-clamp: 6;
@@ -111,16 +111,16 @@
 .biographyToggle {
 	display: inline-block;
 	padding: 8px 16px;
-	background: rgba(255, 255, 255, 0.1);
-	border: 2px solid rgba(255, 255, 255, 0.2);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
+	border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 	border-radius: 8px;
 	font-size: 18px;
 	cursor: pointer;
 	transition: all 0.2s ease;
 
 	&:focus {
-		background: #ffffff;
-		color: #000;
+		background: var(--theme-on-surface, #ffffff);
+		color: var(--theme-background, #000);
 		transform: scale(1.05);
 	}
 }
@@ -151,7 +151,7 @@
 		transform: scale(1.08);
 
 		.poster {
-			border-color: #ffffff;
+			border-color: var(--theme-focus-border-color, #ffffff);
 		}
 	}
 }
@@ -184,13 +184,13 @@
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: #333;
+	background: var(--theme-surface-variant, #333);
 	border-radius: 8px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 48px;
-	color: #666;
+	color: var(--theme-text-muted, #666);
 }
 
 .mediaTypeBadge {
@@ -203,16 +203,16 @@
 	font-weight: 700;
 	letter-spacing: 0.5px;
 	text-transform: uppercase;
-	color: #fff;
+	color: var(--theme-on-badge, #fff);
 	z-index: 2;
 }
 
 .movieBadge {
-	background: #2563eb;
+	background: var(--theme-badge-movie, #2563eb);
 }
 
 .seriesBadge {
-	background: #7c3aed;
+	background: var(--theme-badge-show, #7c3aed);
 }
 
 .availabilityBadge {
@@ -226,9 +226,9 @@
 }
 
 .availability5 {
-	background: #22c55e;
-	border: 2px solid #fff;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	background: var(--theme-status-available, #22c55e);
+	border: 2px solid var(--theme-text-primary, #fff);
+	box-shadow: 0 1px 3px rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.3);
 }
 
 .availability5::after {
@@ -238,14 +238,14 @@
 	left: 5px;
 	width: 4px;
 	height: 7px;
-	border: solid #fff;
+	border: solid var(--theme-text-primary, #fff);
 	border-width: 0 2px 2px 0;
 	transform: rotate(45deg);
 }
 
 .availability4 {
-	background: #f59e0b;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	background: var(--theme-status-pending, #eab308);
+	box-shadow: 0 1px 3px rgba(var(--theme-scrim-rgb, 0, 0, 0), 0.3);
 }
 
 .availability4::after {
@@ -255,13 +255,13 @@
 	left: 50%;
 	width: 8px;
 	height: 2px;
-	background: #fff;
+	background: var(--theme-on-badge, #fff);
 	transform: translate(-50%, -50%);
 }
 
 .availability3 {
 	background: transparent;
-	border: 2px solid #6366f1;
+	border: 2px solid var(--theme-status-downloading, #6366f1);
 	border-top-color: transparent;
 	animation: spin 1s linear infinite;
 }
@@ -282,7 +282,7 @@
 .cardTitle {
 	font-size: 16px;
 	font-weight: 500;
-	color: #ffffff;
+	color: var(--theme-text-primary, #ffffff);
 	margin: 0 0 4px 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -291,7 +291,7 @@
 
 .cardCharacter {
 	font-size: 14px;
-	color: #888;
+	color: var(--theme-text-secondary, #888);
 	margin: 0 0 2px 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -300,7 +300,7 @@
 
 .cardYear {
 	font-size: 14px;
-	color: #666;
+	color: var(--theme-text-muted, #666);
 	margin: 0;
 }
 
@@ -312,7 +312,7 @@
 	justify-content: center;
 	height: 100%;
 	font-size: 24px;
-	color: #888;
+	color: var(--theme-text-secondary, #888);
 	text-align: center;
 
 	> * + * {
@@ -322,16 +322,37 @@
 
 .errorButton {
 	padding: 12px 24px;
-	background: rgba(255, 255, 255, 0.1);
-	border: 2px solid rgba(255, 255, 255, 0.2);
+	background: rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1);
+	border: 2px solid rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.2);
 	border-radius: 8px;
 	font-size: 18px;
 	cursor: pointer;
 	transition: all 0.2s ease;
 
 	&:focus {
-		background: #ffffff;
-		color: #000;
+		background: var(--theme-on-surface, #ffffff);
+		color: var(--theme-background, #000);
 		transform: scale(1.05);
+	}
+}
+
+:global(html[data-theme-id='neon_pulse']) {
+	.personName,
+	.sectionTitle,
+	.cardTitle {
+		color: var(--theme-accent, #ff2e92);
+		text-shadow: var(--theme-text-glow, 0 0 8px rgba(255, 46, 146, 0.35));
+	}
+
+	.metaInfo,
+	.biographyText,
+	.cardCharacter,
+	.cardYear {
+		color: var(--theme-on-surface, #00e5ff);
+	}
+
+	.appearanceCard:focus .poster {
+		border-color: var(--theme-accent, #ff2e92);
+		box-shadow: 0 0 10px rgba(var(--theme-accent-rgb, 255, 46, 146), 0.3);
 	}
 }

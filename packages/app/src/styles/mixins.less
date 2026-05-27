@@ -22,13 +22,19 @@
 	}
 }
 
+.theme-chip() {
+	border-radius: var(--theme-chip-radius, 8px);
+	border: var(--theme-chip-border, 1px solid transparent);
+	background: var(--theme-chip-background, rgba(var(--theme-on-surface-rgb, 255, 255, 255), 0.1));
+}
+
 .watched-badge(@size: 26px, @icon-size: 15px) {
 	position: absolute;
 	top: 8px;
 	right: 8px;
 	width: @size;
 	height: @size;
-	background: rgba(0, 164, 220, 0.9);
+	background: var(--theme-badge-watched, rgba(0, 164, 220, 0.9));
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
