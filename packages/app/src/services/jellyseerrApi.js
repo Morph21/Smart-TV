@@ -256,6 +256,27 @@ result[normalized] = obj[key];
 return result;
 };
 
+const normalizeMoonfinStreamEvent = (payload) => {
+if (payload == null) return null;
+
+let parsed = payload;
+if (typeof parsed === 'string') {
+const trimmed = parsed.trim();
+if (!trimmed) return null;
+try {
+parsed = JSON.parse(trimmed);
+} catch (_) {
+return {type: trimmed};
+}
+}
+
+if (!parsed || typeof parsed !== 'object') {
+return null;
+}
+
+return normalizeKeys(parsed);
+};
+
 export const moonfinPing = async (serverUrl, token) => {
 const sUrl = serverUrl || jellyfinServerUrl;
 const sToken = token || jellyfinAccessToken;
@@ -428,6 +449,7 @@ throw new Error('Server URL and token required');
 
 let closed = false;
 const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+let eventSource = null;
 
 const emitError = (error) => {
 if (closed) return;
@@ -435,6 +457,49 @@ if (error?.name === 'AbortError') return;
 if (typeof onError === 'function') {
 onError(error);
 }
+};
+
+const emitEvent = (payload) => {
+if (closed) return;
+const normalized = normalizeMoonfinStreamEvent(payload);
+if (!normalized) return;
+if (typeof onEvent === 'function') {
+onEvent(normalized);
+}
+};
+
+const connectWithEventSource = () => {
+const EventSourceCtor = typeof globalThis !== 'undefined' ? globalThis.EventSource : undefined;
+if (typeof EventSourceCtor === 'undefined') {
+return false;
+}
+
+const streamUrl = `${sUrl}/Moonfin/Settings/Stream?api_key=${encodeURIComponent(sToken)}`;
+try {
+eventSource = new EventSourceCtor(streamUrl);
+} catch (error) {
+emitError(error);
+return false;
+}
+
+eventSource.onmessage = (messageEvent) => {
+const payload = messageEvent?.data;
+if (!payload) return;
+emitEvent(payload);
+};
+
+eventSource.onerror = () => {
+if (closed) return;
+try {
+eventSource?.close();
+} catch (error) {
+void error;
+}
+eventSource = null;
+emitError(new Error('Moonfin settings stream closed'));
+};
+
+return true;
 };
 
 const run = async () => {
@@ -455,6 +520,9 @@ throw error;
 }
 
 if (!response.body || typeof response.body.getReader !== 'function') {
+if (connectWithEventSource()) {
+return;
+}
 throw new Error('Moonfin settings stream is not supported on this device');
 }
 
@@ -479,11 +547,9 @@ if (!payload) continue;
 
 try {
 const parsed = JSON.parse(payload);
-if (typeof onEvent === 'function') {
-onEvent(parsed);
-}
+emitEvent(parsed);
 } catch (error) {
-console.warn('[Jellyseerr] Ignoring malformed Moonfin stream payload:', error.message);
+emitEvent(payload);
 }
 }
 }
@@ -506,6 +572,12 @@ controller?.abort();
 } catch (error) {
 void error;
 }
+try {
+eventSource?.close();
+} catch (error) {
+void error;
+}
+eventSource = null;
 }
 };
 };

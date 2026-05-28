@@ -376,8 +376,10 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		updateSetting,
 		resetSettings,
 		availableThemes,
+		savedThemes,
 		activeThemeId,
 		selectThemeById,
+		deleteSavedTheme,
 		syncFromServer,
 		syncToServer
 	} = useSettings();
@@ -434,6 +436,8 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const [homeProbeMeta, setHomeProbeMeta] = useState(null);
 	const [kefinProbeMeta, setKefinProbeMeta] = useState(null);
 	const [probeCacheInfo, setProbeCacheInfo] = useState(() => getPluginProbeCacheState());
+	const [savedThemeDeleteId, setSavedThemeDeleteId] = useState('');
+	const [savedThemeStatus, setSavedThemeStatus] = useState('');
 	const integrationProbeLoadingRef = useRef(false);
 	const homeRowsEditorLoadIdRef = useRef(0);
 
@@ -458,6 +462,9 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			} else if (cv.view === 'themes') {
 				const selectedId = availableThemes.find((t) => t.id === activeThemeId)?.id;
 				Spotlight.focus(selectedId ? `theme-card-${selectedId}` : 'themes-view');
+			} else if (cv.view === 'savedThemes') {
+				const firstId = savedThemes[0]?.id;
+				Spotlight.focus(firstId ? `saved-theme-${firstId}` : 'saved-themes-view');
 			} else if (cv.view === 'homeRows') {
 				Spotlight.focus('homerows-view');
 			} else if (cv.view === 'libraries') {
@@ -685,6 +692,30 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const openThemes = useCallback(() => {
 		pushView({ view: 'themes', returnFocusTo: 'setting-themeSelection' });
 	}, [pushView]);
+
+	const openSavedThemes = useCallback(() => {
+		setSavedThemeStatus('');
+		pushView({ view: 'savedThemes', returnFocusTo: 'setting-savedThemes' });
+	}, [pushView]);
+
+	const handleDeleteSavedTheme = useCallback(async (themeId) => {
+		if (!themeId || savedThemeDeleteId) return;
+
+		setSavedThemeDeleteId(themeId);
+		setSavedThemeStatus('');
+		try {
+			const deleted = await deleteSavedTheme(themeId);
+			setSavedThemeStatus(
+				deleted
+					? $L('Deleted saved theme from this device.')
+					: $L('Theme is not currently saved on this device.'),
+			);
+		} catch (_) {
+			setSavedThemeStatus($L('Failed to delete saved theme.'));
+		} finally {
+			setSavedThemeDeleteId('');
+		}
+	}, [deleteSavedTheme, savedThemeDeleteId]);
 
 	const openHomeRowsEditor = useCallback((returnFocusTo = 'setting-homeRows') => {
 		setTempHomeRows([...(settings.homeRows || DEFAULT_HOME_ROWS)].sort((a, b) => a.order - b.order));
@@ -1376,6 +1407,14 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 				$L('Theme'),
 				availableThemes.find((t) => t.id === activeThemeId)?.displayName || $L('Default'),
 				openThemes
+			)}
+			{renderNavItem(
+				'savedThemes',
+				$L('Saved Themes'),
+				savedThemes.length > 0
+					? `${savedThemes.length} ${$L('downloaded themes')}`
+					: $L('No downloaded themes'),
+				openSavedThemes
 			)}
 			{renderOptionItem('focusBorderColor', $L('Focus Border Color'), ACCENT_COLOR_OPTIONS, $L('Theme Default'))}
 			{renderOptionItem('clockDisplay', $L('Clock Display'), getClockDisplayOptions(), $L('24-Hour'))}
@@ -2177,6 +2216,52 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		</ViewContainer>
 	);
 
+	const renderSavedThemesView = () => (
+		<ViewContainer className={css.viewContainer} spotlightId='saved-themes-view'>
+			<div className={css.listContent} onFocus={handleListFocus}>
+				<div className={css.listInner}>
+					{renderSectionTitle($L('Saved Themes'))}
+					<div className={css.viewDescription}>
+						{$L('These themes are stored locally for the current server. Deleting removes only this device copy.')}
+					</div>
+					{savedThemes.length === 0 && (
+						<div className={css.loadingMessage}>{$L('No saved themes found for this server.')}</div>
+					)}
+					{savedThemes.map((savedTheme) => {
+						const isSelected = savedTheme.id === activeThemeId;
+						const deleting = savedThemeDeleteId === savedTheme.id;
+						return (
+							<div key={savedTheme.id} className={css.homeRowItem}>
+								<SpottableDiv
+									className={`${css.listItem} ${isSelected ? css.listItemSelected : ''}`}
+									onClick={() => selectThemeById(savedTheme.id)}
+									spotlightId={`saved-theme-${savedTheme.id}`}
+								>
+									<div className={css.listItemBody}>
+										<div className={css.listItemHeading}>{savedTheme.displayName}</div>
+										<div className={css.listItemCaption}>{savedTheme.id}</div>
+									</div>
+									<div className={css.listItemTrailing}>{renderRadio(isSelected)}</div>
+								</SpottableDiv>
+								<div className={css.homeRowControls}>
+									<Button
+										onClick={() => handleDeleteSavedTheme(savedTheme.id)}
+										disabled={deleting}
+										size='small'
+										spotlightId={`saved-theme-delete-${savedTheme.id}`}
+									>
+										{deleting ? $L('Deleting...') : $L('Delete')}
+									</Button>
+								</div>
+							</div>
+						);
+					})}
+					{savedThemeStatus && <div className={css.statusMessage}>{savedThemeStatus}</div>}
+				</div>
+			</div>
+		</ViewContainer>
+	);
+
 	const renderHomeRowsView = () => (
 		<ViewContainer className={css.viewContainer} spotlightId='homerows-view'>
 			<div className={css.listContent} onFocus={handleListFocus}>
@@ -2453,6 +2538,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{currentView.view === 'subcategory' && renderSubcategoryView()}
 			{currentView.view === 'options' && renderOptionsView()}
 			{currentView.view === 'themes' && renderThemesView()}
+			{currentView.view === 'savedThemes' && renderSavedThemesView()}
 			{currentView.view === 'homeRows' && renderHomeRowsView()}
 			{currentView.view === 'jellyseerrRows' && renderJellyseerrRowsView()}
 			{currentView.view === 'integrationDetails' && renderIntegrationDetailsView()}

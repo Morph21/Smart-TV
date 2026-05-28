@@ -287,6 +287,50 @@ const extractThemeObjects = (payload) => {
 	return [];
 };
 
+const THEME_CACHE_KEY_PREFIX = 'moonfin_theme_cache_';
+
+const toThemeCacheServerKey = (serverUrl) => {
+	const normalized = String(serverUrl || '').trim().toLowerCase();
+	const sanitized = normalized.replace(/[^a-z0-9]+/g, '_');
+	return sanitized || 'default';
+};
+
+const themeCacheKeyForServer = (serverUrl) => `${THEME_CACHE_KEY_PREFIX}${toThemeCacheServerKey(serverUrl)}`;
+
+const parseThemeEntries = (objects) => {
+	const deduped = new Map();
+	for (const raw of objects) {
+		if (!raw || typeof raw !== 'object') continue;
+		try {
+			const spec = parseThemeSpec(raw);
+			if (isBuiltInThemeId(spec.id)) continue;
+			deduped.set(spec.id, {spec, raw});
+		} catch (_) {
+			continue;
+		}
+	}
+	return Array.from(deduped.values());
+};
+
+const loadCachedThemeObjects = async (serverUrl) => {
+	const cacheKey = themeCacheKeyForServer(serverUrl);
+	const cached = await getFromStorage(cacheKey);
+	return extractThemeObjects(cached).filter((entry) => entry && typeof entry === 'object');
+};
+
+const saveCachedThemeObjects = async (serverUrl, entries) => {
+	const cacheKey = themeCacheKeyForServer(serverUrl);
+	await saveToStorage(cacheKey, entries.map((entry) => entry.raw));
+};
+
+const toSavedThemeList = (entries) => entries
+	.map((entry) => ({id: entry.spec.id, displayName: entry.spec.displayName}))
+	.sort((left, right) => {
+		const nameCompare = left.displayName.localeCompare(right.displayName, undefined, {sensitivity: 'base'});
+		if (nameCompare !== 0) return nameCompare;
+		return left.id.localeCompare(right.id);
+	});
+
 const SettingsContext = createContext(null);
 
 export function SettingsProvider({children}) {
@@ -294,6 +338,7 @@ export function SettingsProvider({children}) {
 	const [serverMessage, setServerMessage] = useState('');
 	const [loaded, setLoaded] = useState(false);
 	const [themeCatalogVersion, setThemeCatalogVersion] = useState(0);
+	const [savedThemes, setSavedThemes] = useState([]);
 	const serverCredsRef = useRef(null);
 	const pluginEnabledRef = useRef(false);
 	const syncFromServerRef = useRef(null);
@@ -391,6 +436,60 @@ export function SettingsProvider({children}) {
 		setServerMessage('');
 	}, []);
 
+	const ensureThemeSelectionValid = useCallback(() => {
+		setSettings((prev) => {
+			const updated = {...prev};
+			let changed = false;
+
+			if (updated.customThemeId && !getAvailableThemes()[updated.customThemeId]) {
+				updated.customThemeId = '';
+				changed = true;
+			}
+			if (!isBuiltInThemeId(updated.visualTheme)) {
+				updated.visualTheme = 'moonfin';
+				changed = true;
+			}
+
+			if (!changed) {
+				return prev;
+			}
+
+			saveToStorage('settings', updated);
+			return updated;
+		});
+	}, []);
+
+	const refreshThemeCatalog = useCallback(async (serverUrl, token, {hydrateCache = true} = {}) => {
+		let cachedEntries = [];
+		if (hydrateCache) {
+			const cachedObjects = await loadCachedThemeObjects(serverUrl);
+			cachedEntries = parseThemeEntries(cachedObjects);
+			replaceCustomThemes(cachedEntries.map((entry) => entry.spec));
+			setThemeCatalogVersion((value) => value + 1);
+			setSavedThemes(toSavedThemeList(cachedEntries));
+		}
+
+		let themesPayload = null;
+		try {
+			themesPayload = await getMoonfinThemes(serverUrl, token);
+		} catch (_) {
+			themesPayload = null;
+		}
+
+		if (themesPayload === null) {
+			ensureThemeSelectionValid();
+			return cachedEntries;
+		}
+
+		const remoteEntries = parseThemeEntries(extractThemeObjects(themesPayload));
+		replaceCustomThemes(remoteEntries.map((entry) => entry.spec));
+		setThemeCatalogVersion((value) => value + 1);
+		setSavedThemes(toSavedThemeList(remoteEntries));
+		await saveCachedThemeObjects(serverUrl, remoteEntries);
+		ensureThemeSelectionValid();
+		return remoteEntries;
+	}, [ensureThemeSelectionValid]);
+
 	const runStreamSync = useCallback(async (serverUrl, token) => {
 		if (streamSyncInFlightRef.current) {
 			streamSyncQueuedRef.current = true;
@@ -435,12 +534,19 @@ export function SettingsProvider({children}) {
 			serverUrl,
 			token,
 			(event) => {
-				if (event?.type === 'adminMessage') {
-					showServerMessage(event?.text);
+				const eventType = String(event?.type || event?.Type || '').trim().toLowerCase();
+				if (eventType === 'adminmessage') {
+					showServerMessage(event?.text ?? event?.Text ?? event?.message ?? event?.Message);
 					return;
 				}
 
-				if (event?.type !== 'settingsUpdated') return;
+				if (eventType === 'themeschanged') {
+					sseReconnectAttemptRef.current = 0;
+					refreshThemeCatalog(serverUrl, token, {hydrateCache: false}).catch(() => {});
+					return;
+				}
+
+				if (eventType !== 'settingsupdated') return;
 				sseReconnectAttemptRef.current = 0;
 				runStreamSync(serverUrl, token).catch(() => {});
 			},
@@ -474,7 +580,7 @@ export function SettingsProvider({children}) {
 				}, delayMs);
 			}
 		);
-	}, [runStreamSync, showServerMessage, stopSettingsStream]);
+	}, [refreshThemeCatalog, runStreamSync, showServerMessage, stopSettingsStream]);
 
 	const syncFromServer = useCallback(async (serverUrl, token) => {
 		try {
@@ -488,22 +594,11 @@ export function SettingsProvider({children}) {
 			try {
 				const ping = await moonfinPing(serverUrl, token);
 				if (ping?.defaultSettings) adminDefaults = ping.defaultSettings;
-			} catch (_) {}
-
-			let themesPayload = null;
-			try {
-				themesPayload = await getMoonfinThemes(serverUrl, token);
-			} catch (_) {}
-
-			const specs = [];
-			for (const entry of extractThemeObjects(themesPayload)) {
-				if (!entry || typeof entry !== 'object') continue;
-				try {
-					specs.push(parseThemeSpec(entry));
-				} catch (_) {}
+			} catch (_) {
+				adminDefaults = null;
 			}
-			replaceCustomThemes(specs);
-			setThemeCatalogVersion((value) => value + 1);
+
+			await refreshThemeCatalog(serverUrl, token, {hydrateCache: true});
 
 			const serverData = await getMoonfinSettings(serverUrl, token);
 			if (!serverData) {
@@ -538,8 +633,37 @@ export function SettingsProvider({children}) {
 				return updated;
 			});
 
-		} catch (_) {}
-	}, [connectSettingsStream]);
+		} catch (_) {
+			return;
+		}
+	}, [connectSettingsStream, refreshThemeCatalog]);
+
+	const deleteSavedTheme = useCallback(async (themeId) => {
+		const trimmedThemeId = typeof themeId === 'string' ? themeId.trim() : '';
+		if (!trimmedThemeId || isBuiltInThemeId(trimmedThemeId)) {
+			return false;
+		}
+
+		const creds = serverCredsRef.current;
+		if (!creds?.serverUrl) {
+			return false;
+		}
+
+		const cachedObjects = await loadCachedThemeObjects(creds.serverUrl);
+		const cachedEntries = parseThemeEntries(cachedObjects);
+		if (!cachedEntries.some((entry) => entry.spec.id === trimmedThemeId)) {
+			return false;
+		}
+
+		const nextEntries = cachedEntries.filter((entry) => entry.spec.id !== trimmedThemeId);
+		await saveCachedThemeObjects(creds.serverUrl, nextEntries);
+
+		replaceCustomThemes(nextEntries.map((entry) => entry.spec));
+		setThemeCatalogVersion((value) => value + 1);
+		setSavedThemes(toSavedThemeList(nextEntries));
+		ensureThemeSelectionValid();
+		return true;
+	}, [ensureThemeSelectionValid]);
 
 	const syncToServer = useCallback(async (serverUrl, token) => {
 		if (serverUrl && token) {
@@ -582,11 +706,13 @@ export function SettingsProvider({children}) {
 			serverMessage,
 			loaded,
 			availableThemes,
+			savedThemes,
 			activeThemeId,
 			activeTheme,
 			updateSetting,
 			updateSettings,
 			selectThemeById,
+			deleteSavedTheme,
 			resetSettings,
 			showServerMessage,
 			clearServerMessage,

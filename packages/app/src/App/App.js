@@ -74,6 +74,15 @@ const normalizeJellyseerrSelection = (item) => {
 	return {mediaId, mediaType};
 };
 
+const reportStopSafely = (positionTicks) => {
+	try {
+		playback.reportStop(positionTicks);
+		return true;
+	} catch (_) {
+		return false;
+	}
+};
+
 const PanelLoader = () => (
 	<div className={css.panelLoader}>
 		<LoadingSpinner />
@@ -273,9 +282,7 @@ const AppContent = (props) => {
 		playback.stopHealthMonitoring();
 		const session = playback.getCurrentSession();
 		if (session) {
-			try {
-				playback.reportStop(session.positionTicks || 0);
-			} catch (_) {}
+			reportStopSafely(session.positionTicks || 0);
 		}
 		const videoElements = document.querySelectorAll('video');
 		videoElements.forEach(video => {
