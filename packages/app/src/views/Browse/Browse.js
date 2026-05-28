@@ -59,6 +59,30 @@ const getGenresIncludeTypes = (filter) => {
 	return 'Movie,Series';
 };
 
+const getItemGenreNames = (item) => {
+	if (!item || typeof item !== 'object') return [];
+	const directGenres = Array.isArray(item.Genres) ? item.Genres : [];
+	const genreItems = Array.isArray(item.GenreItems)
+		? item.GenreItems.map((genreItem) => genreItem?.Name).filter(Boolean)
+		: [];
+	return [...directGenres, ...genreItems]
+		.map((name) => String(name).trim().toLowerCase())
+		.filter(Boolean);
+};
+
+const filterItemsByExcludedGenres = (items, excludedGenres) => {
+	const excluded = Array.isArray(excludedGenres)
+		? excludedGenres.map((genre) => String(genre).trim().toLowerCase()).filter(Boolean)
+		: [];
+	if (excluded.length === 0) return items;
+	const excludedSet = new Set(excluded);
+	return items.filter((item) => {
+		const genres = getItemGenreNames(item);
+		if (genres.length === 0) return true;
+		return !genres.some((genre) => excludedSet.has(genre));
+	});
+};
+
 const parsePluginSpec = (specJson) => {
 	if (!specJson) return null;
 	try {
@@ -284,7 +308,10 @@ const Browse = ({
 			}
 
 			if (items.length > 0) {
-				const filteredItems = items.filter(item => item.Type !== 'BoxSet');
+				const filteredItems = filterItemsByExcludedGenres(
+					items.filter(item => item.Type !== 'BoxSet'),
+					s.excludedGenres
+				);
 				const featuredWithLogos = filteredItems.map(item => ({
 					...item,
 					LogoUrl: getLogoUrl(getItemServerUrl(item), item, {maxWidth: 800, quality: 90})
@@ -1401,6 +1428,7 @@ const Browse = ({
 							onNavigateUp={handleNavigateUp}
 							onNavigateDown={handleNavigateDown}
 							showServerBadge={unifiedMode}
+							showOverview={settings.homeRowOverlay === 'on'}
 							registerRowRef={registerRowRef}
 						/>
 					))}

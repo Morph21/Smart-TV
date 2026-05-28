@@ -87,16 +87,25 @@ const FeaturedBanner = memo(({
 			carouselIntervalRef.current = null;
 		}
 
-		const carouselSpeed = settings.carouselSpeed || 8000;
-		if (!isVisible || featuredItems.length <= 1 || !featuredFocused || carouselSpeed === 0 || trailerActive) return;
+		const autoAdvanceEnabled = settings.autoAdvance !== false;
+		const configuredInterval = Number(settings.autoAdvanceInterval);
+		const carouselSpeed = Number.isFinite(configuredInterval) && configuredInterval > 0
+			? configuredInterval * 1000
+			: (settings.carouselSpeed || 8000);
+		if (!autoAdvanceEnabled || !isVisible || featuredItems.length <= 1 || !featuredFocused || carouselSpeed <= 0 || trailerActive) return;
 
 		carouselIntervalRef.current = setInterval(() => {
 			setCurrentIndex((prev) => (prev + 1) % featuredItems.length);
 		}, carouselSpeed);
-	}, [isVisible, featuredItems.length, featuredFocused, settings.carouselSpeed, trailerActive]);
+	}, [isVisible, featuredItems.length, featuredFocused, settings.autoAdvance, settings.autoAdvanceInterval, settings.carouselSpeed, trailerActive]);
 
 	useEffect(() => {
-		if (!isVisible || featuredItems.length <= 1 || !featuredFocused || settings.carouselSpeed === 0 || trailerActive) return;
+		const autoAdvanceEnabled = settings.autoAdvance !== false;
+		const configuredInterval = Number(settings.autoAdvanceInterval);
+		const carouselSpeed = Number.isFinite(configuredInterval) && configuredInterval > 0
+			? configuredInterval * 1000
+			: (settings.carouselSpeed || 8000);
+		if (!autoAdvanceEnabled || !isVisible || featuredItems.length <= 1 || !featuredFocused || carouselSpeed <= 0 || trailerActive) return;
 		startCarouselTimer();
 		return () => {
 			if (carouselIntervalRef.current) {
@@ -104,7 +113,7 @@ const FeaturedBanner = memo(({
 				carouselIntervalRef.current = null;
 			}
 		};
-	}, [isVisible, featuredItems.length, featuredFocused, settings.carouselSpeed, trailerActive, startCarouselTimer]);
+	}, [isVisible, featuredItems.length, featuredFocused, settings.autoAdvance, settings.autoAdvanceInterval, settings.carouselSpeed, trailerActive, startCarouselTimer]);
 
 	const stopTrailer = useCallback(() => {
 		if (trailerRevealTimerRef.current) {

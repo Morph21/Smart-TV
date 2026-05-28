@@ -8,6 +8,7 @@ import css from './RatingsRow.module.less';
 const RatingsRow = ({item, serverUrl, compact = false, pluginEnabled = true}) => {
 	const {settings} = useSettings();
 	const showLabels = settings.showRatingLabels !== false;
+	const showRatingBadges = settings.showRatingBadges !== false;
 	const enabledSources = settings.mdblistRatingSources;
 	const [allRatings, setAllRatings] = useState([]);
 	const mountedRef = useRef(true);
@@ -48,6 +49,8 @@ const RatingsRow = ({item, serverUrl, compact = false, pluginEnabled = true}) =>
 			.filter(r => enabledSources.includes(r.source))
 			.sort((a, b) => enabledSources.indexOf(a.source) - enabledSources.indexOf(b.source));
 	}, [allRatings, enabledSources]);
+
+	if (!showRatingBadges) return null;
 
 	const communityRating = item && item.CommunityRating ? item.CommunityRating.toFixed(1) : null;
 	const hasContent = communityRating || displayRatings.length > 0 || (!pluginEnabled && item && item.CriticRating);

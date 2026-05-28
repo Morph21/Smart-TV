@@ -13,7 +13,6 @@ import serverLogger from '../../services/serverLogger';
 import connectionPool from '../../services/connectionPool';
 import {probeKefinTweaks, kefinSectionToPluginSection} from '../../services/kefinTweaksService';
 import {probeHomeScreenSections, hssSectionToPluginSection} from '../../services/homeScreenSectionsService';
-import {clearCapabilitiesCache} from '../../services/deviceProfile';
 import {isBackKey} from '../../utils/keys';
 import ClearDataDialog from '../../components/ClearDataDialog';
 import SpottableInput from '../../components/SpottableInput/SpottableInput';
@@ -240,15 +239,6 @@ const UI_OPACITY_OPTIONS = [
 	{ value: 95, label: '95%' }
 ];
 
-const USER_OPACITY_OPTIONS = [
-	{ value: 0, label: '0%' },
-	{ value: 50, label: '50%' },
-	{ value: 65, label: '65%' },
-	{ value: 75, label: '75%' },
-	{ value: 85, label: '85%' },
-	{ value: 95, label: '95%' }
-];
-
 const getUiColorOptions = () => [
 	{ value: 'gray', label: $L('Gray'), rgb: '128, 128, 128' },
 	{ value: 'black', label: $L('Black'), rgb: '0, 0, 0' },
@@ -264,17 +254,6 @@ const getUiColorOptions = () => [
 	{ value: 'indigo', label: $L('Indigo'), rgb: '30, 58, 138' }
 ];
 
-const getUiScaleOptions = () => [
-	{ value: 0.85, label: $L('Compact') },
-	{ value: 0.9, label: $L('Small') },
-	{ value: 0.95, label: $L('Slightly Small') },
-	{ value: 1.0, label: $L('Default') },
-	{ value: 1.05, label: $L('Slightly Large') },
-	{ value: 1.1, label: $L('Large') },
-	{ value: 1.15, label: $L('Extra Large') },
-	{ value: 1.2, label: $L('Huge') },
-	{ value: 1.3, label: $L('Maximum') }
-];
 const getScreensaverModeOptions = () => [
 	{ value: 'library', label: $L('Library Backdrops') },
 	{ value: 'logo', label: $L('Moonfin Logo') }
@@ -357,20 +336,51 @@ const getGenresIncludeTypes = (filter) => {
 	return 'Movie,Series';
 };
 
-const LANGUAGE_OPTIONS = [
-	{ value: 'en-US', label: $L('English') },
-	{ value: 'de', label: $L('German') },
-	{ value: 'es', label: $L('Spanish') },
-	{ value: 'fr', label: $L('French') },
-	{ value: 'pl', label: $L('Polish') },
-	{ value: 'pt-BR', label: $L('Portuguese (Brazil)') },
-	{ value: 'ru', label: $L('Russian') }
+const getServerSortOptions = () => [
+	{ value: 'name', label: $L('Server Name') },
+	{ value: 'recent', label: $L('Recently Used') },
+	{ value: 'added', label: $L('Date Added') }
 ];
 
-const getMediaBarSourceOptions = () => [
-	{ value: 'library', label: $L('Libraries') },
-	{ value: 'collection', label: $L('Collections') }
+const getFolderViewModeOptions = () => [
+	{ value: 'local', label: $L('Per Library') },
+	{ value: 'on', label: $L('Always On') },
+	{ value: 'off', label: $L('Always Off') }
 ];
+
+const getHomeRowOverlayOptions = () => [
+	{ value: 'off', label: $L('Off') },
+	{ value: 'on', label: $L('On') }
+];
+
+const getAudioLanguageOptions = () => [
+	{ value: '', label: $L('Auto') },
+	{ value: 'eng', label: $L('English') },
+	{ value: 'spa', label: $L('Spanish') },
+	{ value: 'fra', label: $L('French') },
+	{ value: 'deu', label: $L('German') },
+	{ value: 'ita', label: $L('Italian') },
+	{ value: 'por', label: $L('Portuguese') },
+	{ value: 'jpn', label: $L('Japanese') },
+	{ value: 'kor', label: $L('Korean') },
+	{ value: 'zho', label: $L('Chinese') }
+];
+
+const RATING_SOURCE_OPTIONS = [
+	{ value: 'imdb', label: 'IMDb' },
+	{ value: 'tmdb', label: 'TMDB' },
+	{ value: 'tomatoes', label: $L('Rotten Tomatoes') },
+	{ value: 'metacritic', label: 'Metacritic' }
+];
+
+const getEnabledRatingSourcesSummary = (sources) => {
+	const enabled = Array.isArray(sources) ? sources : [];
+	if (enabled.length === 0) return $L('None');
+	return RATING_SOURCE_OPTIONS
+		.filter((option) => enabled.includes(option.value))
+		.map((option) => option.label)
+		.join(', ');
+};
 
 const getNextUpBehaviorOptions = () => [
 	{ value: 'extended', label: $L('Extended') },
@@ -615,7 +625,10 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const [seerrAuthError, setSeerrAuthError] = useState('');
 	const [kefinProbeState, setKefinProbeState] = useState({loading: false, data: null, error: ''});
 	const [hssProbeState, setHssProbeState] = useState({loading: false, data: null, error: ''});
-	const languageChanged = settings.uiLanguage && settings.uiLanguage !== 'en-US';
+	const [tempRatingSources, setTempRatingSources] = useState([]);
+	const [tempExcludedGenresText, setTempExcludedGenresText] = useState('');
+	const [tempPinCode, setTempPinCode] = useState('0000');
+	const [pinCodeError, setPinCodeError] = useState('');
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -642,6 +655,12 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 				Spotlight.focus('homerows-view');
 			} else if (cv.view === 'libraries') {
 				Spotlight.focus('libraries-view');
+			} else if (cv.view === 'ratingSources') {
+				Spotlight.focus('rating-sources-view');
+			} else if (cv.view === 'excludedGenres') {
+				Spotlight.focus('excluded-genres-input');
+			} else if (cv.view === 'pinCode') {
+				Spotlight.focus('pin-code-input');
 			}
 		}, 50);
 		return () => clearTimeout(timer);
@@ -693,11 +712,6 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		},
 		[settings, updateSetting]
 	);
-
-	const toggleExperimentalTruehd = useCallback(() => { // eslint-disable-line no-unused-vars
-		updateSetting('experimentalTruehd', !settings.experimentalTruehd);
-		clearCapabilitiesCache();
-	}, [settings.experimentalTruehd, updateSetting]);
 
 	const handleOptionSelect = useCallback(
 		(settingKey, value) => {
@@ -811,6 +825,60 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const openThemes = useCallback(() => {
 		pushView({ view: 'themes', returnFocusTo: 'setting-themeSelection' });
 	}, [pushView]);
+
+	const openRatingSources = useCallback(() => {
+		setTempRatingSources(Array.isArray(settings.mdblistRatingSources) ? [...settings.mdblistRatingSources] : []);
+		pushView({view: 'ratingSources', returnFocusTo: 'setting-ratingSources'});
+	}, [settings.mdblistRatingSources, pushView]);
+
+	const toggleRatingSource = useCallback((sourceValue) => {
+		setTempRatingSources((prev) => {
+			if (prev.includes(sourceValue)) {
+				return prev.filter((value) => value !== sourceValue);
+			}
+			return [...prev, sourceValue];
+		});
+	}, []);
+
+	const saveRatingSources = useCallback(() => {
+		updateSetting('mdblistRatingSources', tempRatingSources);
+		popView();
+	}, [tempRatingSources, updateSetting, popView]);
+
+	const openExcludedGenres = useCallback(() => {
+		const excluded = Array.isArray(settings.excludedGenres) ? settings.excludedGenres : [];
+		setTempExcludedGenresText(excluded.join(', '));
+		pushView({view: 'excludedGenres', returnFocusTo: 'setting-excludedGenres'});
+	}, [settings.excludedGenres, pushView]);
+
+	const saveExcludedGenres = useCallback(() => {
+		const parsed = tempExcludedGenresText
+			.split(',')
+			.map((value) => value.trim())
+			.filter(Boolean);
+		const normalized = [...new Set(parsed.map((value) => value.toLowerCase()))];
+		updateSetting('excludedGenres', normalized);
+		popView();
+	}, [tempExcludedGenresText, updateSetting, popView]);
+
+	const openPinCode = useCallback(() => {
+		const currentPin = typeof settings.pinCode === 'string' && /^\d{4}$/.test(settings.pinCode)
+			? settings.pinCode
+			: '0000';
+		setTempPinCode(currentPin);
+		setPinCodeError('');
+		pushView({view: 'pinCode', returnFocusTo: 'setting-pinCode'});
+	}, [settings.pinCode, pushView]);
+
+	const savePinCode = useCallback(() => {
+		if (!/^\d{4}$/.test(tempPinCode)) {
+			setPinCodeError($L('PIN must be exactly 4 digits.'));
+			return;
+		}
+		updateSetting('pinCode', tempPinCode);
+		setPinCodeError('');
+		popView();
+	}, [tempPinCode, updateSetting, popView]);
 
 	const refreshBuiltInCollectionGenreSections = useCallback(async () => {
 		const collectionsSortBy = settings.collectionsRowSortBy || 'SortName';
@@ -1175,16 +1243,6 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		</SpottableDiv>
 	);
 
-	const renderMissingItem = (id, title, desc = $L('Not available on Smart-TV yet'), iconName) => (
-		<SpottableDiv className={css.listItem} spotlightId={`missing-${id}`}>
-			{renderSettingsIcon(iconName)}
-			<div className={css.listItemBody}>
-				<div className={css.listItemHeading}>{title}</div>
-				<div className={css.listItemCaption}>{desc}</div>
-			</div>
-		</SpottableDiv>
-	);
-
 	const renderSliderItem = (settingKey, title, min, max, step, format, iconName) => (
 		<div className={css.sliderContainer}>
 			<div className={css.sliderLabel}>
@@ -1206,73 +1264,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			/>
 		</div>
 	);
-	const renderGeneralApplication = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{/* Fallback 'English' is intentionally not wrapped with $L() — it matches the raw stored value, not a translated display string */}
-			{renderOptionItem('uiLanguage', $L('Language'), LANGUAGE_OPTIONS, 'English')}
-			{languageChanged && (
-				<div className={css.listItem}>
-					<div className={css.listItemBody}>
-						<div className={css.listItemCaption}>{$L('Restart the app to apply the new language')}</div>
-					</div>
-				</div>
-			)}
-			{renderOptionItem('clockDisplay', $L('Clock Display'), getClockDisplayOptions(), $L('24-Hour'))}
-			{renderToggleItem('showClock', $L('Show Clock'), $L('Show or hide clock on home screen'))}
-			{renderToggleItem('autoLogin', $L('Auto Login'), $L('Automatically sign in on app launch'))}
-			{renderOptionItem('watchedIndicatorBehavior', $L('Watched Indicators'), getWatchedIndicatorOptions(), $L('Always'))}
-		</>
-	);
 
-	const renderGeneralMultiServer = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderToggleItem(
-				'unifiedLibraryMode',
-				$L('Unified Library Mode'),
-				$L('Combine content from all servers into a single view')
-			)}
-		</>
-	);
-
-	const renderGeneralNavbar = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderOptionItem('navbarPosition', $L('Navigation Style'), getNavPositionOptions(), $L('Top Bar'))}
-			{renderToggleItem('showShuffleButton', $L('Show Shuffle Button'), $L('Show shuffle button in navigation bar'))}
-			{settings.showShuffleButton &&
-				renderOptionItem('shuffleContentType', $L('Shuffle Content Type'), getContentTypeOptions(), $L('Movies & TV Shows'))}
-			{renderToggleItem('showGenresButton', $L('Show Genres Button'), $L('Show genres button in navigation bar'))}
-			{renderToggleItem('showFavoritesButton', $L('Show Favorites Button'), $L('Show favorites button in navigation bar'))}
-			{renderToggleItem(
-				'showLibrariesInToolbar',
-				$L('Show Libraries in Toolbar'),
-				$L('Show library shortcuts in navigation bar')
-			)}
-		</>
-	);
-
-	const renderGeneralHomeScreen = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderToggleItem(
-				'mergeContinueWatchingNextUp',
-				$L('Merge Continue Watching & Next Up'),
-				$L('Combine into a single row')
-			)}
-			{renderToggleItem(
-				'useSeriesThumbnails',
-				$L('Use Series Thumbnails'),
-				$L('Show series artwork instead of individual episode images')
-			)}
-			{renderOptionItem('homeRowsPosterSize', $L('Poster Size'), getPosterSizeOptions(), $L('Default'))}
-			{renderOptionItem('homeRowsImageType', $L('Image Type'), getImageTypeOptions(), $L('Poster'))}
-			{renderNavItem('homeRows', $L('Configure Home Rows'), $L('Customize which rows appear on home screen'), openHomeRows)}
-			{renderNavItem(
-				'hideLibraries',
-				$L('Hide Libraries'),
-				$L('Choose which libraries to hide (syncs across all clients)'),
-				openLibraries
-			)}
-		</>
-	);
 	const renderPlaybackVideo = () => (
 		<>
 			{renderOptionItem('introAction', $L('Intro Action'), getMediaSegmentActionOptions(), $L('Ask to Skip'), 'skip')}
@@ -1315,102 +1307,27 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		</>
 	);
 
-	const renderDisplayBackdrop = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderToggleItem(
-				'showHomeBackdrop',
-				$L('Home Row Backdrops'),
-				$L('Show background art when browsing rows on the home screen')
-			)}
-			{renderOptionItem('backdropBlurHome', $L('Home Backdrop Blur'), getBlurOptions(), $L('Medium'))}
-			{renderOptionItem('backdropBlurDetail', $L('Details Backdrop Blur'), getBlurOptions(), $L('Medium'))}
-		</>
-	);
-
-	const renderDisplayUI = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderOptionItem('uiScale', $L('UI Scale'), getUiScaleOptions(), $L('Default'))}
-			{renderOptionItem('userOpacity', $L('User Avatar Opacity'), USER_OPACITY_OPTIONS, '85%')}
-			{renderToggleItem('cardFocusZoom', $L('Card Focus Zoom'), $L('Slightly enlarge cards when focused'))}
-		</>
-	);
-
-	const renderDisplayFeatured = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderToggleItem('showFeaturedBar', $L('Show Featured Bar'), $L('Display the featured media bar on home screen'))}
-			{renderOptionItem('featuredBarStyle', $L('Bar Style'), getFeaturedBarStyleOptions(), $L('Moonfin'))}
-			{renderOptionItem('featuredContentType', $L('Content Type'), getContentTypeOptions(), $L('Movies & TV Shows'))}
-			{renderOptionItem('featuredItemCount', $L('Item Count'), getFeaturedItemCountOptions(), $L('10 items'))}
-			{renderOptionItem('mediaBarSourceType', $L('Source'), getMediaBarSourceOptions(), $L('Libraries'))}
-			{renderToggleItem(
-				'featuredTrailerPreview',
-				$L('Trailer Preview'),
-				$L('Automatically play trailer previews in the featured media bar')
-			)}
-			{settings.featuredTrailerPreview &&
-				renderToggleItem('featuredTrailerMuted', $L('Mute Trailer Audio'), $L('Mute trailer previews in the featured media bar and details screen trailer overlay'))}
-		</>
-	);
-
-	const renderPlaybackNextUp = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderOptionItem('nextUpBehavior', $L('Next Up Behavior'), getNextUpBehaviorOptions(), $L('Extended'))}
-			{settings.nextUpBehavior !== 'disabled' &&
-				renderSliderItem('nextUpTimeout', $L('Countdown Timer'), 0, 30, 1, (v) => (v === 0 ? $L('Instant') : `${v}s`))}
-		</>
-	);
-
-	const renderDisplayThemes = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderOptionItem('seasonalTheme', $L('Seasonal Effect'), getSeasonalThemeOptions(), $L('None'))}
-			{renderToggleItem('themeMusicEnabled', $L('Theme Music'), $L('Play background music on detail pages'))}
-			{settings.themeMusicEnabled &&
-				renderSliderItem('themeMusicVolume', $L('Theme Music Volume'), 0, 100, 5, (v) => `${v}%`)}
-			{settings.themeMusicEnabled &&
-				renderToggleItem(
-					'themeMusicOnHomeRows',
-					$L('Theme Music on Home Rows'),
-					$L('Play theme music when browsing home screen items')
-				)}
-		</>
-	);
-
-	const renderDisplayScreensaver = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderToggleItem(
-				'screensaverEnabled',
-				$L('Enable Screensaver'),
-				$L('Reduce brightness after inactivity to prevent screen burn-in')
-			)}
-			{settings.screensaverEnabled &&
-				renderOptionItem('screensaverMode', $L('Screensaver Type'), getScreensaverModeOptions(), $L('Library Backdrops'))}
-			{settings.screensaverEnabled &&
-				renderOptionItem('screensaverTimeout', $L('Timeout'), getScreensaverTimeoutOptions(), $L('90 seconds'))}
-			{settings.screensaverEnabled &&
-				renderOptionItem('screensaverDimmingLevel', $L('Dimming Level'), getScreensaverDimmingOptions(), '50%')}
-			{settings.screensaverEnabled &&
-				renderToggleItem('screensaverShowClock', $L('Show Clock'), $L('Display a moving clock during screensaver'))}
-			{settings.screensaverEnabled &&
-				renderToggleItem('screensaverAgeFilter', $L('Age Rating Filter'), $L('Only show age-appropriate backdrops'))}
-			{settings.screensaverEnabled &&
-				settings.screensaverAgeFilter &&
-				renderOptionItem('screensaverMaxRating', $L('Max Rating'), AGE_RATING_OPTIONS, 'PG-13')}
-		</>
-	);
-
 	const renderAccountAuthentication = () => (
 		<>
 			{renderToggleItem('autoLogin', $L('Auto Sign In'), $L('Automatically sign in on app launch'), 'profile')}
-			{renderMissingItem('always-authenticate', $L('Always Authenticate'), undefined, 'lock')}
-			{renderMissingItem('pin-code-protection', $L('PIN Code Protection'), undefined, 'lockcircle')}
-			{renderMissingItem('sort-servers-by', $L('Sort Servers By'), undefined, 'arrowupdown')}
+			{renderToggleItem('alwaysAuthenticate', $L('Always Authenticate'), $L('Require manual authentication after app start'), 'lock')}
+			{renderToggleItem('pinCodeProtection', $L('PIN Code Protection'), $L('Require a PIN before opening the app'), 'lockcircle')}
+			{renderNavItem(
+				'pinCode',
+				$L('PIN Code'),
+				typeof settings.pinCode === 'string' && /^\d{4}$/.test(settings.pinCode)
+					? $L('Configured 4-digit PIN')
+					: $L('Default PIN: 0000'),
+				openPinCode,
+				'lockcircle'
+			)}
+			{renderOptionItem('serverSortBy', $L('Sort Servers By'), getServerSortOptions(), $L('Server Name'), 'arrowupdown')}
 		</>
 	);
 
 	const renderAccountPrivacySafety = () => (
 		<>
-			{renderMissingItem('blocked-ratings', $L('Blocked Ratings'), undefined, 'profile')}
-			{renderMissingItem('exit-confirmation', $L('Exit Confirmation'), undefined, 'exit')}
+			{renderToggleItem('exitConfirmation', $L('Exit Confirmation'), $L('Ask before exiting the app from home/login screens'), 'exit')}
 		</>
 	);
 
@@ -1424,7 +1341,6 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			)}
 			{renderOptionItem('focusBorderColor', $L('Focus Border Color'), ACCENT_COLOR_OPTIONS, $L('Theme Default'))}
 			{renderOptionItem('clockDisplay', $L('Clock Display'), getClockDisplayOptions(), $L('24-Hour'))}
-			{renderMissingItem('24-hour-clock', $L('24-Hour Clock'), $L('Handled via Clock Display on Smart-TV'))}
 			{renderToggleItem('cardFocusZoom', $L('Card Focus Expansion'), $L('Slightly enlarge cards when focused'))}
 			{renderToggleItem('showHomeBackdrop', $L('Show Backdrops'), $L('Show background art while browsing'))}
 			{renderOptionItem('backdropBlurHome', $L('Browsing Blur'), getBlurOptions(), $L('Medium'))}
@@ -1486,7 +1402,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{renderOptionItem('homeRowsImageType', $L('Home Row Image Type'), getImageTypeOptions(), $L('Poster'), 'picture')}
 			{renderToggleItem('useSeriesThumbnails', $L('Series Thumbnails'), $L('Use series artwork instead of episode images'), 'aspectratio')}
 			{renderOptionItem('homeRowsPosterSize', $L('Image Size'), getPosterSizeOptions(), $L('Default'), 'aspectratio')}
-			{renderMissingItem('home-row-overlay', $L('Home Row Overlay'), undefined, 'info')}
+			{renderOptionItem('homeRowOverlay', $L('Home Row Overlay'), getHomeRowOverlayOptions(), $L('Off'), 'info')}
 			{renderToggleItem('themeMusicOnHomeRows', $L('Play Theme Music on Home Page'), $L('Play theme music while browsing home rows'), 'music')}
 		</>
 	);
@@ -1494,7 +1410,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const renderPersonalizationLibraries = () => (
 		<>
 			{renderNavItem('hideLibraries', $L('Library Visibility'), $L('Choose which libraries are hidden'), openLibraries, 'show')}
-			{renderMissingItem('folder-view', $L('Folder View'), undefined, 'folder')}
+			{renderOptionItem('folderViewMode', $L('Folder View'), getFolderViewModeOptions(), $L('Per Library'), 'folder')}
 			{renderToggleItem('unifiedLibraryMode', $L('Multi-Server Libraries'), $L('Combine content from all servers into a single view'), 'dns')}
 		</>
 	);
@@ -1526,12 +1442,21 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{renderOptionItem('featuredItemCount', $L('Item Count'), getFeaturedItemCountOptions(), $L('10 items'), 'list')}
 			{renderNavItem('sourceLibraries', $L('Source Libraries'), $L('Choose source libraries for media bar'), () => {}, 'folder')}
 			{renderNavItem('sourceCollections', $L('Source Collections'), $L('Choose source collections for media bar'), () => {}, 'bookmark')}
-			{renderMissingItem('excluded-genres', $L('Excluded Genres'), undefined, 'hide')}
-			{renderMissingItem('auto-advance', $L('Auto Advance'), undefined, 'skip')}
-			{renderMissingItem('auto-advance-interval', $L('Auto Advance Interval'), undefined, 'timer')}
+			{renderNavItem(
+				'excludedGenres',
+				$L('Excluded Genres'),
+				(Array.isArray(settings.excludedGenres) && settings.excludedGenres.length > 0)
+					? settings.excludedGenres.join(', ')
+					: $L('None'),
+				openExcludedGenres,
+				'hide'
+			)}
+			{renderToggleItem('autoAdvance', $L('Auto Advance'), $L('Automatically cycle featured media items'), 'skip')}
+			{settings.autoAdvance &&
+				renderSliderItem('autoAdvanceInterval', $L('Auto Advance Interval'), 2, 20, 1, (v) => `${v}s`, 'timer')}
 			{renderToggleItem('featuredTrailerPreview', $L('Trailer Preview'), $L('Automatically play trailer previews in media bar'), 'movies')}
-			{renderMissingItem('media-preview', $L('Media Preview'), undefined, 'mediaplayer')}
-			{renderMissingItem('preview-audio', $L('Preview Audio'), undefined, 'sound')}
+			{settings.featuredTrailerPreview &&
+				renderToggleItem('featuredTrailerMuted', $L('Mute Trailer Audio'), $L('Mute trailer previews in the featured media bar and details screen trailer overlay'), 'sound')}
 		</>
 	);
 
@@ -1547,10 +1472,16 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const renderIntegrationsMetadataRatings = () => (
 		<>
 			{renderToggleItem('mdblistEnabled', $L('Fetch Additional Ratings'), $L('Enable MDBList ratings'), 'star')}
-			{renderMissingItem('enabled-rating-sources', $L('Enabled Rating Sources'), undefined, 'list')}
+			{renderNavItem(
+				'ratingSources',
+				$L('Enabled Rating Sources'),
+				getEnabledRatingSourcesSummary(settings.mdblistRatingSources),
+				openRatingSources,
+				'list'
+			)}
 			{renderToggleItem('tmdbEpisodeRatingsEnabled', $L('Show Episode Ratings'), $L('Show episode ratings from TMDB'), 'star')}
 			{renderToggleItem('showRatingLabels', $L('Show Rating Text Labels'), $L('Display source labels under scores'), 'bookmark')}
-			{renderMissingItem('show-rating-badges', $L('Show Rating Badges'), undefined, 'colorpicker')}
+			{renderToggleItem('showRatingBadges', $L('Show Rating Badges'), $L('Display ratings row on supported media screens'), 'colorpicker')}
 		</>
 	);
 
@@ -1635,9 +1566,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 
 	const renderPlaybackAudio = () => (
 		<>
-			{renderMissingItem('audio-night-mode', $L('Audio Night Mode'), undefined, 'light')}
-			{renderMissingItem('default-audio-language', $L('Default Audio Language'), undefined, 'language')}
-			{renderMissingItem('audio-behavior', $L('Audio Behavior'), undefined, 'sound')}
+			{renderOptionItem('audioLanguage', $L('Default Audio Language'), getAudioLanguageOptions(), $L('Auto'), 'language')}
 			{renderToggleItem('passthroughEnabled', $L('Audio Passthrough'), $L('Enable advanced bitstream passthrough for external audio devices'), 'speaker')}
 			{renderToggleItem('ac3Passthrough', $L('AC3 Passthrough'), $L('Allow Dolby Digital passthrough when available'), 'speaker')}
 			{renderToggleItem('eac3Passthrough', $L('E-AC3 Passthrough'), $L('Allow Dolby Digital Plus passthrough when available'), 'speaker')}
@@ -1657,50 +1586,30 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 
 	const renderPlaybackAutomationQueue = () => (
 		<>
-			{renderMissingItem('cinema-mode', $L('Cinema Mode'), undefined, 'movies')}
 			{renderToggleItem('autoPlay', $L('Episode Queuing'), $L('Automatically play the next episode'), 'list')}
 			{renderOptionItem('nextUpBehavior', $L('Next Up Prompt'), getNextUpBehaviorOptions(), $L('Extended'), 'skip')}
 			{settings.nextUpBehavior !== 'disabled' &&
 				renderSliderItem('nextUpTimeout', $L('Next Up Prompt Timeout'), 0, 30, 1, (v) => (v === 0 ? $L('Instant') : `${v}s`), 'timer')}
-			{renderMissingItem('still-watching', $L('Still Watching Prompt'), undefined, 'show')}
+			{renderToggleItem('stillWatchingPrompt', $L('Still Watching Prompt'), $L('Show continuation prompts before auto-playing the next episode'), 'show')}
 		</>
 	);
 
 	const renderPlaybackOfflineDownloads = () => (
-		<>
-			{renderMissingItem('default-download-quality', $L('Default Download Quality'), undefined, 'picture')}
-			{renderMissingItem('wifi-only', $L('WiFi Only'), undefined, 'wifi4')}
-			{renderMissingItem('storage-limit', $L('Storage Limit'), undefined, 'folder')}
-			{renderMissingItem('download-location', $L('Download Location'), undefined, 'folderupper')}
-			{renderMissingItem('save-to-downloads', $L('Save to Downloads Folder'), undefined, 'folderupper')}
-			{renderMissingItem('concurrent-downloads', $L('Concurrent Downloads'), undefined, 'list')}
-		</>
+		<></>
 	);
 
 	const renderPlaybackSyncPlay = () => (
 		<>
-			{renderMissingItem('syncplay-enabled', $L('SyncPlay Enabled'), undefined, 'groups')}
+			{renderToggleItem('syncplayEnabled', $L('SyncPlay Enabled'), $L('Enable SyncPlay groups and controls'), 'groups')}
 			{renderToggleItem('showSyncPlayButton', $L('SyncPlay Button'), $L('Show SyncPlay button in navigation bar'), 'check')}
-			{renderMissingItem('open-syncplay', $L('Open SyncPlay'), undefined, 'groups')}
-			{renderMissingItem('advanced-correction', $L('Advanced Correction'), undefined, 'spanner')}
-			{renderMissingItem('sync-correction', $L('Sync Correction'), undefined, 'refresh')}
-			{renderMissingItem('speed-to-sync', $L('Speed to Sync'), undefined, 'playspeed')}
-			{renderMissingItem('skip-to-sync', $L('Skip to Sync'), undefined, 'skip')}
-			{renderMissingItem('minimum-speed-delay', $L('Minimum Speed Delay'), undefined, 'timer')}
-			{renderMissingItem('maximum-speed-delay', $L('Maximum Speed Delay'), undefined, 'timer')}
-			{renderMissingItem('speed-duration', $L('Speed Duration'), undefined, 'scheduler')}
-			{renderMissingItem('minimum-skip-delay', $L('Minimum Skip Delay'), undefined, 'timer')}
-			{renderMissingItem('syncplay-extra-offset', $L('SyncPlay Extra Offset'), undefined, 'scheduler')}
+			{renderToggleItem('syncplayAutoOpen', $L('Open SyncPlay'), $L('Automatically open SyncPlay dialog when starting playback'), 'groups')}
 		</>
 	);
 
 	const renderPlaybackAdvanced = () => (
 		<>
-			{renderMissingItem('video-start-delay', $L('Video Start Delay'), undefined, 'scheduler')}
-			{renderMissingItem('custom-mpv-conf', $L('Custom MPV Conf'), undefined, 'spanner')}
-			{renderMissingItem('mpv-conf-path', $L('MPV Conf Path'), undefined, 'files')}
-			{renderMissingItem('unsafe-mpv-options', $L('Unsafe MPV Options'), undefined, 'alert02')}
-			{renderMissingItem('live-tv-direct', $L('Live TV Direct'), undefined, 'liveplay')}
+			{renderSliderItem('videoStartDelay', $L('Video Start Delay'), 0, 5, 0.5, (v) => (v === 0 ? $L('Off') : `${Number(v).toFixed(1)}s`), 'scheduler')}
+			{renderToggleItem('liveTvDirect', $L('Live TV Direct'), $L('Open the first available live channel directly from library selection'), 'liveplay')}
 		</>
 	);
 
@@ -1718,7 +1627,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const renderAboutAppInfo = () => (
 		<>
 			{renderAboutApp()}
-			{renderMissingItem('update-notifications', $L('Update Notifications'), undefined, 'download')}
+			{renderToggleItem('updateNotificationsEnabled', $L('Update Notifications'), $L('Show app update notifications when a new release is available'), 'download')}
 		</>
 	);
 
@@ -1752,18 +1661,6 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			</>
 		);
 	};
-
-	const renderPluginMDBList = () => ( // eslint-disable-line no-unused-vars
-		<>
-			{renderToggleItem('mdblistEnabled', $L('Enable Ratings'), $L('Show MDBList ratings on media details and featured bar'))}
-			{settings.mdblistEnabled &&
-				renderToggleItem('showRatingLabels', $L('Show Rating Labels'), $L('Display source names below rating scores'))}
-		</>
-	);
-
-	const renderPluginTMDB = () => ( // eslint-disable-line no-unused-vars
-		<>{renderToggleItem('tmdbEpisodeRatingsEnabled', $L('Episode Ratings'), $L('Show TMDB ratings on individual episodes'))}</>
-	);
 
 	const renderPluginSeerr = () => ( // eslint-disable-line no-unused-vars
 		<>
@@ -2303,6 +2200,113 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		</ViewContainer>
 	);
 
+	const renderRatingSourcesView = () => (
+		<ViewContainer className={css.viewContainer} spotlightId='rating-sources-view'>
+			<div className={css.listContent} onFocus={handleListFocus}>
+				<div className={css.listInner}>
+					{renderSectionTitle($L('Enabled Rating Sources'))}
+					<div className={css.viewDescription}>
+						{$L('Choose which rating sources are shown in ratings rows.')}
+					</div>
+					{RATING_SOURCE_OPTIONS.map((option) => {
+						const isEnabled = tempRatingSources.includes(option.value);
+						return (
+							<SpottableDiv
+								key={option.value}
+								className={css.listItem}
+								onClick={() => toggleRatingSource(option.value)}
+								spotlightId={`rating-source-${option.value}`}
+							>
+								<div className={css.listItemBody}>
+									<div className={css.listItemHeading}>{option.label}</div>
+								</div>
+								<div className={css.listItemTrailing}>{renderToggle(isEnabled)}</div>
+							</SpottableDiv>
+						);
+					})}
+					<div className={css.actionBar}>
+						<Button onClick={popView} size='small' spotlightId='rating-sources-cancel'>
+							{$L('Cancel')}
+						</Button>
+						<Button onClick={saveRatingSources} size='small' spotlightId='rating-sources-save'>
+							{$L('Save')}
+						</Button>
+					</div>
+				</div>
+			</div>
+		</ViewContainer>
+	);
+
+	const renderExcludedGenresView = () => (
+		<ViewContainer className={css.viewContainer} spotlightId='excluded-genres-view'>
+			<div className={css.listContent} onFocus={handleListFocus}>
+				<div className={css.listInner}>
+					{renderSectionTitle($L('Excluded Genres'))}
+					<div className={css.viewDescription}>
+						{$L('Enter a comma-separated list of genre names to hide from the featured media bar.')}
+					</div>
+					<div className={css.inputGroup}>
+						<label>{$L('Genres')}</label>
+						<SpottableInput
+							className={css.input}
+							type='text'
+							value={tempExcludedGenresText}
+							onChange={(e) => setTempExcludedGenresText(e.target.value)}
+							placeholder={$L('Example: horror, reality, documentary')}
+							spotlightId='excluded-genres-input'
+						/>
+					</div>
+					<div className={css.actionBar}>
+						<Button onClick={popView} size='small' spotlightId='excluded-genres-cancel'>
+							{$L('Cancel')}
+						</Button>
+						<Button onClick={saveExcludedGenres} size='small' spotlightId='excluded-genres-save'>
+							{$L('Save')}
+						</Button>
+					</div>
+				</div>
+			</div>
+		</ViewContainer>
+	);
+
+	const renderPinCodeView = () => (
+		<ViewContainer className={css.viewContainer} spotlightId='pin-code-view'>
+			<div className={css.listContent} onFocus={handleListFocus}>
+				<div className={css.listInner}>
+					{renderSectionTitle($L('Set PIN Code'))}
+					<div className={css.viewDescription}>
+						{$L('Enter a 4-digit PIN used to unlock the app when PIN protection is enabled.')}
+					</div>
+					<div className={css.inputGroup}>
+						<label>{$L('PIN')}</label>
+						<SpottableInput
+							className={css.input}
+							type='password'
+							value={tempPinCode}
+							onChange={(e) => {
+								const next = String(e.target.value || '').replace(/\D/g, '').slice(0, 4);
+								setTempPinCode(next);
+								setPinCodeError('');
+							}}
+							placeholder={$L('4 digits')}
+							maxLength={4}
+							spotlightId='pin-code-input'
+						/>
+					</div>
+					{pinCodeError && <div className={`${css.statusMessage} ${css.statusError}`}>{pinCodeError}</div>}
+					<div className={css.actionBar}>
+						<Button onClick={popView} size='small' spotlightId='pin-code-cancel'>
+							{$L('Cancel')}
+						</Button>
+						<Button onClick={savePinCode} size='small' spotlightId='pin-code-save'>
+							{$L('Save')}
+						</Button>
+					</div>
+				</div>
+			</div>
+		</ViewContainer>
+	);
+
 	const isUnifiedModal = settings.unifiedLibraryMode && hasMultipleServers;
 
 	const renderLibrariesView = () => (
@@ -2361,6 +2365,9 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{currentView.view === 'options' && renderOptionsView()}
 			{currentView.view === 'themes' && renderThemesView()}
 			{currentView.view === 'homeRows' && renderHomeRowsView()}
+			{currentView.view === 'ratingSources' && renderRatingSourcesView()}
+			{currentView.view === 'excludedGenres' && renderExcludedGenresView()}
+			{currentView.view === 'pinCode' && renderPinCodeView()}
 			{currentView.view === 'libraries' && renderLibrariesView()}
 			<ClearDataDialog
 				open={clearDataDialogOpen}

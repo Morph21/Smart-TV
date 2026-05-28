@@ -18,6 +18,7 @@ import {getImageUrl} from '../../utils/helpers';
 import {initPgsCanvasRenderer, disposePgsRenderer, clearPgsCanvas} from '../../utils/pgsRenderer';
 import {supportsAssRenderer, initAssCanvasRenderer, disposeAssRenderer, setAssTime} from '../../utils/assRenderer';
 import {getSubtitleOverlayStyle, getSubtitleTextStyle, sanitizeSubtitleHtml} from '../../utils/subtitleConstants';
+import {findPreferredAudioStream} from '../../utils/audioLanguage';
 import {api as jellyfinApi, createApiForServer, getServerUrl} from '../../services/jellyfinApi';
 import PlayerControls, {usePlayerButtons} from './PlayerControls';
 import useSegmentPopups from './useSegmentPopups';
@@ -536,17 +537,23 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				setChapters(chapterList);
 
 				// Handle initial audio selection
+				const preferredAudio = findPreferredAudioStream(result.audioStreams, settings.audioLanguage);
 				if (initialAudioIndex !== undefined && initialAudioIndex !== null) {
 					setSelectedAudioIndex(initialAudioIndex);
 				} else {
+					if (preferredAudio) {
+						setSelectedAudioIndex(preferredAudio.index);
+					}
 					const defaultAudio = result.audioStreams?.find(s => s.isDefault);
-					if (defaultAudio) setSelectedAudioIndex(defaultAudio.index);
+					if (!preferredAudio && defaultAudio) setSelectedAudioIndex(defaultAudio.index);
 				}
 
 				// Track pending audio/subtitle setup (apply after AVPlay prepare)
 				let pendingAudioIndex = null;
 				if (initialAudioIndex != null) {
 					pendingAudioIndex = initialAudioIndex;
+				} else if (preferredAudio) {
+					pendingAudioIndex = preferredAudio.index;
 				}
 
 				let pendingSubAction = null;
@@ -796,7 +803,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				}
 
 				// Seek to start position if resuming. For HLS-transcode we defer the
-				// seek until AFTER play() has started — calling seekTo() in the READY
+				// seek until AFTER play() has started - calling seekTo() in the READY
 				// state on a fresh HLS session yields PLAYER_ERROR_SEEK_FAILED.
 				const isHlsTranscode = result.playMethod === playback.PlayMethod.Transcode && result.url?.includes('.m3u8');
 				let deferredSeekMs = 0;
@@ -810,6 +817,10 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				}
 
 				// Play - must be called BEFORE setSelectTrack, which requires PLAYING or PAUSED state
+				const startDelayMs = Math.max(0, Number(settings.videoStartDelay || 0) * 1000);
+				if (startDelayMs > 0) {
+					await new Promise((resolve) => setTimeout(resolve, startDelayMs));
+				}
 				avplayPlay();
 				setIsPaused(false);
 

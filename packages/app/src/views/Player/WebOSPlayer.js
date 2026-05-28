@@ -24,6 +24,7 @@ import {useSettings} from '../../context/SettingsContext';
 import {useSyncPlay} from '../../context/SyncPlayContext';
 import * as syncPlayService from '../../services/syncPlay';
 import {getSubtitleOverlayStyle, getSubtitleTextStyle, sanitizeSubtitleHtml} from '../../utils/subtitleConstants';
+import {findPreferredAudioStream} from '../../utils/audioLanguage';
 import PlayerControls, {usePlayerButtons} from './PlayerControls';
 import useSegmentPopups from './useSegmentPopups';
 import {
@@ -655,11 +656,18 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				setChapters(chapterList);
 
 				const defaultAudio = result.audioStreams?.find(s => s.isDefault);
+				const preferredAudio = findPreferredAudioStream(result.audioStreams, settings.audioLanguage);
 				if (initialAudioIndex !== undefined && initialAudioIndex !== null) {
 					setSelectedAudioIndex(initialAudioIndex);
 					// Store for onFirstTimeUpdate to apply via audioTracks API
 					pendingAudioRef.current = {
 						streamIndex: initialAudioIndex,
+						audioStreams: result.audioStreams || []
+					};
+				} else if (preferredAudio) {
+					setSelectedAudioIndex(preferredAudio.index);
+					pendingAudioRef.current = {
+						streamIndex: preferredAudio.index,
 						audioStreams: result.audioStreams || []
 					};
 				} else if (defaultAudio) {
@@ -1132,16 +1140,27 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 			}
 		};
 
-		setSourceAndPlay();
+		const startDelayMs = Math.max(0, Number(settings.videoStartDelay || 0) * 1000);
+		let startDelayTimer = null;
+		if (startDelayMs > 0) {
+			startDelayTimer = setTimeout(() => {
+				setSourceAndPlay();
+			}, startDelayMs);
+		} else {
+			setSourceAndPlay();
+		}
 
 		return () => {
+			if (startDelayTimer) {
+				clearTimeout(startDelayTimer);
+			}
 			if (playbackStartTimeoutRef.current) {
 				clearTimeout(playbackStartTimeoutRef.current);
 				playbackStartTimeoutRef.current = null;
 			}
 			destroyHlsPlayer();
 		};
-	}, [mediaUrl, isLoading, mimeType, playMethod, error]);
+	}, [mediaUrl, isLoading, mimeType, playMethod, error, settings.videoStartDelay]);
 
 	const showControls = useCallback((isModalOpen = activeModal) => {
 		setControlsVisible(true);

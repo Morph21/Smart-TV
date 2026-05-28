@@ -117,7 +117,7 @@ const useSegmentPopups = ({
 				}
 			}
 
-			if (creditsStart != null && nextEpisode && !hasTriggeredNextEpisodeRef.current && outroAction !== 'none') {
+			if (creditsStart != null && nextEpisode && !hasTriggeredNextEpisodeRef.current && outroAction !== 'none' && settings.stillWatchingPrompt !== false) {
 				const inCredits = ticks >= creditsStart;
 				if (inCredits) {
 					setShowSkipCredits(prev => {
@@ -134,14 +134,14 @@ const useSegmentPopups = ({
 			}
 		}
 
-		if (nextEpisode && runTimeRef.current > 0 && settings.nextUpBehavior !== 'disabled') {
+		if (nextEpisode && runTimeRef.current > 0 && settings.nextUpBehavior !== 'disabled' && settings.stillWatchingPrompt !== false) {
 			const remaining = runTimeRef.current - ticks;
 			const nearEnd = remaining < 300000000;
 			if (nearEnd && !hasTriggeredNextEpisodeRef.current) {
 				setShowNextEpisode(true);
 			}
 		}
-	}, [mediaSegments, settings.introAction, settings.outroAction, settings.nextUpBehavior, nextEpisode, runTimeRef, handlePlayNextEpisode, handleSkipIntro]);
+	}, [mediaSegments, settings.introAction, settings.nextUpBehavior, settings.outroAction, settings.stillWatchingPrompt, nextEpisode, runTimeRef, handlePlayNextEpisode, handleSkipIntro]);
 
 	// --- Auto-focus effects ---
 

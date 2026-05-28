@@ -12,7 +12,11 @@ const useVersionCheck = (delay = 3000) => {
 
 	useEffect(() => {
 		// Don't check if delay is null (not authenticated yet)
-		if (delay === null) return;
+		if (delay === null) {
+			setUpdateInfo(null);
+			setIsChecking(false);
+			return;
+		}
 
 		const timer = setTimeout(async () => {
 			setIsChecking(true);

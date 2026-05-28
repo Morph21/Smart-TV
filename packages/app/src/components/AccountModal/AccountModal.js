@@ -1,9 +1,10 @@
-import {useCallback, useState, useEffect, useRef} from 'react';
+import {useCallback, useState, useEffect, useRef, useMemo} from 'react';
 import Spottable from '@enact/spotlight/Spottable';
 import Spotlight from '@enact/spotlight';
 import Popup from '@enact/sandstone/Popup';
 import $L from '@enact/i18n/$L';
 import {useAuth} from '../../context/AuthContext';
+import {useSettings} from '../../context/SettingsContext';
 
 import css from './AccountModal.module.less';
 
@@ -57,6 +58,33 @@ const AccountModal = ({
 		hasMultipleUsers,
 		startAddServerFlow
 	} = useAuth();
+	const {settings} = useSettings();
+
+	const sortedServers = useMemo(() => {
+		const list = Array.isArray(servers) ? [...servers] : [];
+		const sortBy = settings.serverSortBy || 'name';
+		if (sortBy === 'recent') {
+			return list.sort((a, b) => {
+				const aTime = a.lastConnected ? Date.parse(a.lastConnected) : 0;
+				const bTime = b.lastConnected ? Date.parse(b.lastConnected) : 0;
+				if (aTime !== bTime) return bTime - aTime;
+				return (a.username || '').localeCompare(b.username || '', undefined, {sensitivity: 'base'});
+			});
+		}
+		if (sortBy === 'added') {
+			return list.sort((a, b) => {
+				const aTime = a.addedDate ? Date.parse(a.addedDate) : 0;
+				const bTime = b.addedDate ? Date.parse(b.addedDate) : 0;
+				if (aTime !== bTime) return bTime - aTime;
+				return (a.username || '').localeCompare(b.username || '', undefined, {sensitivity: 'base'});
+			});
+		}
+		return list.sort((a, b) => {
+			const serverCompare = (a.name || '').localeCompare(b.name || '', undefined, {sensitivity: 'base'});
+			if (serverCompare !== 0) return serverCompare;
+			return (a.username || '').localeCompare(b.username || '', undefined, {sensitivity: 'base'});
+		});
+	}, [servers, settings.serverSortBy]);
 
 	const [showConfirmRemove, setShowConfirmRemove] = useState(false);
 	const [serverToRemove, setServerToRemove] = useState(null);
@@ -70,14 +98,14 @@ const AccountModal = ({
 					Spotlight.focus(`[data-spotlight-id="${focusOnReturn}"]`);
 					setFocusOnReturn(null);
 				} else {
-					const activeIdx = servers.findIndex(
+					const activeIdx = sortedServers.findIndex(
 						s => activeServerInfo?.serverId === s.serverId && activeServerInfo?.userId === s.userId
 					);
 					Spotlight.focus(`[data-spotlight-id="account-user-${activeIdx >= 0 ? activeIdx : 0}"]`);
 				}
 			}, 100);
 		}
-	}, [open, showConfirmRemove, servers, activeServerInfo, focusOnReturn]);
+	}, [open, showConfirmRemove, sortedServers, activeServerInfo, focusOnReturn]);
 
 	const handleLogout = useCallback(async () => {
 		await logout();
@@ -180,7 +208,7 @@ const AccountModal = ({
 					</div>
 
 					<div className={css.userGrid}>
-						{servers.map((server, index) => {
+						{sortedServers.map((server, index) => {
 							const isActive = activeServerInfo?.serverId === server.serverId &&
 								activeServerInfo?.userId === server.userId;
 							const imageTag = isActive ? (user?.PrimaryImageTag || server.primaryImageTag) : server.primaryImageTag;
@@ -206,7 +234,7 @@ const AccountModal = ({
 									<span className={css.userName}>{server.username}</span>
 									<span className={css.userServerName}>{server.name}</span>
 									{isActive && <span className={css.activeIndicator}>{$L('Active')}</span>}
-									{(servers.length > 1 || !isActive) && (
+									{(sortedServers.length > 1 || !isActive) && (
 										<button
 											className={css.removeBtn}
 											data-server-id={server.serverId}

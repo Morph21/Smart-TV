@@ -1,5 +1,6 @@
 import {createContext, useContext, useState, useCallback, useEffect, useRef} from 'react';
 import {useAuth} from './AuthContext';
+import {useSettings} from './SettingsContext';
 import * as syncPlayService from '../services/syncPlay';
 import {api} from '../services/jellyfinApi';
 
@@ -9,6 +10,7 @@ export const useSyncPlay = () => useContext(SyncPlayContext);
 
 export const SyncPlayProvider = ({children}) => {
 	const {isAuthenticated} = useAuth();
+	const {settings} = useSettings();
 	const [group, setGroup] = useState(null);
 	const [groups, setGroups] = useState([]);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -19,13 +21,24 @@ export const SyncPlayProvider = ({children}) => {
 	const listenerRef = useRef(null);
 
 	useEffect(() => {
-		if (isAuthenticated) {
+		if (isAuthenticated && settings.syncplayEnabled !== false) {
 			syncPlayService.connectWebSocket();
+		} else {
+			syncPlayService.disconnectWebSocket();
 		}
 		return () => {
 			syncPlayService.disconnectWebSocket();
 		};
-	}, [isAuthenticated]);
+	}, [isAuthenticated, settings.syncplayEnabled]);
+
+	useEffect(() => {
+		if (settings.syncplayEnabled !== false) return;
+		setIsDialogOpen(false);
+		setGroup(null);
+		setGroups([]);
+		setPlayQueue(null);
+		setPlayQueueItem(null);
+	}, [settings.syncplayEnabled]);
 
 	useEffect(() => {
 		if (listenerRef.current) {
@@ -116,9 +129,10 @@ export const SyncPlayProvider = ({children}) => {
 	}, []);
 
 	const openDialog = useCallback(() => {
+		if (settings.syncplayEnabled === false) return;
 		setIsDialogOpen(true);
 		refreshGroups();
-	}, [refreshGroups]);
+	}, [refreshGroups, settings.syncplayEnabled]);
 
 	const closeDialog = useCallback(() => {
 		setIsDialogOpen(false);

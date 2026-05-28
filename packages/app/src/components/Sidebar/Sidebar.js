@@ -297,7 +297,7 @@ const Sidebar = ({
 					</SpottableButton>
 				)}
 
-				{settings.showSyncPlayButton !== false && (
+				{settings.syncplayEnabled !== false && settings.showSyncPlayButton !== false && (
 					<SpottableButton
 						className={`${css.sidebarItem} ${isInGroup ? css.active : ''}`}
 						onClick={onSyncPlay}

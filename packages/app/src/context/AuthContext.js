@@ -65,7 +65,7 @@ export const AuthProvider = ({children}) => {
 				const {active} = await loadServers();
 
 				const storedSettings = await getFromStorage('settings');
-				const autoLogin = storedSettings?.autoLogin !== false;
+				const autoLogin = storedSettings?.autoLogin !== false && storedSettings?.alwaysAuthenticate !== true;
 
 				if (active) {
 					setLastServerUrl(active.url);

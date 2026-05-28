@@ -150,13 +150,14 @@ const NavBar = ({
 	}, []);
 
 	const librariesLeftTargetId = useMemo(() => {
-		if (settings.showSyncPlayButton !== false) return 'navbar-syncplay';
+		if (settings.syncplayEnabled !== false && settings.showSyncPlayButton !== false) return 'navbar-syncplay';
 		if (jellyseerrEnabled) return 'navbar-discover';
 		if (settings.showFavoritesButton !== false) return 'navbar-favorites';
 		if (settings.showGenresButton !== false) return 'navbar-genres';
 		if (settings.showShuffleButton !== false) return 'navbar-shuffle';
 		return 'navbar-search';
 	}, [
+		settings.syncplayEnabled,
 		settings.showSyncPlayButton,
 		jellyseerrEnabled,
 		settings.showFavoritesButton,
@@ -316,7 +317,7 @@ const NavBar = ({
 						</SpottableButton>
 					)}
 
-					{settings.showSyncPlayButton !== false && (
+					{settings.syncplayEnabled !== false && settings.showSyncPlayButton !== false && (
 						<SpottableButton
 							className={`${css.navBtn} ${css.navBtnIcon} ${css.expandableBtn} ${isInGroup ? css.active : ''}`}
 							onClick={onSyncPlay}

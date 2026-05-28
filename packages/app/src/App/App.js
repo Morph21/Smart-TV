@@ -1,6 +1,9 @@
 import {useState, useCallback, useEffect, lazy, Suspense, useRef} from 'react';
 import ThemeDecorator from '@enact/sandstone/ThemeDecorator';
 import {Panels, Panel} from '@enact/sandstone/Panels';
+import Spottable from '@enact/spotlight/Spottable';
+import Spotlight from '@enact/spotlight';
+import $L from '@enact/i18n/$L';
 
 import ilib from 'ilib';
 
@@ -28,6 +31,7 @@ import SyncPlayDialog from '../components/SyncPlayDialog';
 import PhotoViewer from '../components/PhotoViewer';
 import ComicViewer from '../components/ComicViewer';
 import SettingsPanel from '../components/SettingsPanel';
+import SpottableInput from '../components/SpottableInput/SpottableInput';
 import useInactivityTimer from '../hooks/useInactivityTimer';
 import {useThemeMusic} from '../hooks/useThemeMusic';
 import {buildThemeCssVars} from '../theme/themeSpec';
@@ -54,6 +58,7 @@ const JellyseerrPerson = lazy(() => import('../views/JellyseerrPerson'));
 import css from './App.module.less';
 
 const MAX_HISTORY_LENGTH = 10;
+const SpottableButton = Spottable('button');
 
 const normalizeJellyseerrSelection = (item) => {
 	if (!item) return null;
@@ -115,6 +120,8 @@ const AppContent = (props) => {
 	const [selectedGenre, setSelectedGenre] = useState(null);
 	const [genreFilter, setGenreFilter] = useState(null);
 	const [playingItem, setPlayingItem] = useState(null);
+	const [playbackOptions, setPlaybackOptions] = useState(null);
+	const [isResume, setIsResume] = useState(false);
 	const [isPlayerPaused, setIsPlayerPaused] = useState(false);
 	const [panelHistory, setPanelHistory] = useState([]);
 	const [jellyseerrItem, setJellyseerrItem] = useState(null);
@@ -125,6 +132,9 @@ const AppContent = (props) => {
 	const [showAccountModal, setShowAccountModal] = useState(false);
 	const [showExitDialog, setShowExitDialog] = useState(false);
 	const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+	const [pinCodeInput, setPinCodeInput] = useState('');
+	const [pinCodeError, setPinCodeError] = useState('');
+	const [isPinUnlocked, setIsPinUnlocked] = useState(false);
 	const cleanupHandlersRef = useRef(null);
 	const backHandlerRef = useRef(null);
 	const detailsItemStackRef = useRef([]);
@@ -133,7 +143,13 @@ const AppContent = (props) => {
 	const [photoViewerItem, setPhotoViewerItem] = useState(null);
 	const [photoViewerItems, setPhotoViewerItems] = useState([]);
 	const [comicViewerItem, setComicViewerItem] = useState(null);
-	const {updateInfo, formattedNotes, dismiss: dismissUpdate} = useVersionCheck(isAuthenticated ? 3000 : null);
+	const {updateInfo, formattedNotes, dismiss: dismissUpdate} = useVersionCheck(
+		isAuthenticated && settings.updateNotificationsEnabled !== false ? 3000 : null
+	);
+	const configuredPin = typeof settings.pinCode === 'string' && /^\d{4}$/.test(settings.pinCode)
+		? settings.pinCode
+		: '0000';
+	const isPinGateActive = isAuthenticated && settings.pinCodeProtection === true && !isPinUnlocked;
 	const screensaverTimeout = Number(settings.screensaverTimeout || 90);
 	const screensaverEnabled = Boolean(
 		settings.screensaverEnabled &&
@@ -147,6 +163,32 @@ const AppContent = (props) => {
 		!comicViewerItem
 	);
 	const {isInactive: showScreensaver, dismiss: dismissScreensaver} = useInactivityTimer(screensaverTimeout, screensaverEnabled);
+
+	useEffect(() => {
+		if (!isAuthenticated) {
+			setIsPinUnlocked(false);
+			setPinCodeInput('');
+			setPinCodeError('');
+			return;
+		}
+		if (settings.pinCodeProtection === true) {
+			setIsPinUnlocked(false);
+			setPinCodeInput('');
+			setPinCodeError('');
+			return;
+		}
+		setIsPinUnlocked(true);
+		setPinCodeInput('');
+		setPinCodeError('');
+	}, [isAuthenticated, settings.pinCodeProtection, user?.Id]);
+
+	useEffect(() => {
+		if (!isPinGateActive) return;
+		const timer = setTimeout(() => {
+			Spotlight.focus('[data-spotlight-id="app-pin-input"]');
+		}, 100);
+		return () => clearTimeout(timer);
+	}, [isPinGateActive]);
 
 	const fetchLibraries = useCallback(async () => {
 		if (isAuthenticated && api && user) {
@@ -308,6 +350,11 @@ const AppContent = (props) => {
 			performAppCleanup();
 			setPlayingItem(null);
 			setPanelHistory([]);
+			if (isAuthenticated && settings.pinCodeProtection === true) {
+				setIsPinUnlocked(false);
+				setPinCodeInput('');
+				setPinCodeError('');
+			}
 			if (isAuthenticated) {
 				setPanelIndex(PANELS.BROWSE);
 			}
@@ -346,7 +393,7 @@ const AppContent = (props) => {
 				cleanupHandlersRef.current();
 			}
 		};
-	}, [isAuthenticated, performAppCleanup, revalidateSession]);
+	}, [isAuthenticated, performAppCleanup, revalidateSession, settings.pinCodeProtection]);
 
 	useEffect(() => {
 		if (!isAuthenticated || !user?.Id) {
@@ -410,6 +457,10 @@ const AppContent = (props) => {
 				e.preventDefault();
 				e.stopPropagation();
 
+				if (isPinGateActive) {
+					return;
+				}
+
 				if (showExitDialog) {
 					return;
 				}
@@ -424,7 +475,11 @@ const AppContent = (props) => {
 				}
 
 				if (panelIndex === PANELS.BROWSE || panelIndex === PANELS.LOGIN) {
-					setShowExitDialog(true);
+					if (settings.exitConfirmation === false) {
+						performAppCleanup();
+					} else {
+						setShowExitDialog(true);
+					}
 					return;
 				}
 				if (panelIndex === PANELS.PLAYER || panelIndex === PANELS.SETTINGS) {
@@ -446,7 +501,7 @@ const AppContent = (props) => {
 
 		window.addEventListener('keydown', handleKeyDown, true);
 		return () => window.removeEventListener('keydown', handleKeyDown, true);
-	}, [panelIndex, handleBack, performAppCleanup, showAccountModal, showExitDialog, showSettingsPanel]);
+	}, [panelIndex, handleBack, performAppCleanup, settings.exitConfirmation, showAccountModal, showExitDialog, showSettingsPanel, isPinGateActive]);
 
 	const handleLoggedIn = useCallback(() => {
 		setPanelHistory([]);
@@ -511,8 +566,8 @@ const AppContent = (props) => {
 		}
 		if (item.Type === 'Audio') {
 			setPlayingItem(item);
-			setPlaybackOptions(null); // eslint-disable-line no-use-before-define
-			setIsResume(false); // eslint-disable-line no-use-before-define
+			setPlaybackOptions(null);
+			setIsResume(false);
 			navigateTo(PANELS.PLAYER);
 			return;
 		}
@@ -540,18 +595,31 @@ const AppContent = (props) => {
 		setComicViewerItem(null);
 	}, []);
 
-	const handleSelectLibrary = useCallback((library) => {
+	const handleSelectLibrary = useCallback(async (library) => {
 		if (library.CollectionType === 'livetv') {
+			if (settings.liveTvDirect) {
+				let channels = null;
+				try {
+					channels = await api.getLiveTvChannels(0, 1);
+				} catch {
+					channels = null;
+				}
+				const firstChannel = channels?.Items?.[0];
+				if (firstChannel) {
+					setPlayingItem(firstChannel);
+					setPlaybackOptions(null);
+					setIsResume(false);
+					navigateTo(PANELS.PLAYER);
+					return;
+				}
+			}
 			navigateTo(PANELS.LIVETV);
 			return;
 		}
 		setSelectedLibrary(library);
 		setGenreFilter(null);
 		navigateTo(PANELS.LIBRARY);
-	}, [navigateTo]);
-
-	const [playbackOptions, setPlaybackOptions] = useState(null);
-	const [isResume, setIsResume] = useState(false);
+	}, [api, navigateTo, settings.liveTvDirect]);
 
 	const handlePlay = useCallback((item, resume, options) => {
 		if (item.MediaType === 'Book' && item.Path?.toLowerCase().endsWith('.cbz')) {
@@ -560,12 +628,14 @@ const AppContent = (props) => {
 		}
 		if (isSyncPlayInGroup) {
 			syncPlaySetNewQueue([item.Id]);
+		} else if (settings.syncplayEnabled !== false && settings.syncplayAutoOpen) {
+			openSyncPlay();
 		}
 		setPlayingItem(item);
 		setPlaybackOptions(options || null);
 		setIsResume(!!resume);
 		navigateTo(PANELS.PLAYER);
-	}, [navigateTo, isSyncPlayInGroup, syncPlaySetNewQueue]);
+	}, [navigateTo, isSyncPlayInGroup, openSyncPlay, settings.syncplayAutoOpen, settings.syncplayEnabled, syncPlaySetNewQueue]);
 
 	useEffect(() => {
 		if (playQueueItem) {
@@ -777,10 +847,71 @@ const AppContent = (props) => {
 		navigateTo(PANELS.JELLYSEERR_PERSON);
 	}, [navigateTo]);
 
+	const handlePinInputChange = useCallback((e) => {
+		const nextValue = String(e.target.value || '').replace(/\D/g, '').slice(0, 4);
+		setPinCodeInput(nextValue);
+		if (pinCodeError) {
+			setPinCodeError('');
+		}
+	}, [pinCodeError]);
+
+	const handlePinSubmit = useCallback(() => {
+		if (pinCodeInput === configuredPin) {
+			setIsPinUnlocked(true);
+			setPinCodeInput('');
+			setPinCodeError('');
+			return;
+		}
+		setPinCodeInput('');
+		setPinCodeError($L('Incorrect PIN code'));
+		Spotlight.focus('[data-spotlight-id="app-pin-input"]');
+	}, [pinCodeInput, configuredPin]);
+
+	const handlePinInputKeyDown = useCallback((e) => {
+		const code = e.keyCode || e.which;
+		if (code === 13 || e.key === 'Enter') {
+			e.preventDefault();
+			handlePinSubmit();
+		}
+	}, [handlePinSubmit]);
+
 	if (isLoading || !authChecked) {
 		return (
 			<div className={css.loading}>
 				<LoadingSpinner />
+			</div>
+		);
+	}
+
+	if (isPinGateActive) {
+		return (
+			<div className={css.app} {...props}>
+				<div className={css.pinGate}>
+					<div className={css.pinCard}>
+						<h2 className={css.pinTitle}>{$L('Enter PIN')}</h2>
+						<p className={css.pinSubtitle}>{$L('This profile is protected by a 4-digit PIN.')}</p>
+						<SpottableInput
+							className={css.pinInput}
+							type='password'
+							value={pinCodeInput}
+							onChange={handlePinInputChange}
+							onKeyDown={handlePinInputKeyDown}
+							maxLength={4}
+							placeholder={$L('4 digits')}
+							spotlightId='app-pin-input'
+						/>
+						{pinCodeError && <div className={css.pinError}>{pinCodeError}</div>}
+						<div className={css.pinActions}>
+							<SpottableButton
+								className={css.pinButton}
+								onClick={handlePinSubmit}
+								spotlightId='app-pin-submit'
+							>
+								{$L('Unlock')}
+							</SpottableButton>
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -823,7 +954,7 @@ const AppContent = (props) => {
 					onGenres={handleOpenGenres}
 					onFavorites={handleOpenFavorites}
 					onDiscover={handleOpenJellyseerr}
-					onSyncPlay={openSyncPlay}
+					onSyncPlay={settings.syncplayEnabled !== false ? openSyncPlay : undefined}
 					onSettings={handleOpenSettings}
 					onSelectLibrary={handleSelectLibrary}
 					onUserMenu={handleOpenAccountModal}
@@ -838,7 +969,7 @@ const AppContent = (props) => {
 					onGenres={handleOpenGenres}
 					onFavorites={handleOpenFavorites}
 					onDiscover={handleOpenJellyseerr}
-					onSyncPlay={openSyncPlay}
+					onSyncPlay={settings.syncplayEnabled !== false ? openSyncPlay : undefined}
 					onSettings={handleOpenSettings}
 					onSelectLibrary={handleSelectLibrary}
 					onUserMenu={handleOpenAccountModal}

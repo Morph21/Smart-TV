@@ -108,7 +108,11 @@ const [imageType, setImageType] = useStorage(`library_imageType_${libraryId}`, i
 const [gridDirection, setGridDirection] = useStorage(`library_gridDirection_${libraryId}`, 'vertical');
 const [folderView, setFolderView] = useStorage(`library_folderView_${libraryId}`, 'off');
 const isMixedContentLibrary = library != null && (!library.CollectionType || library.CollectionType.toLowerCase() === 'folders');
-const isFolderView = folderView === 'on' || isMixedContentLibrary;
+const folderViewMode = settings.folderViewMode || 'local';
+const isFolderView =
+	isMixedContentLibrary ||
+	folderViewMode === 'on' ||
+	(folderViewMode !== 'off' && folderView === 'on');
 const [folderStack, setFolderStack] = useState([]);
 const currentFolderId = folderStack.length > 0 ? folderStack[folderStack.length - 1].id : library?.Id;
 const currentFolderCollectionType = folderStack.length > 0 ? folderStack[folderStack.length - 1].collectionType?.toLowerCase() : null;
@@ -637,9 +641,10 @@ const handleCycleGridDirection = useCallback(() => {
 }, [gridDirection, setGridDirection]);
 
 const handleToggleFolderView = useCallback(() => {
+	if (folderViewMode !== 'local') return;
 	setFolderView(isFolderView ? 'off' : 'on');
 	setFolderStack([]);
-}, [isFolderView, setFolderView]);
+}, [folderViewMode, isFolderView, setFolderView]);
 
 const handleFolderBreadcrumb = useCallback((ev) => {
 	const depth = parseInt(ev.currentTarget?.dataset?.depth, 10);
