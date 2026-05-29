@@ -376,6 +376,7 @@ export const getPlaybackInfo = async (itemId, options = {}) => {
 			itemId,
 			playSessionId: playbackInfo.PlaySessionId,
 			mediaSourceId: mediaSource.Id,
+			liveStreamId: mediaSource.LiveStreamId || null,
 			mediaSource,
 			playMethod,
 			startPositionTicks: 0,
@@ -525,6 +526,7 @@ export const getPlaybackInfo = async (itemId, options = {}) => {
 		itemId,
 		playSessionId: playbackInfo.PlaySessionId,
 		mediaSourceId: mediaSource.Id,
+		liveStreamId: mediaSource.LiveStreamId || null,
 		mediaSource,
 		playMethod,
 		reportedPlayMethod,
@@ -955,8 +957,31 @@ export const reportStop = async (positionTicks) => {
 			MediaSourceId: currentSession.mediaSourceId,
 			PositionTicks: positionTicks
 		});
+
+		if (currentSession.liveStreamId) {
+			try {
+				await api.closeLiveStream(currentSession.liveStreamId);
+			} catch (closeErr) {
+				console.warn('[playback] Failed to close live stream:', closeErr.message);
+			}
+		}
 	} catch (e) {
 		console.warn('[playback] Failed to report stop:', e.message);
+
+		if (currentSession.liveStreamId) {
+			try {
+				const fallbackApi = currentSession.serverCredentials
+					? jellyfinApi.createApiForServer(
+						currentSession.serverCredentials.serverUrl,
+						currentSession.serverCredentials.accessToken,
+						currentSession.serverCredentials.userId
+					)
+					: jellyfinApi.api;
+				await fallbackApi.closeLiveStream(currentSession.liveStreamId);
+			} catch (closeErr) {
+				console.warn('[playback] Failed to close live stream after stop error:', closeErr.message);
+			}
+		}
 	}
 
 	currentSession = null;

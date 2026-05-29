@@ -201,6 +201,10 @@ export const api = {
 		body: data
 	}),
 
+	closeLiveStream: (liveStreamId) => request(`/LiveStreams/Close?LiveStreamId=${encodeURIComponent(liveStreamId)}`, {
+		method: 'POST'
+	}),
+
 	search: async (query, limit = 150) => {
 		const [itemsResult, peopleResult] = await Promise.all([
 			request(`/Users/${currentUser}/Items?searchTerm=${encodeURIComponent(query)}&Limit=${limit}&Recursive=true&IncludeItemTypes=Movie,Series,Episode,MusicAlbum,MusicArtist,Audio&Fields=PrimaryImageAspectRatio,ProductionYear,AlbumArtist`),
@@ -627,6 +631,10 @@ export const createApiForServer = (serverUrl, token, userId) => {
 		reportPlaybackStopped: (data) => serverRequest('/Sessions/Playing/Stopped', {
 			method: 'POST',
 			body: data
+		}),
+
+		closeLiveStream: (liveStreamId) => serverRequest(`/LiveStreams/Close?LiveStreamId=${encodeURIComponent(liveStreamId)}`, {
+			method: 'POST'
 		}),
 
 		setFavorite: (itemId, isFavorite) => serverRequest(`/Users/${userId}/FavoriteItems/${itemId}`, {
