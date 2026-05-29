@@ -307,6 +307,11 @@ const getImageTypeOptions = () => [
 	{ value: 'thumb', label: $L('Thumb') }
 ];
 
+const getHomeRowsStyleOptions = () => [
+	{ value: 'modern', label: $L('Modern') },
+	{ value: 'classic', label: $L('Classic') }
+];
+
 const getHomeRowSortOptions = () => [
 	{ value: 'SortName', label: $L('Name') },
 	{ value: 'DateCreated', label: $L('Date Added') },
@@ -1399,6 +1404,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{settings.displayGenresRows &&
 				renderOptionItem('genresRowItemFilter', $L('Genres Row Items'), getGenresRowItemFilterOptions(), $L('Movies & TV Shows'), 'filter')}
 			{renderToggleItem('mergeContinueWatchingNextUp', $L('Merge Continue Watching'), $L('Combine Continue Watching and Next Up'), 'arrowupdown')}
+			{renderOptionItem('homeRowsStyle', $L('Rows Type'), getHomeRowsStyleOptions(), $L('Modern'), 'appscontents')}
 			{renderOptionItem('homeRowsImageType', $L('Home Row Image Type'), getImageTypeOptions(), $L('Poster'), 'picture')}
 			{renderToggleItem('useSeriesThumbnails', $L('Series Thumbnails'), $L('Use series artwork instead of episode images'), 'aspectratio')}
 			{renderOptionItem('homeRowsPosterSize', $L('Image Size'), getPosterSizeOptions(), $L('Default'), 'aspectratio')}
@@ -2121,6 +2127,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 					<div className={css.viewDescription}>
 						{$L('Enable/disable and reorder the rows that appear on your home screen.')}
 					</div>
+					{renderOptionItem('homeRowsStyle', $L('Rows Type'), getHomeRowsStyleOptions(), $L('Modern'), 'appscontents')}
 					{tempHomeRows.filter((row) => isHomeRowVisibleByGates(row.id, settings)).map((row, index, visibleRows) => (
 						<div key={row.id} className={css.homeRowItem}>
 							<SpottableDiv

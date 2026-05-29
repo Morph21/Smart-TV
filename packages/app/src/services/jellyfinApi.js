@@ -60,6 +60,7 @@ export const getUserId = () => currentUser;
 export const getApiKey = () => accessToken;
 
 const DEFAULT_TIMEOUT_MS = 30000;
+export const HOME_ROW_ITEM_FIELDS = 'PrimaryImageAspectRatio,Overview,Genres,GenreItems,ProductionYear,RunTimeTicks,CommunityRating,CriticRating,ProviderIds,ImageTags,BackdropImageTags,ParentBackdropImageTags,ParentBackdropItemId,ParentThumbItemId,SeriesPrimaryImageTag,SeriesName,ParentIndexNumber,IndexNumber,UserData,AlbumArtist,AlbumId,AlbumPrimaryImageTag';
 
 const fetchWithTimeout = (url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) => {
 	return Promise.race([
@@ -167,7 +168,7 @@ export const api = {
 	}),
 
 	getLatest: (libraryId, limit = 20) =>
-		request(`/Users/${currentUser}/Items/Latest?ParentId=${libraryId}&Limit=${limit}&Fields=ImageTags,ParentThumbItemId,ParentBackdropItemId&ImageTypeLimit=1&GroupItems=true`),
+		request(`/Users/${currentUser}/Items/Latest?ParentId=${libraryId}&Limit=${limit}&Fields=${encodeURIComponent(HOME_ROW_ITEM_FIELDS)}&ImageTypeLimit=1&GroupItems=true`),
 
 	getCollections: (limit = 50, sortBy = 'SortName', sortOrder = 'Ascending') =>
 		request(`/Users/${currentUser}/Items?IncludeItemTypes=BoxSet&Recursive=true&SortBy=${encodeURIComponent(sortBy)}&SortOrder=${encodeURIComponent(sortOrder)}&Limit=${limit}&Fields=PrimaryImageAspectRatio,ProductionYear`),
@@ -542,7 +543,7 @@ export const createApiForServer = (serverUrl, token, userId) => {
 		},
 
 		getLatestMedia: (libraryId = null, limit = 16) => {
-			let endpoint = `/Users/${userId}/Items/Latest?Limit=${limit}&Fields=PrimaryImageAspectRatio,Overview,BackdropImageTags,ParentBackdropImageTags,ParentBackdropItemId,ProviderIds`;
+			let endpoint = `/Users/${userId}/Items/Latest?Limit=${limit}&Fields=${encodeURIComponent(HOME_ROW_ITEM_FIELDS)}`;
 			if (libraryId) endpoint += `&ParentId=${libraryId}`;
 			return serverRequest(endpoint);
 		},

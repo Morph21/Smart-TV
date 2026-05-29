@@ -3,10 +3,11 @@ import Spotlight from '@enact/spotlight';
 import $L from '@enact/i18n/$L';
 import {useAuth} from '../../context/AuthContext';
 import {useSettings} from '../../context/SettingsContext';
-import MediaRow from '../../components/MediaRow';
+import {ClassicMediaRow, ModernMediaRow} from '../../components/MediaRow';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {getImageUrl, getBackdropId, getLogoUrl} from '../../utils/helpers';
 import {getFromStorage, saveToStorage} from '../../services/storage';
+import {HOME_ROW_ITEM_FIELDS} from '../../services/jellyfinApi';
 import * as connectionPool from '../../services/connectionPool';
 import {getMoonfinMediaBar} from '../../services/jellyseerrApi';
 import {toCssColor} from '../../theme/themeSpec';
@@ -23,7 +24,7 @@ const TRANSITION_DELAY_MS = 450;
 // Cache TTL in milliseconds (5 minutes for volatile data, 30 minutes for libraries)
 const CACHE_TTL_VOLATILE = 5 * 60 * 1000;
 const CACHE_TTL_LIBRARIES = 30 * 60 * 1000;
-const STORAGE_KEY_BROWSE = 'browse_cache';
+const STORAGE_KEY_BROWSE = 'browse_cache_v2';
 
 let cachedRowData = null;
 let cachedLibraries = null;
@@ -407,6 +408,10 @@ const Browse = ({
 			borderRadius: 'var(--theme-chip-radius)'
 		};
 	}, [activeTheme]);
+
+	const useModernRows = settings.homeRowsStyle !== 'classic';
+	const RowComponent = useModernRows ? ModernMediaRow : ClassicMediaRow;
+	const showTopInfoArea = !useModernRows;
 
 	const homeRowsConfig = useMemo(() => {
 		return [...(settings.homeRows || [])].sort((a, b) => a.order - b.order);
@@ -915,7 +920,7 @@ const Browse = ({
 					if (!spec || typeof spec !== 'object') return null;
 					const limit = Number.isFinite(Number(spec.limit)) ? Number(spec.limit) : 20;
 					const title = section.name || section.displayText || $L('Plugin Section');
-					const fields = 'PrimaryImageAspectRatio,ProductionYear,ImageTags,UserData,SeriesPrimaryImageTag,AlbumArtist,AlbumId,AlbumPrimaryImageTag';
+					const fields = HOME_ROW_ITEM_FIELDS;
 
 					try {
 						let items = [];
@@ -1162,7 +1167,7 @@ const Browse = ({
 										SortOrder: favoriteSortOrder,
 										Recursive: true,
 										Limit: 20,
-										Fields: 'PrimaryImageAspectRatio,ProductionYear,ImageTags,UserData,SeriesPrimaryImageTag,AlbumArtist,AlbumId,AlbumPrimaryImageTag'
+										Fields: HOME_ROW_ITEM_FIELDS
 									})
 										.then((result) => ({rowConfig, result}))
 										.catch(() => null)
@@ -1342,13 +1347,15 @@ const Browse = ({
 	}, [browseMode]);
 
 	const handleFocusItem = useCallback((item) => {
-		detailSectionRef.current?.handleFocusItem(item);
+		if (showTopInfoArea) {
+			detailSectionRef.current?.handleFocusItem(item);
+		}
 		if (item?.Id && (item.Type === 'Movie' || item.Type === 'Series')) {
 			onFocusItemThemeMusic?.(item.Id);
 		} else {
 			onBlurItemThemeMusic?.();
 		}
-	}, [onFocusItemThemeMusic, onBlurItemThemeMusic]);
+	}, [onFocusItemThemeMusic, onBlurItemThemeMusic, showTopInfoArea]);
 
 	if (isLoading) {
 		return (
@@ -1400,21 +1407,23 @@ const Browse = ({
 					)
 				)}
 
-				<DetailSection
-					ref={detailSectionRef}
-					browseMode={browseMode}
-					api={api}
-					getItemServerUrl={getItemServerUrl}
-					settings={settings}
-					onFocusedItemChange={setFocusedItemForBackdrop}
-				/>
+				{showTopInfoArea && (
+					<DetailSection
+						ref={detailSectionRef}
+						browseMode={browseMode}
+						api={api}
+						getItemServerUrl={getItemServerUrl}
+						settings={settings}
+						onFocusedItemChange={setFocusedItemForBackdrop}
+					/>
+				)}
 
 				<div
 					ref={contentRowsRef}
 					className={`${css.contentRows} ${browseMode === 'rows' ? css.rowsMode : ''}`}
 				>
 					{filteredRows.map((row, index) => (
-						<MediaRow
+						<RowComponent
 							key={row.id}
 							rowId={row.id}
 							title={row.title}

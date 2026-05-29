@@ -1,0 +1,90 @@
+.row {
+	margin-bottom: 26px;
+	overflow: visible;
+	padding-left: 60px;
+	padding-right: 60px;
+	contain: layout style;
+	content-visibility: auto;
+	contain-intrinsic-size: 0 620px;
+
+	&:first-child {
+		margin-top: 40px;
+	}
+}
+
+.title {
+	font-size: 28px;
+	font-weight: 600;
+	margin: 6px 0 1px 0;
+	color: var(--theme-text-primary, #ffffff);
+	text-shadow: var(--theme-text-glow);
+}
+
+.scroller {
+	overflow-x: auto;
+	overflow-y: visible;
+	padding-left: 60px;
+	padding-right: 60px;
+	scrollbar-width: none;
+	margin-left: -60px;
+	margin-right: -60px;
+	-webkit-overflow-scrolling: touch;
+	transform: translateZ(0);
+	will-change: scroll-position;
+	contain: layout style;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.items {
+	display: flex;
+	display: -webkit-flex;
+	padding: 10px 0 24px;
+	width: -webkit-max-content;
+	width: max-content;
+	transform: translateZ(0);
+	contain: layout style;
+	align-items: flex-start;
+
+	> * + * {
+		margin-left: 24px;
+	}
+}
+
+.platformWebos .items > * + * {
+	margin-left: 26px;
+}
+
+.platformWebos .title {
+	font-size: 29px;
+}
+
+.platformTizen {
+	contain-intrinsic-size: 0 590px;
+}
+
+.platformTizen .title {
+	font-size: 26px;
+}
+
+.platformTizen .items {
+	padding-bottom: 20px;
+}
+
+.platformTizen .items > * + * {
+	margin-left: 20px;
+}
+
+.platformLegacy {
+	padding-left: 48px;
+	padding-right: 48px;
+}
+
+.platformLegacy .scroller {
+	padding-left: 48px;
+	padding-right: 48px;
+	margin-left: -48px;
+	margin-right: -48px;
+}

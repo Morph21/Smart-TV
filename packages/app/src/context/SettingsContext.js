@@ -98,6 +98,7 @@ const defaultSettings = {
 	useSeriesThumbnails: false,
 	homeRowsPosterSize: 'default',
 	homeRowsImageType: 'poster',
+	homeRowsStyle: 'modern',
 	homeRowOverlay: 'off',
 	folderViewMode: 'local',
 	excludedGenres: [],
@@ -198,6 +199,8 @@ const mergeHomeRows = (rows) => {
 	if (!added) return rows;
 	return merged;
 };
+
+const normalizeHomeRowsStyle = (value) => (value === 'classic' || value === 'modern' ? value : 'modern');
 
 const normalizeGuid = (id) => {
 	if (!id || typeof id !== 'string') return id;
@@ -351,10 +354,21 @@ export function SettingsProvider({children}) {
 		getFromStorage('settings').then((stored) => {
 			if (stored) {
 				let migrated = false;
+				const hasExplicitHomeRowsStyle = Object.prototype.hasOwnProperty.call(stored, 'homeRowsStyle');
 				const mergedHomeRows = mergeHomeRows(stored.homeRows);
 				if (mergedHomeRows !== stored.homeRows) {
 					stored.homeRows = mergedHomeRows;
 					migrated = true;
+				}
+				if (!hasExplicitHomeRowsStyle) {
+					stored.homeRowsStyle = 'modern';
+					migrated = true;
+				} else {
+					const normalizedStyle = normalizeHomeRowsStyle(stored.homeRowsStyle);
+					if (normalizedStyle !== stored.homeRowsStyle) {
+						stored.homeRowsStyle = normalizedStyle;
+						migrated = true;
+					}
 				}
 				if (!Array.isArray(stored.pluginSections)) {
 					stored.pluginSections = [];
@@ -499,6 +513,7 @@ export function SettingsProvider({children}) {
 				for (const key of SYNCABLE_KEYS) {
 					if (resolved[key] !== undefined) updated[key] = resolved[key];
 				}
+				updated.homeRowsStyle = normalizeHomeRowsStyle(updated.homeRowsStyle);
 				if (updated.customThemeId && !getAvailableThemes()[updated.customThemeId]) {
 					updated.customThemeId = '';
 				}
