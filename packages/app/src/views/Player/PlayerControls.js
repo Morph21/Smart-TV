@@ -70,8 +70,8 @@ export const usePlayerButtons = ({
 			return [
 				{id: 'subtitle', icon: <IconSubtitle />, label: $L('Subtitles'), action: 'subtitle', disabled: subtitleStreams.length === 0},
 				{id: 'audio', icon: <IconAudio />, label: $L('Audio'), action: 'audio', disabled: audioStreams.length === 0},
-				{id: 'zoom', icon: <IconZoom />, label: $L('Zoom').concat(` (${zoomModeLabel})`), action: 'zoom', active: zoomModeKey !== 'fit'},
 				{id: 'quality', icon: <IconQuality />, label: $L('Playback Quality'), action: 'quality'},
+				{id: 'zoom', icon: <IconZoom />, label: $L('Zoom').concat(` (${zoomModeLabel})`), action: 'zoom', active: zoomModeKey !== 'fit'},
 				{id: 'info', icon: <IconInfo />, label: $L('Playback Information'), action: 'info'}
 			];
 		}
@@ -81,8 +81,8 @@ export const usePlayerButtons = ({
 			{id: 'subtitle', icon: <IconSubtitle />, label: $L('Subtitles'), action: 'subtitle', disabled: subtitleStreams.length === 0},
 			{id: 'audio', icon: <IconAudio />, label: $L('Audio'), action: 'audio', disabled: audioStreams.length === 0},
 			{id: 'cast', icon: <IconCast />, label: $L('Cast and Crew'), action: 'cast', disabled: !hasCastMembers},
-			{id: 'zoom', icon: <IconZoom />, label: $L('Zoom').concat(` (${zoomModeLabel})`), action: 'zoom', active: zoomModeKey !== 'fit'},
 			{id: 'quality', icon: <IconQuality />, label: $L('Playback Quality'), action: 'quality', active: selectedQuality != null},
+			{id: 'zoom', icon: <IconZoom />, label: $L('Zoom').concat(` (${zoomModeLabel})`), action: 'zoom', active: zoomModeKey !== 'fit'},
 			{id: 'info', icon: <IconInfo />, label: $L('Playback Information'), action: 'info'}
 		];
 	}, [audioStreams.length, chapters.length, subtitleStreams.length, isAudioMode, isLiveTV, playbackRate, selectedQuality, hasCastMembers, zoomModeLabel, zoomModeKey]);

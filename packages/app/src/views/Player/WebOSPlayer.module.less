@@ -393,15 +393,58 @@
 	justify-content: flex-start;
 
 	> * + * {
-		margin-left: 20px;
+		margin-left: 12px;
 	}
 	align-items: center;
-	margin-top: 20px;
+	margin-top: 0;
+}
+
+.videoControlsRow {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 18px;
+	width: 100%;
+}
+
+.transportButtons {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+
+	> * + * {
+		margin-left: 12px;
+	}
+}
+
+.controlBtnWrapper {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.focusTooltip {
+	position: absolute;
+	bottom: calc(100% + 12px);
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(0, 0, 0, 0.85);
+	color: #fff;
+	padding: 6px 12px;
+	border-radius: 6px;
+	font-size: 18px;
+	font-weight: 600;
+	white-space: nowrap;
+	pointer-events: none;
+	z-index: 10;
 }
 
 .controlBtn {
-	width: 110px;
-	height: 110px;
+	width: 84px;
+	height: 84px;
 	background: rgba(255, 255, 255, 0);
 	border: none;
 	border-radius: 50%;
@@ -412,19 +455,30 @@
 	transition: all 0.2s ease;
 	outline: none;
 	color: #fff;
-	font-size: 32px;
+	font-size: 26px;
 
 	svg {
-		width: 48px;
-		height: 48px;
+		width: 36px;
+		height: 36px;
+	}
+
+	img {
+		width: 36px;
+		height: 36px;
+		filter: brightness(0) invert(1);
 	}
 }
 
 .controlBtn:hover,
 .controlBtn:focus {
 	background: rgba(255, 255, 255, 1);
-	transform: scale(1.15);
+	transform: scale(1.08);
 	color: #333;
+}
+
+.controlBtn:hover img,
+.controlBtn:focus img {
+	filter: none;
 }
 
 .controlBtn:disabled {
@@ -447,12 +501,12 @@
 
 /* Active state for toggle buttons (shuffle, repeat, favorite) */
 .controlBtnActive {
-	color: #00a4dc;
+	color: #fff;
 }
 
 .controlBtnActive:hover,
 .controlBtnActive:focus {
-	color: #00a4dc;
+	color: #333;
 }
 
 /* Favorite button row above seekbar (audio mode) */
