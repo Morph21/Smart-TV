@@ -31,6 +31,7 @@ import SyncPlayDialog from '../components/SyncPlayDialog';
 import PhotoViewer from '../components/PhotoViewer';
 import ComicViewer from '../components/ComicViewer';
 import SettingsPanel from '../components/SettingsPanel';
+import ShuffleOverlay from '../components/ShuffleOverlay';
 import SpottableInput from '../components/SpottableInput/SpottableInput';
 import useInactivityTimer from '../hooks/useInactivityTimer';
 import {useThemeMusic} from '../hooks/useThemeMusic';
@@ -132,6 +133,8 @@ const AppContent = (props) => {
 	const [showAccountModal, setShowAccountModal] = useState(false);
 	const [showExitDialog, setShowExitDialog] = useState(false);
 	const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+	const [showShuffleOverlay, setShowShuffleOverlay] = useState(false);
+	const [shuffleOriginSpotlightId, setShuffleOriginSpotlightId] = useState('navbar-shuffle');
 	const [pinCodeInput, setPinCodeInput] = useState('');
 	const [pinCodeError, setPinCodeError] = useState('');
 	const [isPinUnlocked, setIsPinUnlocked] = useState(false);
@@ -157,6 +160,7 @@ const AppContent = (props) => {
 		panelIndex !== PANELS.LOGIN &&
 		(panelIndex !== PANELS.PLAYER || isPlayerPaused) &&
 		!showExitDialog &&
+		!showShuffleOverlay &&
 		!showSettingsPanel &&
 		!showAccountModal &&
 		!photoViewerItem &&
@@ -450,6 +454,9 @@ const AppContent = (props) => {
 
 	useEffect(() => {
 		const handleKeyDown = (e) => {
+			if (showShuffleOverlay) {
+				return;
+			}
 			if (e.keyCode === KEYS.BACKSPACE && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
 				return;
 			}
@@ -501,43 +508,19 @@ const AppContent = (props) => {
 
 		window.addEventListener('keydown', handleKeyDown, true);
 		return () => window.removeEventListener('keydown', handleKeyDown, true);
-	}, [panelIndex, handleBack, performAppCleanup, settings.exitConfirmation, showAccountModal, showExitDialog, showSettingsPanel, isPinGateActive]);
+	}, [panelIndex, handleBack, performAppCleanup, settings.exitConfirmation, showAccountModal, showExitDialog, showSettingsPanel, showShuffleOverlay, isPinGateActive]);
 
 	const handleLoggedIn = useCallback(() => {
 		setPanelHistory([]);
 		navigateTo(PANELS.BROWSE, false);
 	}, [navigateTo]);
 
-	const handleShuffle = useCallback(async () => {
-		try {
-			// Convert setting value to API format
-			const contentType = settings.shuffleContentType || 'both';
-			const includeItemTypes = contentType === 'movies' ? 'Movie'
-				: contentType === 'tv' ? 'Series'
-				: 'Movie,Series';
-
-			let item;
-			if (unifiedMode) {
-				// Get random items from all servers
-				const items = await connectionPool.getRandomItemsFromAllServers(contentType, 1);
-				if (items.length > 0) {
-					item = items[0];
-				}
-			} else {
-				const result = await api.getRandomItem(includeItemTypes);
-				if (result.Items?.length > 0) {
-					item = result.Items[0];
-				}
-			}
-
-			if (item) {
-				setSelectedItem(item);
-				navigateTo(PANELS.DETAILS);
-			}
-		} catch (err) {
-			console.error('Shuffle failed:', err);
-		}
-	}, [api, navigateTo, settings.shuffleContentType, unifiedMode]);
+	const handleShuffle = useCallback(() => {
+		const current = Spotlight.getCurrent();
+		const spotlightId = current?.getAttribute?.('data-spotlight-id') || current?.id || 'navbar-shuffle';
+		setShuffleOriginSpotlightId(spotlightId);
+		setShowShuffleOverlay(true);
+	}, []);
 
 	const handleSelectItem = useCallback((item) => {
 		if (item.isJellyseerr) {
@@ -686,6 +669,10 @@ const AppContent = (props) => {
 
 	const handleCancelExitDialog = useCallback(() => {
 		setShowExitDialog(false);
+	}, []);
+
+	const handleCloseShuffleOverlay = useCallback(() => {
+		setShowShuffleOverlay(false);
 	}, []);
 
 	const handleRetryConnection = useCallback(() => {
@@ -1171,6 +1158,17 @@ const AppContent = (props) => {
 			<SyncPlayDialog
 				open={syncPlayDialogOpen}
 				onClose={closeSyncPlay}
+			/>
+			<ShuffleOverlay
+				open={showShuffleOverlay}
+				onClose={handleCloseShuffleOverlay}
+				onSelectItem={handleSelectItem}
+				api={api}
+				unifiedMode={unifiedMode}
+				contentType={settings.shuffleContentType || 'both'}
+				serverUrl={serverUrl}
+				accessToken={accessToken}
+				originSpotlightId={shuffleOriginSpotlightId}
 			/>
 			<UpdateNotification
 				updateInfo={updateInfo}

@@ -277,7 +277,7 @@ export const api = {
 	getRandomItem: (includeTypes = 'Movie,Series') =>
 		request(`/Items?UserId=${currentUser}&IncludeItemTypes=${includeTypes}&Recursive=true&SortBy=Random&Limit=1&Fields=PrimaryImageAspectRatio,Overview&ExcludeItemTypes=BoxSet`),
 
-	getRandomItems: (contentType = 'both', limit = 10, parentId = null) => {
+	getRandomItems: (contentType = 'both', limit = 10, parentId = null, genreName = null, fields = 'PrimaryImageAspectRatio,Overview,Genres,ProviderIds,RemoteTrailers') => {
 		let includeTypes;
 		switch (contentType) {
 			case 'movies':
@@ -290,7 +290,8 @@ export const api = {
 				includeTypes = 'Movie,Series';
 		}
 		const parentParam = parentId ? `&ParentId=${parentId}` : '';
-		return request(`/Users/${currentUser}/Items?IncludeItemTypes=${includeTypes}&Recursive=true&SortBy=Random&Limit=${limit}&Fields=PrimaryImageAspectRatio,Overview,Genres,ProviderIds,RemoteTrailers&HasBackdrop=true&ExcludeItemTypes=BoxSet${parentParam}`);
+		const genreParam = genreName ? `&Genres=${encodeURIComponent(genreName)}` : '';
+		return request(`/Users/${currentUser}/Items?IncludeItemTypes=${includeTypes}&Recursive=true&SortBy=Random&Limit=${limit}&Fields=${encodeURIComponent(fields)}&HasBackdrop=true&ExcludeItemTypes=BoxSet${parentParam}${genreParam}`);
 	},
 
 	getCollectionItems: (collectionId, limit = 50) =>
@@ -551,7 +552,7 @@ export const createApiForServer = (serverUrl, token, userId) => {
 		getCollections: (limit = 50, sortBy = 'SortName', sortOrder = 'Ascending') =>
 			serverRequest(`/Users/${userId}/Items?IncludeItemTypes=BoxSet&Recursive=true&SortBy=${encodeURIComponent(sortBy)}&SortOrder=${encodeURIComponent(sortOrder)}&Limit=${limit}&Fields=PrimaryImageAspectRatio,ProductionYear`),
 
-		getRandomItems: (contentType = 'both', limit = 10) => {
+		getRandomItems: (contentType = 'both', limit = 10, parentId = null, genreName = null, fields = 'PrimaryImageAspectRatio,Overview,Genres,ProviderIds') => {
 			let includeTypes;
 			switch (contentType) {
 				case 'movies':
@@ -563,7 +564,9 @@ export const createApiForServer = (serverUrl, token, userId) => {
 				default:
 					includeTypes = 'Movie,Series';
 			}
-			return serverRequest(`/Users/${userId}/Items?IncludeItemTypes=${includeTypes}&Recursive=true&SortBy=Random&Limit=${limit}&Fields=PrimaryImageAspectRatio,Overview,Genres,ProviderIds&HasBackdrop=true&ExcludeItemTypes=BoxSet`);
+			const parentParam = parentId ? `&ParentId=${parentId}` : '';
+			const genreParam = genreName ? `&Genres=${encodeURIComponent(genreName)}` : '';
+			return serverRequest(`/Users/${userId}/Items?IncludeItemTypes=${includeTypes}&Recursive=true&SortBy=Random&Limit=${limit}&Fields=${encodeURIComponent(fields)}&HasBackdrop=true&ExcludeItemTypes=BoxSet${parentParam}${genreParam}`);
 		},
 
 		getRandomItem: (includeTypes = 'Movie,Series') =>
