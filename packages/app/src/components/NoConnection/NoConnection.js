@@ -1,4 +1,5 @@
 import {useState, useEffect, useCallback} from 'react';
+import $L from '@enact/i18n/$L';
 import Spottable from '@enact/spotlight/Spottable';
 import Spotlight from '@enact/spotlight';
 
@@ -52,14 +53,14 @@ const NoConnection = () => {
 						<line x1="12" y1="20" x2="12.01" y2="20" />
 					</svg>
 				</div>
-				<h1 className={css.title}>No Internet Connection</h1>
-				<p className={css.message}>Check your network settings and try again.</p>
+				<h1 className={css.title}>{$L('No Internet Connection')}</h1>
+				<p className={css.message}>{$L('Check your network settings and try again.')}</p>
 				<SpottableButton
 					className={css.retryButton}
 					data-spotlight-id="no-connection-retry"
 					onClick={handleRetry}
 				>
-					Retry
+					{$L('Retry')}
 				</SpottableButton>
 			</div>
 		</div>

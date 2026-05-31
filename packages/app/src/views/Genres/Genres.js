@@ -24,11 +24,11 @@ const SettingsPanelContainer = SpotlightContainerDecorator({enterTo: 'last-focus
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const SORT_OPTIONS = [
-{key: 'name-asc', label: 'Name (A-Z)'},
-{key: 'name-desc', label: 'Name (Z-A)'},
-{key: 'count-desc', label: 'Most Items'},
-{key: 'count-asc', label: 'Least Items'},
-{key: 'random', label: 'Random'}
+{key: 'name-asc', label: $L('Name (A-Z)')},
+{key: 'name-desc', label: $L('Name (Z-A)')},
+{key: 'count-desc', label: $L('Most Items')},
+{key: 'count-asc', label: $L('Least Items')},
+{key: 'random', label: $L('Random')}
 ];
 
 const Genres = ({onSelectGenre, onHome, backHandlerRef}) => {

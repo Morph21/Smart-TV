@@ -1,4 +1,5 @@
 import {memo, useCallback, useEffect, useState, useRef} from 'react';
+import $L from '@enact/i18n/$L';
 import Spottable from '@enact/spotlight/Spottable';
 import Spotlight from '@enact/spotlight';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
@@ -21,9 +22,9 @@ const GroupsContainer = SpotlightContainerDecorator({
 const SpottableButton = Spottable('button');
 
 const REPEAT_LABELS = {
-	RepeatNone: 'Off',
-	RepeatOne: 'One',
-	RepeatAll: 'All'
+	RepeatNone: $L('Off'),
+	RepeatOne: $L('One'),
+	RepeatAll: $L('All')
 };
 
 const REPEAT_CYCLE = ['RepeatNone', 'RepeatOne', 'RepeatAll'];
@@ -145,7 +146,7 @@ const SyncPlayDialog = ({open, onClose}) => {
 				onClick={(e) => e.stopPropagation()} // eslint-disable-line react/jsx-no-bind
 			>
 				<div className={css.header}>
-					<h2 className={css.title}>SyncPlay</h2>
+					<h2 className={css.title}>{$L('SyncPlay')}</h2>
 					<SpottableButton
 						className={css.closeBtn}
 						onClick={onClose}
@@ -194,7 +195,7 @@ const LobbyView = memo(({groups, groupName, isCreating, isJoining, onInputChange
 					value={groupName}
 					onChange={onInputChange}
 					onKeyDown={onInputKeyDown}
-					placeholder="Group name..."
+					placeholder={$L('Group name...')}
 					maxLength={64}
 					spotlightId="syncplay-input"
 				/>
@@ -204,17 +205,17 @@ const LobbyView = memo(({groups, groupName, isCreating, isJoining, onInputChange
 					disabled={!groupName.trim() || isCreating}
 					spotlightId="syncplay-create-btn"
 				>
-					{isCreating ? 'Creating...' : 'Create'}
+					{isCreating ? $L('Creating...') : $L('Create')}
 				</SpottableButton>
 			</div>
 
 			<div className={css.divider}>
-				<span>or join an existing group</span>
+				<span>{$L('or join an existing group')}</span>
 			</div>
 
 			<GroupsContainer className={css.groupsList} spotlightId="syncplay-groups">
 				{groups.length === 0 ? (
-					<div className={css.emptyState}>No active groups found</div>
+					<div className={css.emptyState}>{$L('No active groups found')}</div>
 				) : (
 					groups.map((g) => (
 						<SpottableButton
@@ -224,14 +225,14 @@ const LobbyView = memo(({groups, groupName, isCreating, isJoining, onInputChange
 							disabled={isJoining === g.GroupId}
 						>
 							<div className={css.groupInfo}>
-								<span className={css.groupName}>{g.GroupName || 'Unnamed Group'}</span>
+								<span className={css.groupName}>{g.GroupName || $L('Unnamed Group')}</span>
 								<span className={css.groupMeta}>
-									{(g.Participants?.length || 0)} member{(g.Participants?.length || 0) !== 1 ? 's' : ''}
+									{`${g.Participants?.length || 0} ${(g.Participants?.length || 0) === 1 ? $L('member') : $L('members')}`}
 									{' \u00B7 '}
-									{g.State || 'Idle'}
+									{g.State || $L('Idle')}
 								</span>
 							</div>
-							<span className={css.joinLabel}>Join</span>
+							<span className={css.joinLabel}>{$L('Join')}</span>
 						</SpottableButton>
 					))
 				)}
@@ -243,7 +244,7 @@ const LobbyView = memo(({groups, groupName, isCreating, isJoining, onInputChange
 const GroupView = memo(({group, isLeaving, onLeave, playQueue, playQueueItem, onToggleRepeat, onToggleShuffle}) => {
 	if (!group) return null;
 	const participants = group.Participants || [];
-	const stateLabel = group.State || 'Idle';
+	const stateLabel = group.State || $L('Idle');
 	const repeatMode = playQueue?.RepeatMode || 'RepeatNone';
 	const shuffleMode = playQueue?.ShuffleMode || 'Sorted';
 	const queueLength = playQueue?.Playlist?.length || 0;
@@ -252,7 +253,7 @@ const GroupView = memo(({group, isLeaving, onLeave, playQueue, playQueueItem, on
 	return (
 		<div className={css.groupView}>
 			<div className={css.groupHeader}>
-				<h3 className={css.groupTitle}>{group.GroupName || 'Group'}</h3>
+				<h3 className={css.groupTitle}>{group.GroupName || $L('Group')}</h3>
 				<span className={`${css.stateBadge} ${css['state' + stateLabel]}`}>
 					{stateLabel}
 				</span>
@@ -260,9 +261,9 @@ const GroupView = memo(({group, isLeaving, onLeave, playQueue, playQueueItem, on
 
 			{playQueueItem && (
 				<div className={css.nowPlaying}>
-					<h4 className={css.sectionTitle}>Now Playing</h4>
+					<h4 className={css.sectionTitle}>{$L('Now Playing')}</h4>
 					<div className={css.nowPlayingInfo}>
-						<span className={css.nowPlayingTitle}>{playQueueItem.Name || 'Unknown'}</span>
+						<span className={css.nowPlayingTitle}>{playQueueItem.Name || $L('Unknown')}</span>
 						{queueLength > 1 && (
 							<span className={css.nowPlayingMeta}>
 								{queueIndex + 1} of {queueLength}
@@ -279,26 +280,26 @@ const GroupView = memo(({group, isLeaving, onLeave, playQueue, playQueueItem, on
 						onClick={onToggleShuffle}
 						spotlightId="syncplay-shuffle-btn"
 					>
-						Shuffle: {shuffleMode === 'Shuffle' ? 'On' : 'Off'}
+						{$L('Shuffle')}: {shuffleMode === 'Shuffle' ? $L('On') : $L('Off')}
 					</SpottableButton>
 					<SpottableButton
 						className={`${css.controlBtn} ${repeatMode !== 'RepeatNone' ? css.controlActive : ''}`}
 						onClick={onToggleRepeat}
 						spotlightId="syncplay-repeat-btn"
 					>
-						Repeat: {REPEAT_LABELS[repeatMode] || 'Off'}
+						{$L('Repeat')}: {REPEAT_LABELS[repeatMode] || $L('Off')}
 					</SpottableButton>
 				</div>
 			)}
 
 			<div>
-				<h4 className={css.sectionTitle}>Members ({participants.length})</h4>
+				<h4 className={css.sectionTitle}>{$L('Members ({count})').replace('{count}', String(participants.length))}</h4>
 				<ul className={css.membersList}>
 					{participants.map((name, i) => (
 						<li key={i} className={css.member}>{name}</li>
 					))}
 					{participants.length === 0 && (
-						<li className={css.member}>Waiting for members...</li>
+						<li className={css.member}>{$L('Waiting for members...')}</li>
 					)}
 				</ul>
 			</div>
@@ -310,7 +311,7 @@ const GroupView = memo(({group, isLeaving, onLeave, playQueue, playQueueItem, on
 					disabled={isLeaving}
 					spotlightId="syncplay-leave-btn"
 				>
-					{isLeaving ? 'Leaving...' : 'Leave Group'}
+					{isLeaving ? $L('Leaving...') : $L('Leave Group')}
 				</SpottableButton>
 			</div>
 		</div>

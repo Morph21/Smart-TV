@@ -1206,9 +1206,9 @@ const AppContent = (props) => {
 			<DebugOverlay />
 			{connectionState !== 'connected' && isAuthenticated && (
 				<div className={css.connectionBanner}>
-					<span>{connectionState === 'reconnecting' ? 'Reconnecting to server...' : 'Lost connection to server'}</span>
+					<span>{connectionState === 'reconnecting' ? $L('Reconnecting to server...') : $L('Lost connection to server')}</span>
 					{connectionState === 'disconnected' && (
-						<button className={css.retryButton} onClick={handleRetryConnection}>Retry</button>
+						<button className={css.retryButton} onClick={handleRetryConnection}>{$L('Retry')}</button>
 					)}
 				</div>
 			)}

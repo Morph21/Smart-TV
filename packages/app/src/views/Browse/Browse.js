@@ -36,14 +36,14 @@ let lastFocusState = null;
 const EXCLUDED_COLLECTION_TYPES = ['boxsets', 'books', 'musicvideos', 'homevideos', 'photos'];
 
 const FAVORITE_ROW_CONFIGS = [
-	{id: 'favoriteMovies', title: 'Favorite Movies', includeItemTypes: 'Movie', type: 'portrait'},
-	{id: 'favoriteSeries', title: 'Favorite Series', includeItemTypes: 'Series', type: 'portrait'},
-	{id: 'favoriteEpisodes', title: 'Favorite Episodes', includeItemTypes: 'Episode', type: 'landscape'},
-	{id: 'favoritePeople', title: 'Favorite People', includeItemTypes: 'Person', type: 'portrait'},
-	{id: 'favoriteArtists', title: 'Favorite Artists', includeItemTypes: 'MusicArtist', type: 'square'},
-	{id: 'favoriteMusicVideos', title: 'Favorite Music Videos', includeItemTypes: 'MusicVideo', type: 'landscape'},
-	{id: 'favoriteAlbums', title: 'Favorite Albums', includeItemTypes: 'MusicAlbum', type: 'square'},
-	{id: 'favoriteSongs', title: 'Favorite Songs', includeItemTypes: 'Audio', type: 'square'}
+	{id: 'favoriteMovies', title: $L('Favorite Movies'), includeItemTypes: 'Movie', type: 'portrait'},
+	{id: 'favoriteSeries', title: $L('Favorite Series'), includeItemTypes: 'Series', type: 'portrait'},
+	{id: 'favoriteEpisodes', title: $L('Favorite Episodes'), includeItemTypes: 'Episode', type: 'landscape'},
+	{id: 'favoritePeople', title: $L('Favorite People'), includeItemTypes: 'Person', type: 'portrait'},
+	{id: 'favoriteArtists', title: $L('Favorite Artists'), includeItemTypes: 'MusicArtist', type: 'square'},
+	{id: 'favoriteMusicVideos', title: $L('Favorite Music Videos'), includeItemTypes: 'MusicVideo', type: 'landscape'},
+	{id: 'favoriteAlbums', title: $L('Favorite Albums'), includeItemTypes: 'MusicAlbum', type: 'square'},
+	{id: 'favoriteSongs', title: $L('Favorite Songs'), includeItemTypes: 'Audio', type: 'square'}
 ];
 
 const FAVORITE_ROW_IDS = FAVORITE_ROW_CONFIGS.map((row) => row.id);

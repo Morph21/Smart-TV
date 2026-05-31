@@ -70,7 +70,7 @@ const RatingsRow = ({item, serverUrl, compact = false, pluginEnabled = true}) =>
 						<img
 							className={css.ratingIconCompact}
 							src={getRtFallbackIcon(item.CriticRating)}
-							alt="Rotten Tomatoes"
+							alt={$L('Rotten Tomatoes')}
 						/>
 						<span className={css.ratingValueCompact}>{item.CriticRating}%</span>
 					</span>
@@ -106,11 +106,11 @@ const RatingsRow = ({item, serverUrl, compact = false, pluginEnabled = true}) =>
 					<img
 						className={css.ratingIcon}
 						src={getRtFallbackIcon(item.CriticRating)}
-						alt="Rotten Tomatoes"
+						alt={$L('Rotten Tomatoes')}
 					/>
 					<div className={css.ratingInfo}>
 						<span className={css.ratingValue}>{item.CriticRating}%</span>
-						{showLabels && <span className={css.ratingName}>Rotten Tomatoes</span>}
+						{showLabels && <span className={css.ratingName}>{$L('Rotten Tomatoes')}</span>}
 					</div>
 				</div>
 			)}

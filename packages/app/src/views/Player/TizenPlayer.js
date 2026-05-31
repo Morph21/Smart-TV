@@ -2140,7 +2140,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 							{subtitle && <p className={css.audioTrackArtist}>{subtitle}</p>}
 							{item.Album && <p className={css.audioTrackAlbum}>{item.Album}</p>}
 							<div className={css.audioLyricsPreview}>
-								{isLyricsLoading && <p className={css.audioLyricsLine}>Loading lyrics...</p>}
+								{isLyricsLoading && <p className={css.audioLyricsLine}>{$L('Loading lyrics...')}</p>}
 								{!isLyricsLoading && lyricsError && <p className={css.audioLyricsLine}>{lyricsError}</p>}
 								{!isLyricsLoading && !lyricsError && activeLyricLine && (
 									<p className={css.audioLyricsLine}>{activeLyricLine}</p>
@@ -2149,7 +2149,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 									<p className={css.audioLyricsLine}>{lyricsLines[0].text}</p>
 								)}
 								{!isLyricsLoading && !lyricsError && lyricsLines.length === 0 && (
-									<p className={css.audioLyricsLine}>No lyrics available</p>
+									<p className={css.audioLyricsLine}>{$L('No lyrics available')}</p>
 								)}
 							</div>
 						</div>
@@ -2293,7 +2293,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				renderInfoPlaybackRows={({css: c}) => (
 					<div className={c.infoRow}>
 						<span className={c.infoLabel}>{$L('Player')}</span>
-						<span className={c.infoValue}>AVPlay (Native)</span>
+						<span className={c.infoValue}>{$L('AVPlay (Native)')}</span>
 					</div>
 				)}
 			/>

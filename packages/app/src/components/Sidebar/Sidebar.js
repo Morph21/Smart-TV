@@ -303,7 +303,7 @@ const Sidebar = ({
 						onClick={onSyncPlay}
 					>
 						<SyncPlayIcon className={css.sidebarIcon} style={navIconStyle(7)} />
-						<span className={css.sidebarLabel}>SyncPlay</span>
+						<span className={css.sidebarLabel}>{$L('SyncPlay')}</span>
 					</SpottableButton>
 				)}
 

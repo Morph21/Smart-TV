@@ -324,7 +324,7 @@ const NavBar = ({
 							spotlightId="navbar-syncplay"
 						>
 							<SyncPlayIcon className={css.navIcon} style={navIconStyle(7)} />
-							<span className={css.expandLabel}>SyncPlay</span>
+								<span className={css.expandLabel}>{$L('SyncPlay')}</span>
 						</SpottableButton>
 					)}
 

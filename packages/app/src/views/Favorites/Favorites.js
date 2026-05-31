@@ -24,21 +24,21 @@ const SettingsPanelContainer = SpotlightContainerDecorator({enterTo: 'last-focus
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const SORT_OPTIONS = [
-{key: 'SortName', field: 'SortName', order: 'Ascending', label: 'Name'},
-{key: 'DateCreated', field: 'DateCreated', order: 'Descending', label: 'Date Added'},
-{key: 'PremiereDate', field: 'PremiereDate', order: 'Descending', label: 'Premiere Date'},
-{key: 'CommunityRating', field: 'CommunityRating', order: 'Descending', label: 'Community Rating'},
-{key: 'CriticRating', field: 'CriticRating', order: 'Descending', label: 'Critic Rating'},
-{key: 'DatePlayed', field: 'DatePlayed', order: 'Descending', label: 'Last Played'},
-{key: 'Runtime', field: 'Runtime', order: 'Ascending', label: 'Runtime'}
+{key: 'SortName', field: 'SortName', order: 'Ascending', label: $L('Name')},
+{key: 'DateCreated', field: 'DateCreated', order: 'Descending', label: $L('Date Added')},
+{key: 'PremiereDate', field: 'PremiereDate', order: 'Descending', label: $L('Premiere Date')},
+{key: 'CommunityRating', field: 'CommunityRating', order: 'Descending', label: $L('Community Rating')},
+{key: 'CriticRating', field: 'CriticRating', order: 'Descending', label: $L('Critic Rating')},
+{key: 'DatePlayed', field: 'DatePlayed', order: 'Descending', label: $L('Last Played')},
+{key: 'Runtime', field: 'Runtime', order: 'Ascending', label: $L('Runtime')}
 ];
 
 const TYPE_FILTERS = [
-{key: 'all', label: 'All', types: 'Movie,Series,Episode,Person'},
-{key: 'movies', label: 'Movies', types: 'Movie'},
-{key: 'shows', label: 'Shows', types: 'Series'},
-{key: 'episodes', label: 'Episodes', types: 'Episode'},
-{key: 'people', label: 'People', types: 'Person'}
+{key: 'all', label: $L('All'), types: 'Movie,Series,Episode,Person'},
+{key: 'movies', label: $L('Movies'), types: 'Movie'},
+{key: 'shows', label: $L('Shows'), types: 'Series'},
+{key: 'episodes', label: $L('Episodes'), types: 'Episode'},
+{key: 'people', label: $L('People'), types: 'Person'}
 ];
 
 const LETTERS = ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];

@@ -1,45 +1,47 @@
+import $L from '@enact/i18n/$L';
+
 export const SUBTITLE_SIZE_OPTIONS = [
-	{ value: 'small', label: 'Small', fontSize: 36 },
-	{ value: 'medium', label: 'Medium', fontSize: 44 },
-	{ value: 'large', label: 'Large', fontSize: 52 },
-	{ value: 'xlarge', label: 'Extra Large', fontSize: 60 }
+	{ value: 'small', label: $L('Small'), fontSize: 36 },
+	{ value: 'medium', label: $L('Medium'), fontSize: 44 },
+	{ value: 'large', label: $L('Large'), fontSize: 52 },
+	{ value: 'xlarge', label: $L('Extra Large'), fontSize: 60 }
 ];
 
 export const SUBTITLE_COLOR_OPTIONS = [
-	{ value: '#ffffff', label: 'White' },
-	{ value: '#ffff00', label: 'Yellow' },
-	{ value: '#00ffff', label: 'Cyan' },
-	{ value: '#ff00ff', label: 'Magenta' },
-	{ value: '#00ff00', label: 'Green' },
-	{ value: '#ff0000', label: 'Red' },
-	{ value: '#808080', label: 'Grey' },
-	{ value: '#404040', label: 'Dark Grey' }
+	{ value: '#ffffff', label: $L('White') },
+	{ value: '#ffff00', label: $L('Yellow') },
+	{ value: '#00ffff', label: $L('Cyan') },
+	{ value: '#ff00ff', label: $L('Magenta') },
+	{ value: '#00ff00', label: $L('Green') },
+	{ value: '#ff0000', label: $L('Red') },
+	{ value: '#808080', label: $L('Grey') },
+	{ value: '#404040', label: $L('Dark Grey') }
 ];
 
 export const SUBTITLE_POSITION_OPTIONS = [
-	{ value: 'bottom', label: 'Bottom', offset: 10 },
-	{ value: 'lower', label: 'Lower', offset: 20 },
-	{ value: 'middle', label: 'Middle', offset: 30 },
-	{ value: 'higher', label: 'Higher', offset: 40 },
-	{ value: 'absolute', label: 'Absolute', offset: 0 }
+	{ value: 'bottom', label: $L('Bottom'), offset: 10 },
+	{ value: 'lower', label: $L('Lower'), offset: 20 },
+	{ value: 'middle', label: $L('Middle'), offset: 30 },
+	{ value: 'higher', label: $L('Higher'), offset: 40 },
+	{ value: 'absolute', label: $L('Absolute'), offset: 0 }
 ];
 
 export const SUBTITLE_SHADOW_COLOR_OPTIONS = [
-	{ value: '#000000', label: 'Black' },
-	{ value: '#ffffff', label: 'White' },
-	{ value: '#808080', label: 'Grey' },
-	{ value: '#404040', label: 'Dark Grey' },
-	{ value: '#ff0000', label: 'Red' },
-	{ value: '#00ff00', label: 'Green' },
-	{ value: '#0000ff', label: 'Blue' }
+	{ value: '#000000', label: $L('Black') },
+	{ value: '#ffffff', label: $L('White') },
+	{ value: '#808080', label: $L('Grey') },
+	{ value: '#404040', label: $L('Dark Grey') },
+	{ value: '#ff0000', label: $L('Red') },
+	{ value: '#00ff00', label: $L('Green') },
+	{ value: '#0000ff', label: $L('Blue') }
 ];
 
 export const SUBTITLE_BACKGROUND_COLOR_OPTIONS = [
-	{ value: '#000000', label: 'Black' },
-	{ value: '#ffffff', label: 'White' },
-	{ value: '#808080', label: 'Grey' },
-	{ value: '#404040', label: 'Dark Grey' },
-	{ value: '#000080', label: 'Navy' }
+	{ value: '#000000', label: $L('Black') },
+	{ value: '#ffffff', label: $L('White') },
+	{ value: '#808080', label: $L('Grey') },
+	{ value: '#404040', label: $L('Dark Grey') },
+	{ value: '#000080', label: $L('Navy') }
 ];
 
 const hexOpacity = (opacity) => Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');

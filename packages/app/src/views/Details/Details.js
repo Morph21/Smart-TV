@@ -73,21 +73,21 @@ const getMediaBadges = (item, versionIndex = 0) => {
 
 	if (video) {
 		// Resolution badge
-		if (video.Width >= 3800) badges.push({type: 'badge4k', label: '4K'});
-		else if (video.Width >= 1900) badges.push({type: 'badgeHd', label: '1080p'});
-		else if (video.Width >= 1260) badges.push({type: 'badgeHd', label: '720p'});
+		if (video.Width >= 3800) badges.push({type: 'badge4k', label: $L('4K')});
+		else if (video.Width >= 1900) badges.push({type: 'badgeHd', label: $L('1080p')});
+		else if (video.Width >= 1260) badges.push({type: 'badgeHd', label: $L('720p')});
 
 		// HDR/DV badges
 		const rangeType = video.VideoRangeType;
 		if (rangeType === 'DOVIWithHDR10' || rangeType === 'DOVI' || rangeType === 'DOVIWithHDR10Plus') {
-			badges.push({type: 'badgeDv', label: 'DV'});
+			badges.push({type: 'badgeDv', label: $L('DV')});
 		}
 		if (rangeType && rangeType !== 'SDR') {
-			if (rangeType.includes('HDR10Plus')) badges.push({type: 'badgeHdr', label: 'HDR10+'});
-			else if (rangeType.includes('HDR10') || rangeType === 'DOVIWithHDR10') badges.push({type: 'badgeHdr', label: 'HDR10'});
-			else if (rangeType !== 'DOVI') badges.push({type: 'badgeHdr', label: 'HDR'});
+			if (rangeType.includes('HDR10Plus')) badges.push({type: 'badgeHdr', label: $L('HDR10+')});
+			else if (rangeType.includes('HDR10') || rangeType === 'DOVIWithHDR10') badges.push({type: 'badgeHdr', label: $L('HDR10')});
+			else if (rangeType !== 'DOVI') badges.push({type: 'badgeHdr', label: $L('HDR')});
 		} else if (video.VideoRange === 'HDR') {
-			badges.push({type: 'badgeHdr', label: 'HDR'});
+			badges.push({type: 'badgeHdr', label: $L('HDR')});
 		}
 
 		// Video codec badge
@@ -107,9 +107,9 @@ const getMediaBadges = (item, versionIndex = 0) => {
 	if (audio) {
 		// Audio format badge
 		if (audio.Profile?.includes('Atmos') || audio.Title?.includes('Atmos')) {
-			badges.push({type: 'badgeAtmos', label: 'ATMOS'});
+			badges.push({type: 'badgeAtmos', label: $L('ATMOS')});
 		} else if (audio.Profile?.includes('DTS:X') || audio.Title?.includes('DTS:X')) {
-			badges.push({type: 'badgeDtsx', label: 'DTS:X'});
+			badges.push({type: 'badgeDtsx', label: $L('DTS:X')});
 		} else if (audio.Channels > 6) {
 			badges.push({type: 'badgeSurround', label: `${audio.Channels - 1}.1`});
 		} else if (audio.Channels === 6) {

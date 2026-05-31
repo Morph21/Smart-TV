@@ -150,13 +150,13 @@ const getBaseCategories = () => [
 
 const getBitrateOptions = () => [
 	{ value: 0, label: $L('Auto (Recommended)') },
-	{ value: 120000000, label: '120 Mbps' },
-	{ value: 80000000, label: '80 Mbps' },
-	{ value: 60000000, label: '60 Mbps' },
-	{ value: 40000000, label: '40 Mbps' },
-	{ value: 20000000, label: '20 Mbps' },
-	{ value: 10000000, label: '10 Mbps' },
-	{ value: 5000000, label: '5 Mbps' }
+	{ value: 120000000, label: $L('120 Mbps') },
+	{ value: 80000000, label: $L('80 Mbps') },
+	{ value: 60000000, label: $L('60 Mbps') },
+	{ value: 40000000, label: $L('40 Mbps') },
+	{ value: 20000000, label: $L('20 Mbps') },
+	{ value: 10000000, label: $L('10 Mbps') },
+	{ value: 5000000, label: $L('5 Mbps') }
 ];
 
 const getContentTypeOptions = () => [
@@ -236,11 +236,11 @@ const getSeekStepOptions = () => [
 ];
 
 const UI_OPACITY_OPTIONS = [
-	{ value: 50, label: '50%' },
-	{ value: 65, label: '65%' },
-	{ value: 75, label: '75%' },
-	{ value: 85, label: '85%' },
-	{ value: 95, label: '95%' }
+	{ value: 50, label: $L('50%') },
+	{ value: 65, label: $L('65%') },
+	{ value: 75, label: $L('75%') },
+	{ value: 85, label: $L('85%') },
+	{ value: 95, label: $L('95%') }
 ];
 
 const getUiColorOptions = () => [
@@ -274,10 +274,10 @@ const getScreensaverTimeoutOptions = () => [
 
 const getScreensaverDimmingOptions = () => [
 	{ value: 0, label: $L('Off') },
-	{ value: 25, label: '25%' },
-	{ value: 50, label: '50%' },
-	{ value: 75, label: '75%' },
-	{ value: 100, label: '100%' }
+	{ value: 25, label: $L('25%') },
+	{ value: 50, label: $L('50%') },
+	{ value: 75, label: $L('75%') },
+	{ value: 100, label: $L('100%') }
 ];
 
 const getClockDisplayOptions = () => [
@@ -376,10 +376,10 @@ const getAudioLanguageOptions = () => [
 ];
 
 const RATING_SOURCE_OPTIONS = [
-	{ value: 'imdb', label: 'IMDb' },
-	{ value: 'tmdb', label: 'TMDB' },
+	{ value: 'imdb', label: $L('IMDb') },
+	{ value: 'tmdb', label: $L('TMDB') },
 	{ value: 'tomatoes', label: $L('Rotten Tomatoes') },
-	{ value: 'metacritic', label: 'Metacritic' }
+	{ value: 'metacritic', label: $L('Metacritic') }
 ];
 
 const getEnabledRatingSourcesSummary = (sources) => {
@@ -442,11 +442,11 @@ const hexToRgba = (hex) => {
 };
 
 const AGE_RATING_OPTIONS = [
-	{ value: 0, label: 'G' },
-	{ value: 7, label: 'PG' },
-	{ value: 13, label: 'PG-13' },
-	{ value: 17, label: 'R' },
-	{ value: 18, label: 'NC-17' }
+	{ value: 0, label: $L('G') },
+	{ value: 7, label: $L('PG') },
+	{ value: 13, label: $L('PG-13') },
+	{ value: 17, label: $L('R') },
+	{ value: 18, label: $L('NC-17') }
 ];
 
 const getLabel = (options, value, fallback) => {
@@ -514,7 +514,7 @@ const buildCollectionPluginSections = (collections, sortBy, sortOrder) => {
 	const items = Array.isArray(collections) ? collections : [];
 	return items.map((collection, index) => {
 		const collectionId = collection?.Id || `collection-${index + 1}`;
-		const displayText = collection?.Name || `Collection ${index + 1}`;
+		const displayText = collection?.Name || $L('Collection {index}').replace('{index}', String(index + 1));
 		return {
 			id: `collection:${normalizeSectionToken(collectionId, `collection-${index + 1}`)}`,
 			displayText,
@@ -536,7 +536,7 @@ const buildGenrePluginSections = (genres, includeItemTypes, sortBy, sortOrder) =
 	const items = Array.isArray(genres) ? genres : [];
 	return items.map((genre, index) => {
 		const genreId = genre?.Id || genre?.Name || `genre-${index + 1}`;
-		const genreName = genre?.Name || `Genre ${index + 1}`;
+		const genreName = genre?.Name || $L('Genre {index}').replace('{index}', String(index + 1));
 		return {
 			id: `genre:${normalizeSectionToken(genreId, normalizeSectionToken(genreName, `genre-${index + 1}`))}`,
 			displayText: genreName,
@@ -595,7 +595,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const { capabilities } = useDeviceInfo();
 	const jellyseerr = useJellyseerr();
 	const isSeerr = jellyseerr.isMoonfin && jellyseerr.variant === 'seerr';
-	const seerrLabel = isSeerr ? jellyseerr.displayName || 'Seerr' : 'Jellyseerr';
+	const seerrLabel = isSeerr ? jellyseerr.displayName || $L('Seerr') : $L('Jellyseerr');
 	const categories = getBaseCategories();
 
 	const [navStack, setNavStack] = useState([{ view: 'categories' }]);
@@ -1894,14 +1894,14 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 
 	const renderAboutData = () => (
 		<>
-			<div className={css.viewDescription}>Remove all saved servers, login sessions, and settings. The app will restart as if freshly installed.</div>
+			<div className={css.viewDescription}>{$L('Remove all saved servers, login sessions, and settings. The app will restart as if freshly installed.')}</div>
 			<div className={css.actionBarInline}>
 				<SpottableButton
 					className={`${css.actionButton} ${css.dangerButton}`}
 					onClick={() => setClearDataDialogOpen(true)}
 					spotlightId='clear-all-data'
 				>
-					Clear All Data
+					{$L('Clear All Data')}
 				</SpottableButton>
 			</div>
 		</>
@@ -2028,7 +2028,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 						{ id: 'capabilities', label: $L('Capabilities'), description: $L('Supported formats and codecs') }
 					);
 				}
-				subs.push({ id: 'data', label: 'Data', description: 'Storage and reset' });
+				subs.push({ id: 'data', label: $L('Data'), description: $L('Storage and reset') });
 				return subs;
 			}
 			default:

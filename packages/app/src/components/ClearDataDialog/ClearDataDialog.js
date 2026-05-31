@@ -1,4 +1,5 @@
 import {memo, useEffect} from 'react';
+import $L from '@enact/i18n/$L';
 import Spottable from '@enact/spotlight/Spottable';
 import Spotlight from '@enact/spotlight';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
@@ -56,9 +57,9 @@ const ClearDataDialog = ({open, onCancel, onConfirm}) => {
 	return (
 		<div className={css.overlay}>
 			<DialogContainer className={css.dialog} spotlightId="cleardata-dialog">
-				<h2 className={css.title}>Clear All Data?</h2>
+				<h2 className={css.title}>{$L('Clear All Data?')}</h2>
 				<p className={css.message}>
-					This will remove all settings, saved servers, and login sessions. You will need to set up the app again.
+					{$L('This will remove all settings, saved servers, and login sessions. You will need to set up the app again.')}
 				</p>
 				<div className={css.buttons}>
 					<SpottableButton
@@ -66,14 +67,14 @@ const ClearDataDialog = ({open, onCancel, onConfirm}) => {
 						onClick={onCancel}
 						spotlightId="cleardata-cancel-btn"
 					>
-						Cancel
+						{$L('Cancel')}
 					</SpottableButton>
 					<SpottableButton
 						className={`${css.btn} ${css.confirmBtn} spottable-default`}
 						onClick={onConfirm}
 						spotlightId="cleardata-confirm-btn"
 					>
-						Clear All Data
+						{$L('Clear All Data')}
 					</SpottableButton>
 				</div>
 			</DialogContainer>

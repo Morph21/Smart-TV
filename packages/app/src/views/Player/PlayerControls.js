@@ -26,11 +26,11 @@ export const usePlayerButtons = ({
 	const topButtons = useMemo(() => {
 		if (isAudioMode) {
 			return [
-				{id: 'shuffle', icon: <IconShuffle />, label: 'Shuffle', action: 'shuffle', active: shuffleMode},
-				{id: 'previous', icon: <IconPrevious />, label: 'Previous', action: 'prevTrack', disabled: !hasPrevTrack && !shuffleMode},
-				{id: 'playPause', icon: isPaused ? <IconPlay /> : <IconPause />, label: isPaused ? 'Play' : 'Pause', action: 'playPause'},
-				{id: 'next', icon: <IconNext />, label: 'Next', action: 'nextTrack', disabled: !hasNextTrack && repeatMode === 'off' && !shuffleMode},
-				{id: 'repeat', icon: repeatMode === 'one' ? <IconRepeatOne /> : <IconRepeat />, label: 'Repeat', action: 'repeat', active: repeatMode !== 'off'}
+				{id: 'shuffle', icon: <IconShuffle />, label: $L('Shuffle'), action: 'shuffle', active: shuffleMode},
+				{id: 'previous', icon: <IconPrevious />, label: $L('Previous'), action: 'prevTrack', disabled: !hasPrevTrack && !shuffleMode},
+				{id: 'playPause', icon: isPaused ? <IconPlay /> : <IconPause />, label: isPaused ? $L('Play') : $L('Pause'), action: 'playPause'},
+				{id: 'next', icon: <IconNext />, label: $L('Next'), action: 'nextTrack', disabled: !hasNextTrack && repeatMode === 'off' && !shuffleMode},
+				{id: 'repeat', icon: repeatMode === 'one' ? <IconRepeatOne /> : <IconRepeat />, label: $L('Repeat'), action: 'repeat', active: repeatMode !== 'off'}
 			];
 		}
 		const buttons = [];
@@ -89,7 +89,7 @@ export const usePlayerButtons = ({
 
 	const favoriteButton = useMemo(() => {
 		if (!isAudioMode) return null;
-		return {id: 'favorite', icon: isFavorite ? <IconFavoriteFilled /> : <IconFavorite />, label: 'Favorite', action: 'favorite', active: isFavorite};
+		return {id: 'favorite', icon: isFavorite ? <IconFavoriteFilled /> : <IconFavorite />, label: $L('Favorite'), action: 'favorite', active: isFavorite};
 	}, [isAudioMode, isFavorite]);
 
 	return {topButtons, bottomButtons, favoriteButton};

@@ -19,18 +19,18 @@ const ToolbarContainer = SpotlightContainerDecorator({enterTo: 'last-focused', r
 const GridContainer = SpotlightContainerDecorator({enterTo: 'last-focused', restrict: 'self-only'}, 'div');
 
 const SORT_OPTIONS = [
-	{key: 'SortName,Ascending', label: 'Name (A-Z)'},
-	{key: 'SortName,Descending', label: 'Name (Z-A)'},
-	{key: 'CommunityRating,Descending', label: 'Rating'},
-	{key: 'DateCreated,Descending', label: 'Date Added'},
-	{key: 'PremiereDate,Descending', label: 'Release Date'},
-	{key: 'Random,Ascending', label: 'Random'}
+	{key: 'SortName,Ascending', label: $L('Name (A-Z)')},
+	{key: 'SortName,Descending', label: $L('Name (Z-A)')},
+	{key: 'CommunityRating,Descending', label: $L('Rating')},
+	{key: 'DateCreated,Descending', label: $L('Date Added')},
+	{key: 'PremiereDate,Descending', label: $L('Release Date')},
+	{key: 'Random,Ascending', label: $L('Random')}
 ];
 
 const FILTER_OPTIONS = [
-	{key: 'all', label: 'All'},
-	{key: 'Movie', label: 'Movies'},
-	{key: 'Series', label: 'TV Shows'}
+	{key: 'all', label: $L('All')},
+	{key: 'Movie', label: $L('Movies')},
+	{key: 'Series', label: $L('TV Shows')}
 ];
 
 const LETTERS = ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
