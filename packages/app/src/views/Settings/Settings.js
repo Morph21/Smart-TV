@@ -17,7 +17,7 @@ import {isBackKey} from '../../utils/keys';
 import ClearDataDialog from '../../components/ClearDataDialog';
 import SpottableInput from '../../components/SpottableInput/SpottableInput';
 import {clearAllStorage} from '../../services/storage';
-import {MATERIAL_ICON_URLS} from './materialIconMap';
+import {MATERIAL_ICON_PATHS} from './materialIconMap';
 
 import css from './Settings.module.less';
 
@@ -130,11 +130,19 @@ const toMaterialIconName = (iconName) => MATERIAL_ICON_NAME_MAP[iconName] || ico
 
 const renderSettingsIcon = (iconName) => {
 	if (!iconName) return null;
-	const iconUrl = MATERIAL_ICON_URLS[toMaterialIconName(iconName)] || MATERIAL_ICON_URLS.settings;
+	const iconPath = MATERIAL_ICON_PATHS[toMaterialIconName(iconName)] || MATERIAL_ICON_PATHS.settings;
 
 	return (
 		<div className={css.listItemIcon}>
-			<img aria-hidden='true' alt='' className={css.materialIconSvg} src={iconUrl} />
+			<svg
+				className={css.materialIconSvg}
+				viewBox='0 -960 960 960'
+				fill='currentColor'
+				aria-hidden='true'
+				focusable='false'
+			>
+				<path d={iconPath} />
+			</svg>
 		</div>
 	);
 };
@@ -2240,18 +2248,18 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 									onClick={() => moveHomeRowUp(row.id)}
 									disabled={index === 0}
 									size='small'
+									icon='arrowlargeup'
+									aria-label={$L('Up')}
 									spotlightId={`homerow-up-${row.id}`}
-								>
-									{$L('Up')}
-								</Button>
+								/>
 								<Button
 									onClick={() => moveHomeRowDown(row.id)}
 									disabled={index === visibleRows.length - 1}
 									size='small'
+									icon='arrowlargedown'
+									aria-label={$L('Down')}
 									spotlightId={`homerow-down-${row.id}`}
-								>
-									{$L('Down')}
-								</Button>
+								/>
 							</div>
 						</div>
 					))}
@@ -2276,18 +2284,18 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 											onClick={() => movePluginSectionUp(section.id)}
 											disabled={index === 0}
 											size='small'
+											icon='arrowlargeup'
+											aria-label={$L('Up')}
 											spotlightId={`pluginrow-up-${section.id}`}
-										>
-											{$L('Up')}
-										</Button>
+										/>
 										<Button
 											onClick={() => movePluginSectionDown(section.id)}
 											disabled={index === tempPluginSections.length - 1}
 											size='small'
+											icon='arrowlargedown'
+											aria-label={$L('Down')}
 											spotlightId={`pluginrow-down-${section.id}`}
-										>
-											{$L('Down')}
-										</Button>
+										/>
 									</div>
 								</div>
 							))}
