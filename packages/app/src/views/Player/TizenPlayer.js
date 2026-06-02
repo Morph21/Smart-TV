@@ -28,7 +28,7 @@ import {
 	mapSubtitleStreamsFromMediaSource,
 	mapRemoteSubtitleOptions
 } from './remoteSubtitleUtils';
-import {getVideoDisplayAspectRatio, getZoomDisplayRect} from './aspectRatioUtils';
+import {getVideoDisplayAspectRatio} from './aspectRatioUtils';
 
 import css from './TizenPlayer.module.less';
 
@@ -167,10 +167,16 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 
 	const applyDisplayWindow = useCallback(() => {
 		const screenRect = getTizenFullscreenRect();
-		const zoomRect = getZoomDisplayRect(screenRect, videoAspectRatio, zoomModeRef.current);
-		setDisplayWindow(zoomRect);
-		avplaySetDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN');
-	}, [videoAspectRatio]);
+		setDisplayWindow(screenRect);
+		const mode = zoomModeRef.current;
+		if (mode === 'stretch') {
+			avplaySetDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN');
+		} else if (mode === 'fill') {
+			avplaySetDisplayMethod('PLAYER_DISPLAY_MODE_CROPPED_FULL');
+		} else {
+			avplaySetDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
+		}
+	}, []);
 
 	const enforceRootFontSize = useCallback(() => {
 		if (typeof document === 'undefined') return;
