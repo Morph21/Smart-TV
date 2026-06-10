@@ -14,6 +14,7 @@ import {toCssColor} from '../../theme/themeSpec';
 import DetailSection from './DetailSection';
 import FeaturedBanner from './FeaturedBanner';
 import MakdBanner from './MakdBanner';
+import GalleryBanner from './GalleryBanner';
 import BackdropLayer from './BackdropLayer';
 
 import css from './Browse.module.less';
@@ -237,7 +238,6 @@ const Browse = ({
 	const [state, dispatch] = useReducer(browseReducer, browseInitialState);
 	const {isLoading, browseMode, allRowData, featuredItems} = state;
 	const [focusedItemForBackdrop, setFocusedItemForBackdrop] = useState(null);
-	const [currentFeaturedItem, setCurrentFeaturedItem] = useState(null);
 	const mainContentRef = useRef(null);
 	const detailSectionRef = useRef(null);
 	const lastFocusedRowRef = useRef(null);
@@ -1276,20 +1276,14 @@ const Browse = ({
 	]); // eslint-disable-line no-use-before-define
 
 	const targetBackdropUrl = useMemo(() => {
-		let itemForBackdrop = null;
+		if (browseMode === 'featured') return '';
+		if (!focusedItemForBackdrop || isLegacy || settings.showHomeBackdrop === false) return '';
 
-		if (browseMode === 'featured') {
-			itemForBackdrop = currentFeaturedItem;
-		} else if (focusedItemForBackdrop && !isLegacy && settings.showHomeBackdrop !== false) {
-			itemForBackdrop = focusedItemForBackdrop;
-		}
-
-		if (!itemForBackdrop) return '';
-		const backdropId = getBackdropId(itemForBackdrop);
+		const backdropId = getBackdropId(focusedItemForBackdrop);
 		if (!backdropId) return '';
-		const itemUrl = getItemServerUrl(itemForBackdrop);
+		const itemUrl = getItemServerUrl(focusedItemForBackdrop);
 		return getImageUrl(itemUrl, backdropId, 'Backdrop', {maxWidth: 1280, quality: 80});
-	}, [browseMode, currentFeaturedItem, focusedItemForBackdrop, isLegacy, settings.showHomeBackdrop, getItemServerUrl]);
+	}, [browseMode, focusedItemForBackdrop, isLegacy, settings.showHomeBackdrop, getItemServerUrl]);
 
 	const handleSelectItem = useCallback((item) => {
 		onBlurItemThemeMusic?.();
@@ -1377,7 +1371,18 @@ const Browse = ({
 				/>
 
 				{featuredItems.length > 0 && settings.showFeaturedBar !== false && (
-					settings.featuredBarStyle === 'makd' ? (
+					settings.featuredBarStyle === 'gallery' ? (
+						<GalleryBanner
+							isVisible={browseMode === 'featured'}
+							featuredItems={featuredItems}
+							api={api}
+							settings={settings}
+							getItemServerUrl={getItemServerUrl}
+							onSelectItem={handleSelectItem}
+							onNavigateDown={handleNavigateDownFromFeatured}
+							onFeaturedFocus={handleFeaturedFocusCallback}
+						/>
+					) : settings.featuredBarStyle === 'makd' ? (
 						<MakdBanner
 							isVisible={browseMode === 'featured'}
 							featuredItems={featuredItems}
@@ -1387,7 +1392,6 @@ const Browse = ({
 							onSelectItem={handleSelectItem}
 							onNavigateDown={handleNavigateDownFromFeatured}
 							onFeaturedFocus={handleFeaturedFocusCallback}
-							onCurrentItemChange={setCurrentFeaturedItem}
 						/>
 					) : (
 						<FeaturedBanner
@@ -1402,7 +1406,6 @@ const Browse = ({
 							onFeaturedFocus={handleFeaturedFocusCallback}
 							uiPanelStyle={uiPanelStyle}
 							uiButtonStyle={uiButtonStyle}
-							onCurrentItemChange={setCurrentFeaturedItem}
 						/>
 					)
 				)}
