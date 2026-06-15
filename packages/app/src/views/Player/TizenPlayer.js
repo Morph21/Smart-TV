@@ -911,6 +911,9 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 					} else {
 						avplaySetSilentSubtitle(true);
 					}
+				} else {
+					avplaySetSilentSubtitle(true);
+					useNativeSubtitleRef.current = false;
 				}
 
 				playback.reportStart(positionRef.current);
