@@ -21,6 +21,7 @@ export const setServer = (serverUrl) => {
 export const setAuth = (userId, token) => {
 	currentUser = userId;
 	accessToken = token;
+	if (token) reportCapabilities();
 };
 
 export const getAuthHeader = () => {
@@ -113,6 +114,19 @@ const request = async (endpoint, options = {}) => {
 	if (!text) return null;
 	return JSON.parse(text);
 };
+
+export function reportCapabilities() {
+	if (!currentServer || !accessToken) return;
+	request('/Sessions/Capabilities/Full', {
+		method: 'POST',
+		body: {
+			PlayableMediaTypes: ['Video', 'Audio'],
+			SupportedCommands: [],
+			SupportsMediaControl: false,
+			SupportsPersistentIdentifier: false
+		}
+	}).catch(() => {});
+}
 
 export const api = {
 	getPublicInfo: () => request('/System/Info/Public'),

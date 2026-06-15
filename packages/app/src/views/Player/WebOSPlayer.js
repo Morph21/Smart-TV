@@ -488,6 +488,7 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 				if (!playback.reportProgressBeacon(positionRef.current, {isPaused: true})) {
 					playback.reportProgress(positionRef.current);
 				}
+				playback.reportStopBeacon(positionRef.current);
 			}
 		};
 

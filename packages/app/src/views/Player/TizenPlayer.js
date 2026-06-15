@@ -445,7 +445,10 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 						try { avplayPause(); } catch (e) { void e; }
 					}
 					if (positionRef.current > 0) {
-						playback.reportProgress(positionRef.current);
+						if (!playback.reportProgressBeacon(positionRef.current, {isPaused: true})) {
+							playback.reportProgress(positionRef.current);
+						}
+						playback.reportStopBeacon(positionRef.current);
 					}
 				}
 			);
