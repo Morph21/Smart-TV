@@ -634,7 +634,12 @@ const AppContent = (props) => {
 
 	const handlePlayNext = useCallback((item, trackOptions) => {
 		setPlayingItem(item);
-		setPlaybackOptions(trackOptions || null);
+		setPlaybackOptions(prev => {
+			if (!trackOptions && prev?.audioPlaylist?.some(t => t.Id === item.Id)) {
+				return {audioPlaylist: prev.audioPlaylist};
+			}
+			return trackOptions || null;
+		});
 		setIsResume(false);
 	}, []);
 
