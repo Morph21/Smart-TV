@@ -1033,6 +1033,13 @@
 	padding: 16px 20px 20px;
 }
 
+.nextLabelRow {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	margin-bottom: 6px;
+}
+
 .nextLabel {
 	font-size: 13px;
 	color: rgba(255, 255, 255, 0.5);
@@ -1040,6 +1047,25 @@
 	letter-spacing: 2px;
 	font-weight: 700;
 	margin-bottom: 6px;
+}
+
+.nextLabelRow .nextLabel {
+	margin-bottom: 0;
+}
+
+.nextCountdownInline {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.7);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.nextProgressBarMinimal {
+	height: 6px;
+	margin-top: 16px;
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 3px;
+	overflow: hidden;
 }
 
 .nextTitle {

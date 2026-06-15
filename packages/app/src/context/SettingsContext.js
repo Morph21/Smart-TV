@@ -120,6 +120,7 @@ const defaultSettings = {
 	autoAdvance: true,
 	autoAdvanceInterval: 8,
 	nextUpBehavior: 'extended',
+	nextUpCountdownStyle: 'both',
 	nextUpTimeout: 7,
 	stillWatchingPrompt: true,
 	skipForwardLength: 30,

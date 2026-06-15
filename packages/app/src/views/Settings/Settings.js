@@ -422,6 +422,12 @@ const getNextUpBehaviorOptions = () => [
 	{ value: 'disabled', label: $L('Disabled') }
 ];
 
+const getNextUpCountdownStyleOptions = () => [
+	{ value: 'progressBar', label: $L('Progress Bar') },
+	{ value: 'timer', label: $L('Timer') },
+	{ value: 'both', label: $L('Both') }
+];
+
 const getMediaSegmentActionOptions = () => [
 	{ value: 'ask', label: $L('Ask to Skip') },
 	{ value: 'auto', label: $L('Auto Skip') },
@@ -1745,6 +1751,8 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		<>
 			{renderToggleItem('autoPlay', $L('Episode Queuing'), $L('Automatically play the next episode'), 'list')}
 			{renderOptionItem('nextUpBehavior', $L('Next Up Prompt'), getNextUpBehaviorOptions(), $L('Extended'), 'skip')}
+			{settings.nextUpBehavior !== 'disabled' &&
+				renderOptionItem('nextUpCountdownStyle', $L('Next Up Countdown'), getNextUpCountdownStyleOptions(), $L('Both'), 'timer')}
 			{settings.nextUpBehavior !== 'disabled' &&
 				renderSliderItem('nextUpTimeout', $L('Next Up Prompt Timeout'), 0, 30, 1, (v) => (v === 0 ? $L('Instant') : `${v}s`), 'timer')}
 			{renderToggleItem('stillWatchingPrompt', $L('Still Watching Prompt'), $L('Show continuation prompts before auto-playing the next episode'), 'show')}

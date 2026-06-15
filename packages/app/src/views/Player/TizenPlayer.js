@@ -22,7 +22,7 @@ import {findPreferredAudioStream} from '../../utils/audioLanguage';
 import {api as jellyfinApi, createApiForServer, getServerUrl} from '../../services/jellyfinApi';
 import PlayerControls, {usePlayerButtons} from './PlayerControls';
 import useSegmentPopups from './useSegmentPopups';
-import {CONTROLS_HIDE_DELAY, parseLyricsResponse, withTimeout} from './PlayerConstants';
+import {SpottableButton, NextEpisodeContainer, CONTROLS_HIDE_DELAY, parseLyricsResponse, withTimeout} from './PlayerConstants';
 import {
 	toSubtitleLanguage,
 	mapSubtitleStreamsFromMediaSource,
@@ -2125,6 +2125,10 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		);
 	}
 
+	const nextCountdownStyle = settings.nextUpCountdownStyle ?? 'both';
+	const showNextCountdownTimer = nextEpisodeCountdown !== null && nextCountdownStyle !== 'progressBar';
+	const showNextCountdownBar = nextEpisodeCountdown !== null && nextCountdownStyle !== 'timer';
+
 	return (
 		<div className={css.container} ref={playerContainerRef} onClick={showControls}>
 			{/*
@@ -2236,24 +2240,60 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 
 			{/* Next Episode Overlay */}
 			{(showSkipCredits || showNextEpisode) && nextEpisode && !isAudioMode && !activeModal && !controlsVisible && (
-				<div className={css.nextEpisodeOverlay}>
-					<div className={css.nextLabel}>{$L('UP NEXT')}</div>
-					<div className={css.nextTitle}>{nextEpisode.Name}</div>
-					{nextEpisode.SeriesName && (
-						<div className={css.nextMeta}>
-							S{nextEpisode.ParentIndexNumber}E{nextEpisode.IndexNumber}
+				<NextEpisodeContainer className={css.nextEpisodeOverlay} spotlightRestrict="self-only">
+					{settings.nextUpBehavior !== 'minimal' ? (
+						<div className={css.nextEpisodeCard}>
+							<div className={css.nextThumbnail}>
+								<img
+									src={getImageUrl(item._serverUrl || getServerUrl(), nextEpisode.Id, 'Primary', {maxWidth: 400, quality: 80})}
+									alt={nextEpisode.Name}
+									className={css.nextThumbnailImg}
+								/>
+								<div className={css.nextThumbnailGradient} />
+							</div>
+							<div className={css.nextInfo}>
+								<div className={css.nextLabelRow}>
+									<div className={css.nextLabel}>{$L('UP NEXT')}</div>
+									{showNextCountdownTimer && (
+										<div className={css.nextCountdownInline}>{$L('Starting in {countdown}s').replace('{countdown}', nextEpisodeCountdown)}</div>
+									)}
+								</div>
+								<div className={css.nextTitle}>{nextEpisode.Name}</div>
+								{nextEpisode.SeriesName && (
+									<div className={css.nextMeta}>
+										S{nextEpisode.ParentIndexNumber} E{nextEpisode.IndexNumber} &middot; {nextEpisode.SeriesName}
+									</div>
+								)}
+								<div className={css.nextActions}>
+									<SpottableButton className={css.nextPlayBtn} onClick={handlePlayNextEpisode} spotlightId="next-episode-play-btn" data-spot-default="true">{$L('Play Now')}</SpottableButton>
+									<SpottableButton className={css.nextCancelBtn} onClick={cancelNextEpisodeCountdown}>{$L('Hide')}</SpottableButton>
+								</div>
+							</div>
+							{showNextCountdownBar && (
+								<div className={css.nextProgressBar}>
+									<div className={css.nextProgressFill} style={{'--countdown-duration': `${settings.nextUpTimeout ?? 7}s`}} />
+								</div>
+							)}
+						</div>
+					) : (
+						<div className={css.nextEpisodeMinimal}>
+							<div className={css.nextLabel}>{$L('UP NEXT')}</div>
+							<div className={css.nextTitle}>{nextEpisode.Name}</div>
+							{showNextCountdownTimer && (
+								<div className={css.nextCountdownText}>{$L('Starting in {countdown}s').replace('{countdown}', nextEpisodeCountdown)}</div>
+							)}
+							<div className={css.nextActions}>
+								<SpottableButton className={css.nextPlayBtn} onClick={handlePlayNextEpisode} spotlightId="next-episode-play-btn" data-spot-default="true">{$L('Play Now')}</SpottableButton>
+								<SpottableButton className={css.nextCancelBtn} onClick={cancelNextEpisodeCountdown}>{$L('Hide')}</SpottableButton>
+							</div>
+							{showNextCountdownBar && (
+								<div className={css.nextProgressBarMinimal}>
+									<div className={css.nextProgressFill} style={{'--countdown-duration': `${settings.nextUpTimeout ?? 7}s`}} />
+								</div>
+							)}
 						</div>
 					)}
-					{nextEpisodeCountdown !== null && (
-						<div className={css.nextCountdown}>
-							{$L('Starting in {countdown}s').replace('{countdown}', nextEpisodeCountdown)}
-						</div>
-					)}
-					<div className={css.nextButtons}>
-						<Button onClick={handlePlayNextEpisode} spotlightId="next-episode-play-btn">{$L('Play Now')}</Button>
-						<Button onClick={cancelNextEpisodeCountdown}>{$L('Hide')}</Button>
-					</div>
-				</div>
+				</NextEpisodeContainer>
 			)}
 
 			<PlayerControls

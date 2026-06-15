@@ -2335,6 +2335,10 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 		});
 	}, [focusRow, controlsVisible]);
 
+	const nextCountdownStyle = settings.nextUpCountdownStyle ?? 'both';
+	const showNextCountdownTimer = nextEpisodeCountdown !== null && nextCountdownStyle !== 'progressBar';
+	const showNextCountdownBar = nextEpisodeCountdown !== null && nextCountdownStyle !== 'timer';
+
 	return (
 		<div className={css.container} onClick={!isLoading && !error ? showControls : undefined}>
 			<div
@@ -2460,7 +2464,12 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 							<div className={css.nextThumbnailGradient} />
 						</div>
 						<div className={css.nextInfo}>
-							<div className={css.nextLabel}>{$L('UP NEXT')}</div>
+							<div className={css.nextLabelRow}>
+								<div className={css.nextLabel}>{$L('UP NEXT')}</div>
+								{showNextCountdownTimer && (
+									<div className={css.nextCountdownInline}>{$L('Starting in {countdown}s').replace('{countdown}', nextEpisodeCountdown)}</div>
+								)}
+							</div>
 							<div className={css.nextTitle}>{nextEpisode.Name}</div>
 							{nextEpisode.SeriesName && (
 								<div className={css.nextMeta}>
@@ -2483,12 +2492,17 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 								</SpottableButton>
 							</div>
 						</div>
+						{showNextCountdownBar && (
+							<div className={css.nextProgressBar}>
+								<div className={css.nextProgressFill} style={{'--countdown-duration': `${settings.nextUpTimeout ?? 7}s`}} />
+							</div>
+						)}
 					</div>
 					) : (
 					<div className={css.nextEpisodeMinimal}>
 						<div className={css.nextLabel}>{$L('UP NEXT')}</div>
 						<div className={css.nextTitle}>{nextEpisode.Name}</div>
-						{nextEpisodeCountdown !== null && (
+						{showNextCountdownTimer && (
 							<div className={css.nextCountdownText}>{$L('Starting in {countdown}s').replace('{countdown}', nextEpisodeCountdown)}</div>
 						)}
 						<div className={css.nextActions}>
@@ -2499,15 +2513,12 @@ const Player = ({item, resume, initialMediaSourceId, initialAudioIndex, initialS
 								{$L('Hide')}
 							</SpottableButton>
 						</div>
+						{showNextCountdownBar && (
+							<div className={css.nextProgressBarMinimal}>
+								<div className={css.nextProgressFill} style={{'--countdown-duration': `${settings.nextUpTimeout ?? 7}s`}} />
+							</div>
+						)}
 					</div>
-					)}
-					{nextEpisodeCountdown !== null && settings.nextUpBehavior !== 'minimal' && (
-						<div className={css.nextProgressBar}>
-							<div
-								className={css.nextProgressFill}
-								style={{'--countdown-duration': `${settings.nextUpTimeout ?? 7}s`}}
-							/>
-						</div>
 					)}
 				</NextEpisodeContainer>
 			)}
