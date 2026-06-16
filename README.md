@@ -11,11 +11,26 @@
 [![Release](https://img.shields.io/github/release/Moonfin-Client/Smart-TV.svg)](https://github.com/Moonfin-Client/Smart-TV/releases)
 [![github](https://img.shields.io/github/downloads/Moonfin-Client/Smart-TV/total?logo=github&label=Downloads)](https://github.com/Moonfin-Client/Smart-TV/releases)
 
-<a href="https://www.buymeacoffee.com/moonfin" target="_blank"><img src="https://github.com/user-attachments/assets/fe26eaec-147f-496f-8e95-4ebe19f57131" alt="Buy Me A Coffee" ></a>
+<p align="center">
+  <a href="https://www.buymeacoffee.com/moonfin" target="_blank"><img src="https://github.com/user-attachments/assets/fe26eaec-147f-496f-8e95-4ebe19f57131" alt="Buy Me A Coffee" ></a>
+</p>
 
-> **[← Back to main Moonfin project](https://github.com/Moonfin-Client)**
+> **[Back to main Moonfin project](https://github.com/Moonfin-Client)**
 
 Moonfin is an enhanced Jellyfin client built with the **Enact/Sandstone framework**, optimized for Samsung Smart TVs (Tizen) and LG Smart TVs (webOS). A single shared codebase powers both platforms with native video pipelines tuned for each.
+
+
+<p align="center">
+  <a href="#features--enhancements"><b>Features</b></a> &nbsp;|&nbsp;
+  <a href="#screenshots"><b>Screenshots</b></a> &nbsp;|&nbsp;
+  <a href="#installation"><b>Installation</b></a> &nbsp;|&nbsp;
+  <a href="#building-from-source"><b>Building</b></a> &nbsp;|&nbsp;
+  <a href="#development"><b>Development</b></a> &nbsp;|&nbsp;
+  <a href="#contributing"><b>Contributing</b></a> &nbsp;|&nbsp;
+  <a href="#support--community"><b>Support</b></a> &nbsp;|&nbsp;
+  <a href="#license"><b>License</b></a>
+</p>
+
 
 ## Features & Enhancements
 
@@ -24,11 +39,12 @@ Moonfin builds on the solid foundation of Jellyfin with targeted improvements fo
 ### Hardware-Accelerated Video Playback
 - **Samsung AVPlay** (Tizen) and **Starfish/HTML5** (webOS) native video pipelines
 - Smooth playback with proper hardware decoding for H.264, HEVC, HDR10, HLG, and Dolby Vision (where supported)
-- Automatic DirectPlay → native transcode → hls.js fallback chain when a format isn't natively supported
+- Automatic DirectPlay to native transcode to hls.js fallback chain when a format isn't natively supported
+- **Lossless audio passthrough**: DTS, DTS-HD, and Dolby TrueHD bitstreaming to a capable receiver, rechecked live when you switch audio outputs (experimental on webOS)
 - Enhanced player controls optimized for TV remote navigation
 
 ### Multi-Server & Unified Library Mode
-- **Unified Library Mode** — Combine content from all connected Jellyfin servers into a single view
+- **Unified Library Mode**: Combine content from all connected Jellyfin servers into a single view
 - Browse, search, and play content across multiple servers seamlessly
 - Server badges show content origin when unified mode is enabled
 - Cross-server playback with proper progress tracking per server
@@ -39,6 +55,7 @@ Moonfin builds on the solid foundation of Jellyfin with targeted improvements fo
 Moonfin is the first smart TV client with native Jellyseerr support.
 
 - Browse trending, popular, and recommended movies/shows and filter by genres, studio, network, and keywords
+- Add Seerr discover rows (Trending, Popular, Upcoming, My Requests, and more) directly to your home screen
 - Request content in HD or 4K directly from your TV
 - **NSFW Content Filtering** (optional) using Jellyseerr/TMDB metadata
 - Smart season selection when requesting TV shows
@@ -56,34 +73,58 @@ Moonfin is the first smart TV client with native Jellyseerr support.
 - Cleaner icon-based design for frequently used actions
 
 ### Playback & Media Control
-- **Theme Music Playback** — Background theme music for TV shows and movies with volume control
-- **Pre-Playback Track Selection** — Choose your preferred audio track and subtitle before playback starts
-- **Next Episode Countdown** — Skip button with countdown timer when next episode is available
-- **Trickplay Preview** — Thumbnail previews when scrubbing through video
-- **Media Segment Skipping** — Skip intros, credits, and other segments automatically
+- **Theme Music Playback**: Background theme music for TV shows and movies with volume control
+- **Pre-Playback Track Selection**: Choose your preferred audio track and subtitle before playback starts
+- **Next Episode Countdown**: Skip button with countdown timer when next episode is available
+- **Trickplay Preview**: Thumbnail previews when scrubbing through video
+- **Media Segment Skipping**: Skip intros, credits, and other segments automatically
+- **SyncPlay (Watch Together)**: Synchronized "watch together" playback using Jellyfin's SyncPlay protocol
+- **Advanced Subtitle Rendering**: Client-side PGS image subtitles and styled ASS/SSA subtitles via libass, with embedded font support
+- **Subtitle Downloads**: Search for and download subtitles without leaving the app
+- **In-App Trailers**: Play trailers right inside Moonfin
+- **Music Libraries with Lyrics**: Browse albums, artists, and playlists with synced lyrics
+- **OLED Burn-In Protection**: A screensaver kicks in during paused or idle playback to protect OLED panels
 
 ### Live TV & Recordings
-- **Electronic Program Guide (EPG)** — Browse live TV channels with program information in a much simpler interface
-- **DVR Recordings** — Access and play back recorded content with a simple button press
+- **Electronic Program Guide (EPG)**: Browse live TV channels with program information in a much simpler interface
+- **DVR Recordings**: Access and play back recorded content with a simple button press
 
 ### Improved Details Screen
 - Metadata organized into clear sections: genres, directors, writers, studios, and runtime
 - Taglines displayed above the description where available
 - Cast photos appear as circles for a cleaner look
 - Fits more useful information on screen without feeling cramped
-- **Playlist Management** — Add any item to an existing playlist or create a new one directly from the details screen; reorder items with the left/right keys and remove them with Delete
+- **Playlist Management**: Add any item to an existing playlist or create a new one directly from the details screen; reorder items with the left/right keys and remove them with Delete
+- **Chapters, Collections & Media Versions**: Jump straight to chapters, see which collections a title belongs to, and pick between multiple versions of the same media
+- **Extras & Special Features**: Behind-the-scenes clips, trailers, and other extras when the server has them
+- **Ratings**: Rotten Tomatoes and community ratings shown across Browse, Details, the media bar, and libraries
 
 ### UI Polish
-- **Built with Enact/Sandstone** — Modern React-based framework optimized for TV experiences
-- **Accent Color Customization** — Personalize the UI with your preferred accent color
-- **Backdrop Blur Settings** — Customizable blur effects for home and details pages
-- **UI Scale** — Adjust the interface font size to suit your TV size and viewing distance
-- **Featured Banner** — A rotating hero banner on the browse screen highlights featured content with auto-advance and smooth transitions
-- Item details show up right in the row — no need to open every title to see what it is
+- **Built with Enact/Sandstone**: Modern React-based framework optimized for TV experiences
+- **Themes**: A full theme system with built-in themes, a custom theme menu, and per-device persistence
+- **Accent Color Customization**: Personalize the UI with your preferred accent color
+- **Backdrop Blur Settings**: Customizable blur effects for home and details pages
+- **UI Scale**: Adjust the interface font size to suit your TV size and viewing distance
+- **Media Bar Styles**: Pick from 5 different media bars (Moonfin, MakD, Gallery, Banner, and Bookshelf) to showcase featured content on the home screen, each with auto-advance and smooth transitions
+- Item details show up right in the row, no need to open every title to see what it is
 - Buttons look better when not focused (transparent instead of distracting)
 - Better contrast makes text easier to read
 - Transitions and animations feel responsive
 - Consistent icons and visual elements throughout
+
+### Performance
+- **Automatic Performance Tuning**: Detects how capable your TV is and dials the heaviest visual effects up or down to match, so older sets stay responsive while newer ones keep the full look
+- **Performance Mode**: Choose between Auto, High Quality, Balanced, and Performance to control the tradeoff yourself
+- **Lighter visuals on weaker hardware**: Background blur is reduced or disabled where it would otherwise slow things down
+
+### Localization
+Moonfin speaks your language. Switch the app language right from Settings, with English, German, Spanish, French, Hungarian, Polish, Portuguese (Brazil), and Russian available.
+
+Translations are managed on [Weblate](https://hosted.weblate.org/projects/moonfin/smart-tv/), so anyone can help translate Moonfin into their language and new strings are picked up automatically. Want to see your language here? [Jump in and start translating.](https://hosted.weblate.org/engage/moonfin/)
+
+<a href="https://hosted.weblate.org/engage/moonfin/">
+  <img src="https://hosted.weblate.org/widgets/moonfin/-/smart-tv/multi-auto.svg" alt="Translation status" />
+</a>
 
 ---
 
@@ -115,34 +156,34 @@ Download the latest release from the [Releases page](https://github.com/Moonfin-
 | **Tizen Legacy** | `Moonfin_Tizen_Legacy_*.wgt` | Samsung Smart TVs (2016, Tizen 2.4) |
 | **webOS** | `Moonfin_webOS_*.ipk` | LG Smart TVs (2016+, webOS 3.0+) |
 
-### Sideloading — Samsung (Tizen)
+### Sideloading: Samsung (Tizen)
 
 The easiest way to install on Samsung TVs is using the **Jellyfin 2 Samsung** tool:
 
-1. Download [Jellyfin 2 Samsung](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer) by [@PatrickSt1991](https://github.com/PatrickSt1991)
+1. Download [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) by [@PatrickSt1991](https://github.com/PatrickSt1991)
 2. Enable Developer Mode on your Samsung TV:
-   - Go to **Settings → General → System Manager → Developer Mode**
+   - Go to **Settings > General > System Manager > Developer Mode**
    - Turn Developer Mode **ON**
    - Enter your PC's IP address
    - Restart the TV
 3. Run the tool, select the Moonfin `.wgt` file, enter your TV's IP address, and install
 
-### Sideloading — LG (webOS)
+### Sideloading: LG (webOS)
 
 1. Enable Developer Mode on your LG TV via the [LG Developer portal](https://webostv.developer.lge.com/develop/getting-started/developer-mode-app)
 2. Install the webOS CLI tools (`@webos-tools/cli`)
 3. Set up your TV as a device: `ares-setup-device`
 4. Install the IPK: `ares-install --device <your-tv> moonfin.ipk`
 
-### Seerr/Jellyseerr Setup (Optional)
+### Seerr Setup (Optional)
 
-Seerr/Jellyseerr integration uses the **Moonfin Jellyfin Plugin** to proxy requests through your Jellyfin server, avoiding CORS and cookie issues on TV webviews.
+Seerr integration uses the **Moonfin Jellyfin Plugin** to proxy requests through your Jellyfin server, avoiding CORS and cookie issues on TV webviews.
 
 1. Install the [Moonfin Plugin](https://github.com/Moonfin-Client/Plugin) on your Jellyfin server
-2. Configure the plugin with your Seerr/Jellyseerr server URL and API key in the Jellyfin admin dashboard
-3. In Moonfin on your TV, go to **Settings → Plugin** and enable the integration — no additional URL or key entry is needed on the TV side, it connects through your Jellyfin server automatically
+2. Configure the plugin with your Seerr server URL and API key in the Jellyfin admin dashboard
+3. In Moonfin on your TV, go to **Settings > Plugin** and enable the integration. No additional URL or key entry is needed on the TV side, it connects through your Jellyfin server automatically
 
-> **Note:** The plugin acts as a server-side proxy, so your TV only needs to reach your Jellyfin server. Seerr/Jellyseerr does not need to be directly accessible from the TV.
+> **Note:** The plugin acts as a server-side proxy, so your TV only needs to reach your Jellyfin server. Seerr does not need to be directly accessible from the TV.
 ---
 
 ## Building from Source
@@ -156,10 +197,10 @@ Seerr/Jellyseerr integration uses the **Moonfin Jellyfin Plugin** to proxy reque
 # Install dependencies
 npm install
 
-# Build for Samsung — all variants (Regular, Oblong, Legacy) in one command
+# Build for Samsung: all variants (Regular, Oblong, Legacy) in one command
 npm run build:tizen:all
 
-# Build for Samsung — individual variants
+# Build for Samsung: individual variants
 npm run build:tizen         # Regular
 npm run build:tizen:oblong  # Oblong (512x423 launcher icon)
 npm run build:tizen:legacy  # Legacy (Tizen 2.4, no Smart Hub Preview)
@@ -201,8 +242,8 @@ moonfin/
 │   │       └── styles/       # Global styles and variables
 │   ├── platform-tizen/       # Samsung AVPlay, Smart Hub, Tizen storage
 │   ├── platform-webos/       # Starfish/HTML5 video, Luna storage
-│   ├── build-tizen/          # Tizen build scripts → .wgt
-│   └── build-webos/          # webOS build scripts → .ipk
+│   ├── build-tizen/          # Tizen build scripts -> .wgt
+│   └── build-webos/          # webOS build scripts -> .ipk
 ├── package.json              # npm workspaces root
 └── .eslintrc.js              # Shared ESLint config
 ```
@@ -222,7 +263,7 @@ Services like video, storage, and device profiles use `getPlatform()` to dynamic
 - **Tizen**: AVPlay API for video, `tizen.tvinputdevice` for remote keys
 - **webOS**: Shared HTML5 video element with `audioTracks` API, Luna service calls for storage
 - Packaged apps (`.wgt` / `.ipk`) bypass CORS restrictions
-- Cross-origin cookies don't persist in either platform's webview — use API keys instead
+- Cross-origin cookies don't persist in either platform's webview, use API keys instead
 - UI changes should be tested on actual TV hardware when possible
 
 ---
@@ -232,10 +273,10 @@ Services like video, storage, and device profiles use `getPlatform()` to dynamic
 We welcome contributions to Moonfin!
 
 ### Guidelines
-1. **Check existing issues** — See if your idea or bug is already reported
-2. **Discuss major changes** — Open an issue first for significant features
-3. **Follow code style** — Match the existing codebase conventions
-4. **Test on TV devices** — Verify changes work on actual hardware when possible
+1. **Check existing issues**: See if your idea or bug is already reported
+2. **Discuss major changes**: Open an issue first for significant features
+3. **Follow code style**: Match the existing codebase conventions
+4. **Test on TV devices**: Verify changes work on actual hardware when possible
 
 ### Pull Request Process
 1. Fork the repository
@@ -248,9 +289,9 @@ We welcome contributions to Moonfin!
 
 ## Support & Community
 
-- **Issues** — [GitHub Issues](https://github.com/Moonfin-Client/Smart-TV/issues) for bugs and feature requests
-- **Discussions** — [GitHub Discussions](https://github.com/Moonfin-Client/Smart-TV/discussions) for questions and ideas
-- **Jellyfin** — [jellyfin.org](https://jellyfin.org) for server-related questions
+- **Issues**: [GitHub Issues](https://github.com/Moonfin-Client/Smart-TV/issues) for bugs and feature requests
+- **Discussions**: [GitHub Discussions](https://github.com/Moonfin-Client/Smart-TV/discussions) for questions and ideas
+- **Jellyfin**: [jellyfin.org](https://jellyfin.org) for server-related questions
 
 ---
 
@@ -258,10 +299,10 @@ We welcome contributions to Moonfin!
 
 Moonfin is built upon the excellent work of:
 
-- **[Jellyfin Project](https://jellyfin.org)** — The media server
-- **[Enact](https://enactjs.com)** — React-based framework for TV apps
-- **Jellyfin Tizen & webOS Contributors** — The original client developers
-- **Moonfin Contributors** — Everyone who has contributed to this project
+- **[Jellyfin Project](https://jellyfin.org)**: The media server
+- **[Enact](https://enactjs.com)**: React-based framework for TV apps
+- **Jellyfin Tizen & webOS Contributors**: The original client developers
+- **Moonfin Contributors**: Everyone who has contributed to this project
 
 ---
 
@@ -272,5 +313,5 @@ This project is licensed under the MPL 2.0 license. Some parts incorporate conte
 ---
 <p align="center">
    <strong>Moonfin for Smart TVs</strong> is an independent client and is not affiliated with the Jellyfin project.<br>
-   <a href="https://github.com/Moonfin-Client">← Back to main Moonfin project</a>
+   <a href="https://github.com/Moonfin-Client">Back to main Moonfin project</a>
 </p>
