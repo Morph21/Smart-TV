@@ -389,7 +389,7 @@ const RATING_SOURCE_OPTIONS = [
 	{ value: 'imdb', label: $L('IMDb') },
 	{ value: 'tmdb', label: $L('TMDB') },
 	{ value: 'tomatoes', label: $L('Rotten Tomatoes (Critics)') },
-	{ value: 'popcorn', label: $L('Rotten Tomatoes (Audience)') },
+	{ value: 'tomatoes_audience', label: $L('Rotten Tomatoes (Audience)') },
 	{ value: 'metacritic', label: $L('Metacritic') },
 	{ value: 'metacriticuser', label: $L('Metacritic User') },
 	{ value: 'trakt', label: $L('Trakt') },
