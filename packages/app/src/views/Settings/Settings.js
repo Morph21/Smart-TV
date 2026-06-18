@@ -1363,6 +1363,9 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 							<div className={css.themeCardName}>{theme.displayName}</div>
 							{isSelected && <div className={css.themeCardCheck}>✓</div>}
 						</div>
+						{theme.description ? (
+							<div className={css.themeCardDescription}>{theme.description}</div>
+						) : null}
 						<div
 							className={css.themeCardStripe}
 							style={{background: `linear-gradient(to right, ${bg}, ${surface}, ${accent}, ${progress})`}}

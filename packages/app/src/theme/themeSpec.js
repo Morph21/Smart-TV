@@ -205,6 +205,7 @@ export const parseThemeSpec = (json) => {
 		schemaVersion,
 		id,
 		displayName,
+		description: typeof json.description === 'string' && json.description.trim() ? json.description.trim() : '',
 		fontFamily: typeof json.fontFamily === 'string' && json.fontFamily.trim() ? json.fontFamily.trim() : null,
 		textGlow: parseShadowList(json.textGlow, 'textGlow'),
 		navColorCycle: Array.isArray(json.navColorCycle)
