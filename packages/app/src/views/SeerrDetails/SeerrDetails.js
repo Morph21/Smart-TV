@@ -6,12 +6,12 @@ import Image from '@enact/sandstone/Image';
 import Popup from '@enact/sandstone/Popup';
 import Button from '@enact/sandstone/Button';
 import $L from '@enact/i18n/$L';
-import jellyseerrApi, {canRequestMovies, canRequestTv, canRequest4kMovies, canRequest4kTv, hasAdvancedRequestPermission} from '../../services/jellyseerrApi';
+import seerrApi, {canRequestMovies, canRequestTv, canRequest4kMovies, canRequest4kTv, hasAdvancedRequestPermission} from '../../services/seerrApi';
 import {isLegacyTizen} from '../../platform';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {KEYS} from '../../utils/keys';
-import css from './JellyseerrDetails.module.less';
+import css from './SeerrDetails.module.less';
 
 const safeFocus = (spotlightId) => {
 	try {
@@ -145,7 +145,7 @@ const formatRuntime = (minutes) => {
 
 const CastCard = memo(({person, onSelect}) => {
 	const photoUrl = person.profilePath
-		? jellyseerrApi.getImageUrl(person.profilePath, 'w185')
+		? seerrApi.getImageUrl(person.profilePath, 'w185')
 		: null;
 
 	const handleClick = useCallback(() => {
@@ -168,7 +168,7 @@ const CastCard = memo(({person, onSelect}) => {
 });
 
 const MediaCard = memo(({item, onSelect}) => {
-	const posterUrl = jellyseerrApi.getImageUrl(item.posterPath || item.poster_path, 'w342');
+	const posterUrl = seerrApi.getImageUrl(item.posterPath || item.poster_path, 'w342');
 	const title = item.title || item.name;
 
 	const handleClick = useCallback(() => {
@@ -492,8 +492,8 @@ const AdvancedOptionsPopup = memo(({open, title, servers, is4k, onConfirm, onClo
 				if (!server) return;
 
 				const details = server.isRadarr !== false
-					? await jellyseerrApi.getRadarrServerDetails(selectedServerId)
-					: await jellyseerrApi.getSonarrServerDetails(selectedServerId);
+					? await seerrApi.getRadarrServerDetails(selectedServerId)
+					: await seerrApi.getSonarrServerDetails(selectedServerId);
 
 				setServerDetails(details);
 
@@ -686,8 +686,8 @@ const CancelRequestPopup = memo(({open, pendingRequests, title, onConfirm, onClo
 
 const supportsExternalTrailerSearch = !isLegacyTizen();
 
-const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInMoonfin, onSelectPerson, onSelectKeyword, onBack, backHandlerRef}) => {
-	const {isAuthenticated, user: contextUser} = useJellyseerr();
+const SeerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInMoonfin, onSelectPerson, onSelectKeyword, onBack, backHandlerRef}) => {
+	const {isAuthenticated, user: contextUser} = useSeerr();
 	const [details, setDetails] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [requesting, setRequesting] = useState(false);
@@ -732,12 +732,12 @@ const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInM
 			try {
 				const [data, userData, serversData] = await Promise.all([
 					mediaType === 'movie'
-						? jellyseerrApi.getMovie(mediaId)
-						: jellyseerrApi.getTv(mediaId),
-					jellyseerrApi.getUser().catch(() => null),
+						? seerrApi.getMovie(mediaId)
+						: seerrApi.getTv(mediaId),
+					seerrApi.getUser().catch(() => null),
 					(mediaType === 'movie'
-						? jellyseerrApi.getRadarrServers()
-						: jellyseerrApi.getSonarrServers()
+						? seerrApi.getRadarrServers()
+						: seerrApi.getSonarrServers()
 					).catch(() => [])
 				]);
 
@@ -777,12 +777,12 @@ const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInM
 
 				const [recsData, similarData] = await Promise.all([
 					loadMultiplePages(mediaType === 'movie'
-						? jellyseerrApi.getMovieRecommendations
-						: jellyseerrApi.getTvRecommendations
+						? seerrApi.getMovieRecommendations
+						: seerrApi.getTvRecommendations
 					),
 					loadMultiplePages(mediaType === 'movie'
-						? jellyseerrApi.getMovieSimilar
-						: jellyseerrApi.getTvSimilar
+						? seerrApi.getMovieSimilar
+						: seerrApi.getTvSimilar
 					)
 				]);
 				setRecommendations(recsData.slice(0, 20));
@@ -907,16 +907,16 @@ const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInM
 			};
 
 			if (mediaType === 'movie') {
-				await jellyseerrApi.requestMovie(mediaId, options);
+				await seerrApi.requestMovie(mediaId, options);
 			} else {
-				await jellyseerrApi.requestTv(mediaId, {
+				await seerrApi.requestTv(mediaId, {
 					...options,
 					seasons: seasons || 'all'
 				});
 			}
 			const updated = mediaType === 'movie'
-				? await jellyseerrApi.getMovie(mediaId)
-				: await jellyseerrApi.getTv(mediaId);
+				? await seerrApi.getMovie(mediaId)
+				: await seerrApi.getTv(mediaId);
 			setDetails(updated);
 		} catch (err) {
 			console.error('Request failed:', err);
@@ -959,7 +959,7 @@ const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInM
 
 		if (!hasHdServer && !has4kServer) {
 			const mediaTypeName = mediaType === 'movie' ? $L('movies') : $L('TV shows');
-			setError($L('No Radarr/Sonarr server configured for {mediaType} in Jellyseerr').replace('{mediaType}', mediaTypeName));
+			setError($L('No Radarr/Sonarr server configured for {mediaType} in Seerr').replace('{mediaType}', mediaTypeName));
 			return;
 		}
 
@@ -992,11 +992,11 @@ const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInM
 		setShowCancelPopup(false);
 		try {
 			for (const req of pendingRequests) {
-				await jellyseerrApi.cancelRequest(req.id);
+				await seerrApi.cancelRequest(req.id);
 			}
 			const updated = mediaType === 'movie'
-				? await jellyseerrApi.getMovie(mediaId)
-				: await jellyseerrApi.getTv(mediaId);
+				? await seerrApi.getMovie(mediaId)
+				: await seerrApi.getTv(mediaId);
 			setDetails(updated);
 		} catch (err) {
 			console.error('Cancel failed:', err);
@@ -1197,10 +1197,10 @@ const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInM
 	}
 
 	const posterUrl = details.posterPath
-		? jellyseerrApi.getImageUrl(details.posterPath, 'w500')
+		? seerrApi.getImageUrl(details.posterPath, 'w500')
 		: null;
 	const backdropUrl = details.backdropPath
-		? jellyseerrApi.getImageUrl(details.backdropPath, 'w1280')
+		? seerrApi.getImageUrl(details.backdropPath, 'w1280')
 		: null;
 	const title = details.title || details.name;
 	const voteAverage = Number(details.voteAverage);
@@ -1472,4 +1472,4 @@ const JellyseerrDetails = ({mediaType, mediaId, onClose, onSelectItem, onPlayInM
 	);
 };
 
-export default JellyseerrDetails;
+export default SeerrDetails;

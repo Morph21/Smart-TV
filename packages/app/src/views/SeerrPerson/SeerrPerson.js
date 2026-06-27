@@ -3,13 +3,13 @@ import Spottable from '@enact/spotlight/Spottable';
 import Spotlight from '@enact/spotlight';
 import Image from '@enact/sandstone/Image';
 import $L from '@enact/i18n/$L';
-import jellyseerrApi from '../../services/jellyseerrApi';
+import seerrApi from '../../services/seerrApi';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import css from './JellyseerrPerson.module.less';
+import css from './SeerrPerson.module.less';
 
 const SpottableDiv = Spottable('div');
 
-const JellyseerrPerson = ({personId, personName, onClose, onSelectItem, onBack}) => {
+const SeerrPerson = ({personId, personName, onClose, onSelectItem, onBack}) => {
 	const [details, setDetails] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
@@ -23,7 +23,7 @@ const JellyseerrPerson = ({personId, personName, onClose, onSelectItem, onBack})
 			setLoading(true);
 			setError(null);
 			try {
-				const data = await jellyseerrApi.getPerson(personId);
+				const data = await seerrApi.getPerson(personId);
 				setDetails(data);
 			} catch (err) {
 				console.error('Failed to load person details:', err);
@@ -59,7 +59,7 @@ const JellyseerrPerson = ({personId, personName, onClose, onSelectItem, onBack})
 	}, []);
 
 	const renderAppearanceCard = useCallback((item, index) => {
-		const posterUrl = jellyseerrApi.getImageUrl(item.posterPath || item.poster_path, 'w342');
+		const posterUrl = seerrApi.getImageUrl(item.posterPath || item.poster_path, 'w342');
 		const title = item.title || item.name;
 		const character = item.character;
 		const year = (item.releaseDate || item.release_date || item.firstAirDate || item.first_air_date)?.substring(0, 4);
@@ -131,7 +131,7 @@ const JellyseerrPerson = ({personId, personName, onClose, onSelectItem, onBack})
 	}
 
 	const profileUrl = details.profilePath
-		? jellyseerrApi.getImageUrl(details.profilePath, 'h632')
+		? seerrApi.getImageUrl(details.profilePath, 'h632')
 		: null;
 	const birthYear = details.birthday ? new Date(details.birthday).getFullYear() : null;
 	const deathYear = details.deathday ? new Date(details.deathday).getFullYear() : null;
@@ -213,4 +213,4 @@ const JellyseerrPerson = ({personId, personName, onClose, onSelectItem, onBack})
 	);
 };
 
-export default JellyseerrPerson;
+export default SeerrPerson;

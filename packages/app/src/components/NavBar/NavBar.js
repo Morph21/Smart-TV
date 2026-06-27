@@ -5,11 +5,10 @@ import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDeco
 import Spotlight from '@enact/spotlight';
 import {useAuth} from '../../context/AuthContext';
 import {useSettings} from '../../context/SettingsContext';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import {useSyncPlay} from '../../context/SyncPlayContext';
-import JellyseerrIcon from '../icons/JellyseerrIcon';
-import SyncPlayIcon from '../icons/SyncPlayIcon';
 import SeerrIcon from '../icons/SeerrIcon';
+import SyncPlayIcon from '../icons/SyncPlayIcon';
 import {toCssColor, toSafeCssColorWithAlpha} from '../../theme/themeSpec';
 import {KEYS} from '../../utils/keys';
 
@@ -43,7 +42,7 @@ const NavBar = ({
 }) => {
 	const {user, serverUrl} = useAuth();
 	const {settings, activeTheme} = useSettings();
-	const {isEnabled: jellyseerrEnabled, isMoonfin, variant, displayName} = useJellyseerr();
+	const {isEnabled: seerrEnabled, displayName} = useSeerr();
 	const {isInGroup} = useSyncPlay();
 	const [clock, setClock] = useState('');
 	const [librariesExpanded, setLibrariesExpanded] = useState(false);
@@ -154,7 +153,7 @@ const NavBar = ({
 
 	const librariesLeftTargetId = useMemo(() => {
 		if (settings.syncplayEnabled !== false && settings.showSyncPlayButton !== false) return 'navbar-syncplay';
-		if (jellyseerrEnabled) return 'navbar-discover';
+		if (seerrEnabled) return 'navbar-discover';
 		if (settings.showFavoritesButton !== false) return 'navbar-favorites';
 		if (settings.showGenresButton !== false) return 'navbar-genres';
 		if (settings.showShuffleButton !== false) return 'navbar-shuffle';
@@ -162,7 +161,7 @@ const NavBar = ({
 	}, [
 		settings.syncplayEnabled,
 		settings.showSyncPlayButton,
-		jellyseerrEnabled,
+		seerrEnabled,
 		settings.showFavoritesButton,
 		settings.showGenresButton,
 		settings.showShuffleButton
@@ -208,7 +207,7 @@ const NavBar = ({
 				'library-grid',
 				'person-grid',
 				'discover-row-0',
-				'jellyseerr-browse-grid',
+				'seerr-browse-grid',
 				'action-buttons',
 				'details-primary-btn',
 				'details-favorite-btn',
@@ -306,16 +305,13 @@ const NavBar = ({
 						</SpottableButton>
 					)}
 
-					{jellyseerrEnabled && settings.showSeerrButton !== false && (
+					{seerrEnabled && settings.showSeerrButton !== false && (
 						<SpottableButton
 							className={`${css.navBtn} ${css.navBtnIcon} ${css.expandableBtn}`}
 							onClick={onDiscover}
 							spotlightId="navbar-discover"
 						>
-							{isMoonfin && variant === 'seerr'
-								? <SeerrIcon className={css.navIcon} style={navIconStyle(6)} />
-								: <JellyseerrIcon className={css.navIcon} style={navIconStyle(6)} />
-							}
+							<SeerrIcon className={css.navIcon} style={navIconStyle(6)} />
 							<span className={css.expandLabel}>{displayName}</span>
 						</SpottableButton>
 					)}

@@ -88,7 +88,7 @@ const MediaCard = ({item, serverUrl, cardType = 'portrait', onSelect, onFocusIte
 		}
 
 		const externalPoster = item._externalPosterUrl ||
-			providerIds.JellyseerrPoster ||
+			providerIds.SeerrPoster ||
 			providerIds.SonarrPoster ||
 			providerIds.RadarrPoster ||
 			providerIds.LidarrPoster ||

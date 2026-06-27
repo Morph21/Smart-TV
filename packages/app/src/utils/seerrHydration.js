@@ -1,4 +1,4 @@
-import jellyseerrApi from '../services/jellyseerrApi';
+import seerrApi from '../services/seerrApi';
 
 const HYDRATION_BATCH_SIZE = 6;
 
@@ -21,8 +21,8 @@ const hydrateRequestMediaItems = async (requests = []) => {
 		const cache = requestType === 'movie' ? movieCache : tvCache;
 		if (!cache.has(tmdbId)) {
 			const detailsPromise = (requestType === 'movie'
-				? jellyseerrApi.getMovie(tmdbId)
-				: jellyseerrApi.getTv(tmdbId)
+				? seerrApi.getMovie(tmdbId)
+				: seerrApi.getTv(tmdbId)
 			).catch(() => null);
 			cache.set(tmdbId, detailsPromise);
 		}

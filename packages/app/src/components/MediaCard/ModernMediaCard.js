@@ -140,7 +140,7 @@ const ModernMediaCard = ({
 		}
 		const providerIds = item.ProviderIds || {};
 		const externalPoster = item._externalPosterUrl ||
-			providerIds.JellyseerrPoster ||
+			providerIds.SeerrPoster ||
 			providerIds.SonarrPoster ||
 			providerIds.RadarrPoster ||
 			providerIds.LidarrPoster ||

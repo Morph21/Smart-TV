@@ -1,7 +1,7 @@
-name: "Bug: Jellyseerr"
-description: Report a Jellyseerr integration issue
-title: "[Jellyseerr] "
-labels: ["bug", "jellyseerr"]
+name: "Bug: Seerr"
+description: Report a Seerr integration issue
+title: "[Seerr] "
+labels: ["bug", "seerr"]
 body:
   - type: input
     id: app_version
@@ -81,7 +81,7 @@ body:
   - type: dropdown
     id: works_elsewhere
     attributes:
-      label: Does Jellyseerr work from a phone/PC browser on the same network?
+      label: Does Seerr work from a phone/PC browser on the same network?
       options:
         - "Yes"
         - "No"

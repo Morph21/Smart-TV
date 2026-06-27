@@ -1,6 +1,6 @@
 import $L from '@enact/i18n/$L';
-import jellyseerrApi from '../services/jellyseerrApi';
-import hydrateRequestMediaItems from './jellyseerrHydration';
+import seerrApi from '../services/seerrApi';
+import hydrateRequestMediaItems from './seerrHydration';
 
 const HOME_ROW_LIMIT = 20;
 
@@ -54,7 +54,7 @@ const normalizeMediaItem = (item) => {
 		Name: item.title || item.name,
 		Type: mediaType === 'movie' ? 'Movie' : 'Series',
 		ProductionYear: yearOf(item),
-		_externalPosterUrl: poster ? jellyseerrApi.getImageUrl(poster, 'w342') : null,
+		_externalPosterUrl: poster ? seerrApi.getImageUrl(poster, 'w342') : null,
 		mediaInfo: {status: item.mediaInfo?.status},
 		_seerr: true,
 		_seerrType: 'item',
@@ -71,7 +71,7 @@ const normalizeRequestItem = (request) => {
 		Id: `seerr-${mediaType}-${media.tmdbId}`,
 		Name: media.title || media.name || $L('Unknown'),
 		Type: mediaType === 'movie' ? 'Movie' : 'Series',
-		_externalPosterUrl: poster ? jellyseerrApi.getImageUrl(poster, 'w342') : null,
+		_externalPosterUrl: poster ? seerrApi.getImageUrl(poster, 'w342') : null,
 		mediaInfo: {status: media.status},
 		_seerr: true,
 		_seerrType: 'item',
@@ -83,7 +83,7 @@ const normalizeRequestItem = (request) => {
 const normalizeGenreItem = (genre, mediaType) => ({
 	Id: `seerr-genre-${mediaType}-${genre.id}`,
 	Name: genre.name,
-	_externalBackdropUrl: genre.backdrops?.[0] ? jellyseerrApi.getImageUrl(genre.backdrops[0], 'w780') : null,
+	_externalBackdropUrl: genre.backdrops?.[0] ? seerrApi.getImageUrl(genre.backdrops[0], 'w780') : null,
 	_seerr: true,
 	_seerrType: 'genre',
 	_seerrMediaType: mediaType,
@@ -93,7 +93,7 @@ const normalizeGenreItem = (genre, mediaType) => ({
 const normalizeStudioItem = (studio) => ({
 	Id: `seerr-studio-${studio.id}`,
 	Name: studio.name,
-	_externalLogoUrl: jellyseerrApi.getImageUrl('/' + studio.logo, 'w185'),
+	_externalLogoUrl: seerrApi.getImageUrl('/' + studio.logo, 'w185'),
 	_seerr: true,
 	_seerrType: 'studio',
 	_seerrRaw: {studioId: studio.id, studioName: studio.name}
@@ -102,7 +102,7 @@ const normalizeStudioItem = (studio) => ({
 const normalizeNetworkItem = (network) => ({
 	Id: `seerr-network-${network.id}`,
 	Name: network.name,
-	_externalLogoUrl: jellyseerrApi.getImageUrl('/' + network.logo, 'w185'),
+	_externalLogoUrl: seerrApi.getImageUrl('/' + network.logo, 'w185'),
 	_seerr: true,
 	_seerrType: 'network',
 	_seerrRaw: {networkId: network.id, networkName: network.name}
@@ -112,19 +112,19 @@ export const fetchSeerrHomeRow = async (rowId, {userId} = {}) => {
 	try {
 		switch (rowId) {
 			case 'trending':
-				return ((await jellyseerrApi.trending(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
+				return ((await seerrApi.trending(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
 			case 'popularMovies':
-				return ((await jellyseerrApi.trendingMovies(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
+				return ((await seerrApi.trendingMovies(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
 			case 'popularTv':
-				return ((await jellyseerrApi.trendingTv(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
+				return ((await seerrApi.trendingTv(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
 			case 'upcomingMovies':
-				return ((await jellyseerrApi.upcomingMovies(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
+				return ((await seerrApi.upcomingMovies(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
 			case 'upcomingTv':
-				return ((await jellyseerrApi.upcomingTv(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
+				return ((await seerrApi.upcomingTv(1)).results || []).slice(0, HOME_ROW_LIMIT).map(normalizeMediaItem);
 			case 'genreMovies':
-				return ((await jellyseerrApi.getGenreSliderMovies()) || []).map((g) => normalizeGenreItem(g, 'movie'));
+				return ((await seerrApi.getGenreSliderMovies()) || []).map((g) => normalizeGenreItem(g, 'movie'));
 			case 'genreTv':
-				return ((await jellyseerrApi.getGenreSliderTv()) || []).map((g) => normalizeGenreItem(g, 'tv'));
+				return ((await seerrApi.getGenreSliderTv()) || []).map((g) => normalizeGenreItem(g, 'tv'));
 			case 'studios':
 				return MOVIE_STUDIOS.map(normalizeStudioItem);
 			case 'networks':
@@ -132,11 +132,11 @@ export const fetchSeerrHomeRow = async (rowId, {userId} = {}) => {
 			case 'myRequests': {
 				let resolvedUserId = userId;
 				if (!resolvedUserId) {
-					const apiUser = await jellyseerrApi.getUser().catch(() => null);
+					const apiUser = await seerrApi.getUser().catch(() => null);
 					resolvedUserId = apiUser?.id;
 				}
 				if (!resolvedUserId) return [];
-				const data = await jellyseerrApi.getMyRequests(resolvedUserId, HOME_ROW_LIMIT);
+				const data = await seerrApi.getMyRequests(resolvedUserId, HOME_ROW_LIMIT);
 				const hydrated = await hydrateRequestMediaItems(data.results || []);
 				return hydrated.filter((r) => r?.media?.tmdbId).map(normalizeRequestItem);
 			}

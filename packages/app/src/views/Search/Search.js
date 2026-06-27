@@ -5,7 +5,7 @@ import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDeco
 import Spotlight from '@enact/spotlight';
 import {useAuth} from '../../context/AuthContext';
 import {useSettings} from '../../context/SettingsContext';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import * as connectionPool from '../../services/connectionPool';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ProxiedImage from '../../components/ProxiedImage';
@@ -33,7 +33,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 	const {api, serverUrl, hasMultipleServers} = useAuth();
 	const {settings} = useSettings();
 	const unifiedMode = settings.unifiedLibraryMode && hasMultipleServers;
-	const {isEnabled: jellyseerrEnabled, api: jellyseerrApi} = useJellyseerr();
+	const {isEnabled: seerrEnabled, api: seerrApi} = useSeerr();
 	const [query, setQuery] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [results, setResults] = useState({
@@ -44,7 +44,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 		albums: [],
 		artists: [],
 		songs: [],
-		jellyseerr: []
+		seerr: []
 	});
 	const [displayCounts, setDisplayCounts] = useState({
 		movies: ITEMS_PER_PAGE,
@@ -54,7 +54,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 		albums: ITEMS_PER_PAGE,
 		artists: ITEMS_PER_PAGE,
 		songs: ITEMS_PER_PAGE,
-		jellyseerr: ITEMS_PER_PAGE
+		seerr: ITEMS_PER_PAGE
 	});
 	const debounceRef = useRef(null);
 	const scrollerRefs = useRef({});
@@ -67,7 +67,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 			results.albums.length > 0 ||
 			results.artists.length > 0 ||
 			results.songs.length > 0 ||
-			results.jellyseerr.length > 0;
+			results.seerr.length > 0;
 	}, [results]);
 
 	const getVisibleItems = useCallback((items, rowId) => {
@@ -84,7 +84,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 		if (results.albums.length > 0) rows.push({id: 'albums', title: $L('Albums'), items: getVisibleItems(results.albums, 'albums'), totalCount: results.albums.length, type: 'jellyfin'});
 		if (results.songs.length > 0) rows.push({id: 'songs', title: $L('Songs'), items: getVisibleItems(results.songs, 'songs'), totalCount: results.songs.length, type: 'jellyfin'});
 		if (results.people.length > 0) rows.push({id: 'people', title: $L('People'), items: getVisibleItems(results.people, 'people'), totalCount: results.people.length, type: 'jellyfin'});
-		if (results.jellyseerr.length > 0) rows.push({id: 'jellyseerr', title: $L('Jellyseerr'), items: getVisibleItems(results.jellyseerr, 'jellyseerr'), totalCount: results.jellyseerr.length, type: 'jellyseerr'});
+		if (results.seerr.length > 0) rows.push({id: 'seerr', title: $L('Seerr'), items: getVisibleItems(results.seerr, 'seerr'), totalCount: results.seerr.length, type: 'seerr'});
 		return rows;
 	}, [results, getVisibleItems]);
 
@@ -97,7 +97,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 
 	const doSearch = useCallback(async (searchQuery) => {
 		if (!searchQuery || searchQuery.length < MIN_SEARCH_LENGTH) {
-			setResults({movies: [], shows: [], episodes: [], people: [], albums: [], artists: [], songs: [], jellyseerr: []});
+			setResults({movies: [], shows: [], episodes: [], people: [], albums: [], artists: [], songs: [], seerr: []});
 			setDisplayCounts({
 				movies: ITEMS_PER_PAGE,
 				shows: ITEMS_PER_PAGE,
@@ -106,7 +106,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 				albums: ITEMS_PER_PAGE,
 				artists: ITEMS_PER_PAGE,
 				songs: ITEMS_PER_PAGE,
-				jellyseerr: ITEMS_PER_PAGE
+				seerr: ITEMS_PER_PAGE
 			});
 			return;
 		}
@@ -120,7 +120,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 			albums: ITEMS_PER_PAGE,
 			artists: ITEMS_PER_PAGE,
 			songs: ITEMS_PER_PAGE,
-			jellyseerr: ITEMS_PER_PAGE
+			seerr: ITEMS_PER_PAGE
 		});
 
 		try {
@@ -141,29 +141,29 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 				albums: items.filter(item => item.Type === 'MusicAlbum'),
 				artists: items.filter(item => item.Type === 'MusicArtist'),
 				songs: items.filter(item => item.Type === 'Audio'),
-				jellyseerr: []
+				seerr: []
 			};
 
 			setResults(categorized);
 
-			if (jellyseerrEnabled && jellyseerrApi) {
+			if (seerrEnabled && seerrApi) {
 				try {
-					const jellyseerrResponse = await jellyseerrApi.search(searchQuery);
-					const filteredResults = (jellyseerrResponse.results || [])
+					const seerrResponse = await seerrApi.search(searchQuery);
+					const filteredResults = (seerrResponse.results || [])
 						.filter(item => item.mediaType !== 'person')
 						.slice(0, 20);
-					setResults(prev => ({...prev, jellyseerr: filteredResults}));
+					setResults(prev => ({...prev, seerr: filteredResults}));
 				} catch (err) {
-					console.error('Jellyseerr search failed:', err);
+					console.error('Seerr search failed:', err);
 				}
 			}
 		} catch (err) {
 			console.error('Search failed:', err);
-			setResults({movies: [], shows: [], episodes: [], people: [], albums: [], artists: [], songs: [], jellyseerr: []});
+			setResults({movies: [], shows: [], episodes: [], people: [], albums: [], artists: [], songs: [], seerr: []});
 		} finally {
 			setIsLoading(false);
 		}
-	}, [api, jellyseerrEnabled, jellyseerrApi, unifiedMode]);
+	}, [api, seerrEnabled, seerrApi, unifiedMode]);
 
 	const handleInputChange = useCallback((e) => {
 		let value = e.target.value;
@@ -211,26 +211,26 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 
 	const handleClearSearch = useCallback(() => {
 		setQuery('');
-		setResults({movies: [], shows: [], episodes: [], people: [], jellyseerr: []});
+		setResults({movies: [], shows: [], episodes: [], people: [], seerr: []});
 	}, []);
 
 	const handleCardClick = useCallback((e) => {
 		const card = e.currentTarget;
 		const itemId = card.dataset.itemId;
 		const itemType = card.dataset.itemType;
-		const isJellyseerr = itemType === 'jellyseerr';
+		const isSeerr = itemType === 'seerr';
 
-		if (isJellyseerr) {
-			const jellyseerrItem = results.jellyseerr.find(item => String(item.id) === itemId);
-			if (jellyseerrItem) {
-				const mediaType = jellyseerrItem.mediaType || jellyseerrItem.media_type || (jellyseerrItem.title ? 'movie' : 'tv');
+		if (isSeerr) {
+			const seerrItem = results.seerr.find(item => String(item.id) === itemId);
+			if (seerrItem) {
+				const mediaType = seerrItem.mediaType || seerrItem.media_type || (seerrItem.title ? 'movie' : 'tv');
 				onSelectItem?.({
-					...jellyseerrItem,
-					isJellyseerr: true,
-					mediaId: jellyseerrItem.mediaId || jellyseerrItem.tmdbId || jellyseerrItem.id || jellyseerrItem.Id,
+					...seerrItem,
+					isSeerr: true,
+					mediaId: seerrItem.mediaId || seerrItem.tmdbId || seerrItem.id || seerrItem.Id,
 					mediaType,
-					Id: jellyseerrItem.id,
-					Name: jellyseerrItem.title || jellyseerrItem.name,
+					Id: seerrItem.id,
+					Name: seerrItem.title || seerrItem.name,
 					Type: mediaType === 'movie' ? 'Movie' : 'Series'
 				});
 			}
@@ -287,9 +287,9 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 		};
 	}, []);
 
-	const renderJellyseerrCard = useCallback((item, index, rowId) => {
+	const renderSeerrCard = useCallback((item, index, rowId) => {
 		const imageUrl = item.posterPath
-			? jellyseerrApi.getImageUrl(item.posterPath, 'w300')
+			? seerrApi.getImageUrl(item.posterPath, 'w300')
 			: null;
 		const year = item.releaseDate
 			? new Date(item.releaseDate).getFullYear()
@@ -299,11 +299,11 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 
 		return (
 			<SpottableDiv
-				key={`jellyseerr-${item.id}`}
+				key={`seerr-${item.id}`}
 				className={css.card}
 				onClick={handleCardClick}
 				data-item-id={String(item.id)}
-				data-item-type="jellyseerr"
+				data-item-type="seerr"
 				spotlightId={`${rowId}-item-${index}`}
 			>
 				<div className={css.cardImageWrapper}>
@@ -321,7 +321,7 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 				</div>
 			</SpottableDiv>
 		);
-	}, [handleCardClick, jellyseerrApi]);
+	}, [handleCardClick, seerrApi]);
 
 	const renderJellyfinCard = useCallback((item, index, rowId) => {
 		const isPerson = item.Type === 'Person';
@@ -448,8 +448,8 @@ const Search = ({onSelectItem, onSelectPerson}) => {
 										onFocus={handleRowFocus(row.id, row.totalCount)}
 									>
 										<div className={css.resultItems}>
-											{row.type === 'jellyseerr'
-												? row.items.map((item, idx) => renderJellyseerrCard(item, idx, row.id))
+											{row.type === 'seerr'
+												? row.items.map((item, idx) => renderSeerrCard(item, idx, row.id))
 												: row.items.map((item, idx) => renderJellyfinCard(item, idx, row.id))
 											}
 										</div>

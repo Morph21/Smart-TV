@@ -7,7 +7,7 @@ import Button from '@enact/sandstone/Button';
 import Slider from '@enact/sandstone/Slider';
 import {useAuth} from '../../context/AuthContext';
 import {useSettings, DEFAULT_HOME_ROWS} from '../../context/SettingsContext';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import {useDeviceInfo} from '../../hooks/useDeviceInfo';
 import serverLogger from '../../services/serverLogger';
 import connectionPool from '../../services/connectionPool';
@@ -631,8 +631,8 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const [themeStoreError, setThemeStoreError] = useState(false);
 	const [themeStoreBusyId, setThemeStoreBusyId] = useState(null);
 	const { capabilities } = useDeviceInfo();
-	const jellyseerr = useJellyseerr();
-	const isSeerr = jellyseerr.isMoonfin && jellyseerr.variant === 'seerr';
+	const seerr = useSeerr();
+	const isSeerr = seerr.isMoonfin && seerr.variant === 'seerr';
 	const bootLocaleRef = useRef(settings.uiLanguage);
 	useEffect(() => {
 		if (settings.uiLanguage !== bootLocaleRef.current &&
@@ -640,7 +640,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			window.location.reload();
 		}
 	}, [settings.uiLanguage]);
-	const seerrLabel = isSeerr ? jellyseerr.displayName || $L('Seerr') : $L('Jellyseerr');
+	const seerrLabel = isSeerr ? seerr.displayName || $L('Seerr') : $L('Seerr');
 	const categories = getBaseCategories();
 
 	const [navStack, setNavStack] = useState([{ view: 'categories' }]);
@@ -750,9 +750,9 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	}, [popView]);
 
 	useEffect(() => {
-		const normalizedAuthType = jellyseerr.moonfinAuthType === 'local' ? 'local' : 'jellyfin';
+		const normalizedAuthType = seerr.moonfinAuthType === 'local' ? 'local' : 'jellyfin';
 		setSeerrAuthType(normalizedAuthType);
-	}, [jellyseerr.moonfinAuthType]);
+	}, [seerr.moonfinAuthType]);
 
 	useEffect(() => {
 		if (!settings.useMoonfinPlugin) {
@@ -809,7 +809,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			setMoonfinConnecting(true);
 			setMoonfinStatus($L('Checking Moonfin plugin...'));
 			try {
-				const result = await jellyseerr.configureWithMoonfin(serverUrl, accessToken);
+				const result = await seerr.configureWithMoonfin(serverUrl, accessToken);
 				if (result.authenticated) {
 					setMoonfinStatus($L('Connected via Moonfin!'));
 				} else {
@@ -821,21 +821,21 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 				setMoonfinConnecting(false);
 			}
 		} else {
-			jellyseerr.disable();
+			seerr.disable();
 			setMoonfinStatus('');
 			setSeerrPassword('');
 		}
-	}, [settings.useMoonfinPlugin, updateSetting, serverUrl, accessToken, jellyseerr]);
+	}, [settings.useMoonfinPlugin, updateSetting, serverUrl, accessToken, seerr]);
 
 	const handleSeerrAuthTypeChange = useCallback((nextAuthType) => {
 		const normalizedAuthType = nextAuthType === 'local' ? 'local' : 'jellyfin';
 		setSeerrAuthType(normalizedAuthType);
 		setSeerrAuthMessage('');
 		setSeerrAuthError('');
-		jellyseerr.setMoonfinAuthType?.(normalizedAuthType).catch((err) => {
-			console.log('[Jellyseerr] Failed to save auth type:', err.message);
+		seerr.setMoonfinAuthType?.(normalizedAuthType).catch((err) => {
+			console.log('[Seerr] Failed to save auth type:', err.message);
 		});
-	}, [jellyseerr]);
+	}, [seerr]);
 
 	const handleSeerrLogin = useCallback(async () => {
 		const username = seerrUsername.trim();
@@ -850,7 +850,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		setSeerrAuthError('');
 
 		try {
-			await jellyseerr.loginWithMoonfin(username, seerrPassword, seerrAuthType);
+			await seerr.loginWithMoonfin(username, seerrPassword, seerrAuthType);
 			setSeerrPassword('');
 			setSeerrAuthMessage($L('Signed in to {seerrLabel}.').replace('{seerrLabel}', seerrLabel));
 			setMoonfinStatus($L('Connected via Moonfin!'));
@@ -862,7 +862,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		} finally {
 			setSeerrAuthSubmitting(false);
 		}
-	}, [jellyseerr, seerrUsername, seerrPassword, seerrAuthType, seerrLabel]);
+	}, [seerr, seerrUsername, seerrPassword, seerrAuthType, seerrLabel]);
 
 	const handleSeerrPasswordKeyDown = useCallback((e) => {
 		const code = e.keyCode || e.which;
@@ -878,7 +878,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		setSeerrAuthError('');
 
 		try {
-			await jellyseerr.logout();
+			await seerr.logout();
 			setSeerrPassword('');
 			setSeerrAuthMessage($L('Signed out from {seerrLabel}.').replace('{seerrLabel}', seerrLabel));
 			setMoonfinStatus($L('Moonfin plugin found but no session. Please log in.'));
@@ -890,7 +890,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 		} finally {
 			setSeerrAuthSubmitting(false);
 		}
-	}, [jellyseerr, seerrLabel]);
+	}, [seerr, seerrLabel]);
 
 	const openThemes = useCallback(() => {
 		pushView({ view: 'themes', returnFocusTo: 'setting-themeSelection' });
@@ -1528,7 +1528,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 			{renderToggleItem('showFavoritesButton', $L('Favorites Button'), $L('Show favorites button in navigation bar'), 'heart')}
 			{renderToggleItem('showLibrariesInToolbar', $L('Libraries Button'), $L('Show library shortcuts in navigation bar'), 'folder')}
 			{renderToggleItem('showSyncPlayButton', $L('SyncPlay Button'), $L('Show SyncPlay button in navigation bar'), 'check')}
-			{jellyseerr.isEnabled &&
+			{seerr.isEnabled &&
 				renderToggleItem('showSeerrButton', `${seerrLabel} ${$L('Button')}`, $L('Show Seerr button in navigation bar'))}
 		</>
 	);
@@ -1536,7 +1536,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	const renderPersonalizationHomePage = () => (
 		<>
 			{renderNavItem('homeRows', $L('Home Sections'), $L('Configure which rows appear on home screen'), openHomeRows, 'list')}
-			{jellyseerr.isEnabled && renderToggleItem(
+			{seerr.isEnabled && renderToggleItem(
 				'displaySeerrRows',
 				$L('Display Seerr Discovery Rows'),
 				$L('Show Seerr discovery rows in Home Sections.'),
@@ -1811,12 +1811,12 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 	);
 
 	const renderPluginStatus = () => { // eslint-disable-line no-unused-vars
-		const info = jellyseerr.pluginInfo;
+		const info = seerr.pluginInfo;
 		return (
 			<>
 				{renderInfoItem('pluginVersion', $L('Plugin Version'), info?.version || $L('Unknown'))}
 				{renderInfoItem('settingsSync', $L('Settings Sync'), info?.settingsSyncEnabled ? $L('Available') : $L('Not Available'))}
-				{renderInfoItem('seerrStatus', seerrLabel, info?.jellyseerrEnabled ? $L('Enabled by Admin') : $L('Disabled by Admin'))}
+				{renderInfoItem('seerrStatus', seerrLabel, info?.seerrEnabled ? $L('Enabled by Admin') : $L('Disabled by Admin'))}
 				{isSeerr && renderInfoItem('seerrVariant', $L('Detected Variant'), $L('{seerrLabel} (Seerr v3+)').replace('{seerrLabel}', seerrLabel))}
 			</>
 		);
@@ -1829,17 +1829,17 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 					{$L('Enable the Moonfin plugin first to sign in to {seerrLabel}.').replace('{seerrLabel}', seerrLabel)}
 				</div>
 			)}
-			{settings.useMoonfinPlugin && jellyseerr.pluginInfo?.jellyseerrEnabled === false && (
+			{settings.useMoonfinPlugin && seerr.pluginInfo?.seerrEnabled === false && (
 				<div className={css.authHint}>
 					{$L('{seerrLabel} is disabled by your server administrator.').replace('{seerrLabel}', seerrLabel)}
 				</div>
 			)}
-			{settings.useMoonfinPlugin && jellyseerr.pluginInfo?.jellyseerrEnabled !== false && jellyseerr.isEnabled && jellyseerr.isAuthenticated && jellyseerr.isMoonfin && (
+			{settings.useMoonfinPlugin && seerr.pluginInfo?.seerrEnabled !== false && seerr.isEnabled && seerr.isAuthenticated && seerr.isMoonfin && (
 				<>
 					{renderInfoItem('seerrConnStatus', $L('Status'), $L('Connected via Moonfin'))}
 					{renderInfoItem('seerrAuthType', $L('Sign-In Method'), seerrAuthType === 'local' ? $L('Local Account') : $L('Jellyfin Account'))}
-					{jellyseerr.serverUrl && renderInfoItem('seerrUrl', $L('{seerrLabel} URL').replace('{seerrLabel}', seerrLabel), jellyseerr.serverUrl)}
-					{jellyseerr.user && renderInfoItem('seerrUser', $L('User'), jellyseerr.user.displayName || $L('Moonfin User'))}
+					{seerr.serverUrl && renderInfoItem('seerrUrl', $L('{seerrLabel} URL').replace('{seerrLabel}', seerrLabel), seerr.serverUrl)}
+					{seerr.user && renderInfoItem('seerrUser', $L('User'), seerr.user.displayName || $L('Moonfin User'))}
 					<div className={css.actionBarInline}>
 						<SpottableButton
 							className={`${css.actionButton} ${css.dangerButton}`}
@@ -1852,7 +1852,7 @@ const Settings = ({ onBack, onLibrariesChanged, panelMode }) => {
 					</div>
 				</>
 			)}
-			{settings.useMoonfinPlugin && jellyseerr.pluginInfo?.jellyseerrEnabled !== false && (!jellyseerr.isEnabled || !jellyseerr.isAuthenticated || !jellyseerr.isMoonfin) && (
+			{settings.useMoonfinPlugin && seerr.pluginInfo?.seerrEnabled !== false && (!seerr.isEnabled || !seerr.isAuthenticated || !seerr.isMoonfin) && (
 				<>
 					<div className={css.viewDescription}>
 						{$L('Sign in directly through the Moonfin plugin. No app backend is required.')}

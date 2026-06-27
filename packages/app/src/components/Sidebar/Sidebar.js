@@ -5,11 +5,10 @@ import SpotlightContainerDecorator, {spotlightDefaultClass} from '@enact/spotlig
 import Spotlight from '@enact/spotlight';
 import {useAuth} from '../../context/AuthContext';
 import {useSettings} from '../../context/SettingsContext';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import {useSyncPlay} from '../../context/SyncPlayContext';
-import JellyseerrIcon from '../icons/JellyseerrIcon';
-import SyncPlayIcon from '../icons/SyncPlayIcon';
 import SeerrIcon from '../icons/SeerrIcon';
+import SyncPlayIcon from '../icons/SyncPlayIcon';
 import {toCssColor, toCssColorWithAlpha, toSafeCssColorWithAlpha} from '../../theme/themeSpec';
 import {KEYS} from '../../utils/keys';
 
@@ -41,7 +40,7 @@ const Sidebar = ({
 }) => {
 	const {user, serverUrl} = useAuth();
 	const {settings, activeTheme} = useSettings();
-	const {isEnabled: jellyseerrEnabled, isMoonfin, variant, displayName} = useJellyseerr();
+	const {isEnabled: seerrEnabled, displayName} = useSeerr();
 	const {isInGroup} = useSyncPlay();
 	const [clock, setClock] = useState('');
 	const [isHovered, setIsHovered] = useState(false);
@@ -184,7 +183,7 @@ const Sidebar = ({
 				'library-grid',
 				'person-grid',
 				'discover-row-0',
-				'jellyseerr-browse-grid',
+				'seerr-browse-grid',
 				'action-buttons',
 				'details-primary-btn',
 				'details-favorite-btn',
@@ -307,15 +306,12 @@ const Sidebar = ({
 					</SpottableButton>
 				)}
 
-				{jellyseerrEnabled && settings.showSeerrButton !== false && (
+				{seerrEnabled && settings.showSeerrButton !== false && (
 					<SpottableButton
 						className={css.sidebarItem}
 						onClick={onDiscover}
 					>
-						{isMoonfin && variant === 'seerr'
-							? <SeerrIcon className={css.sidebarIcon} style={navIconStyle(6)} />
-							: <JellyseerrIcon className={css.sidebarIcon} style={navIconStyle(6)} />
-						}
+						<SeerrIcon className={css.sidebarIcon} style={navIconStyle(6)} />
 						<span className={css.sidebarLabel}>{displayName}</span>
 					</SpottableButton>
 				)}

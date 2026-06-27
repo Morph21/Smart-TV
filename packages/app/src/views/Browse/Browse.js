@@ -3,7 +3,7 @@ import Spotlight from '@enact/spotlight';
 import $L from '@enact/i18n/$L';
 import {useAuth} from '../../context/AuthContext';
 import {useSettings} from '../../context/SettingsContext';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import {ClassicMediaRow, ModernMediaRow} from '../../components/MediaRow';
 import SeerrTileRow from '../../components/SeerrTileRow';
 import {getSeerrHomeRowConfigs, fetchSeerrHomeRow} from '../../utils/seerrHomeRows';
@@ -13,7 +13,7 @@ import {getImageUrl, getBackdropId, getLogoUrl} from '../../utils/helpers';
 import {getFromStorage, saveToStorage} from '../../services/storage';
 import {HOME_ROW_ITEM_FIELDS} from '../../services/jellyfinApi';
 import * as connectionPool from '../../services/connectionPool';
-import {getMoonfinMediaBar} from '../../services/jellyseerrApi';
+import {getMoonfinMediaBar} from '../../services/seerrApi';
 import {toCssColor} from '../../theme/themeSpec';
 import DetailSection from './DetailSection';
 import FeaturedBanner from './FeaturedBanner';
@@ -126,7 +126,7 @@ const normalizeHssItemId = (item, sectionType, additionalData, index) => {
 
 	const providerIds = getHssProviderIds(item);
 	const syntheticSource =
-		providerIds.Jellyseerr ||
+		providerIds.Seerr ||
 		providerIds.SonarrSeriesId ||
 		providerIds.RadarrMovieId ||
 		providerIds.LidarrAlbumId ||
@@ -145,7 +145,7 @@ const normalizeHssItemId = (item, sectionType, additionalData, index) => {
 const getHssPosterUrl = (item) => {
 	const providerIds = getHssProviderIds(item);
 	return (
-		providerIds.JellyseerrPoster ||
+		providerIds.SeerrPoster ||
 		providerIds.SonarrPoster ||
 		providerIds.RadarrPoster ||
 		providerIds.LidarrPoster ||
@@ -262,8 +262,8 @@ const Browse = ({
 }) => {
 	const {api, serverUrl, accessToken, hasMultipleServers, user} = useAuth();
 	const {settings, activeTheme} = useSettings();
-	const {isEnabled: jellyseerrEnabled, isAuthenticated: jellyseerrAuthenticated, user: jellyseerrUser} = useJellyseerr();
-	const seerrUserId = jellyseerrUser?.jellyseerrUserId;
+	const {isEnabled: seerrEnabled, isAuthenticated: seerrAuthenticated, user: seerrUser} = useSeerr();
+	const seerrUserId = seerrUser?.seerrUserId;
 	const [seerrRows, setSeerrRows] = useState([]);
 	const unifiedMode = settings.unifiedLibraryMode && hasMultipleServers;
 	const isLegacy = typeof document !== 'undefined' && (' ' + document.documentElement.className + ' ').indexOf(' legacy ') >= 0;
@@ -1436,7 +1436,7 @@ const Browse = ({
 	}, [onSelectSeerrItem, onSelectSeerrGenre, onSelectSeerrStudio, onSelectSeerrNetwork]);
 
 	useEffect(() => {
-		if (!jellyseerrEnabled || !jellyseerrAuthenticated || !settings.displaySeerrRows) {
+		if (!seerrEnabled || !seerrAuthenticated || !settings.displaySeerrRows) {
 			setSeerrRows([]);
 			return;
 		}
@@ -1470,7 +1470,7 @@ const Browse = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [jellyseerrEnabled, jellyseerrAuthenticated, seerrUserId, settings.seerrHomeRows, settings.displaySeerrRows]);
+	}, [seerrEnabled, seerrAuthenticated, seerrUserId, settings.seerrHomeRows, settings.displaySeerrRows]);
 
 	const handleNavigateDownFromFeatured = useCallback(() => {
 		dispatch({type: 'SET_BROWSE_MODE', mode: 'rows'});

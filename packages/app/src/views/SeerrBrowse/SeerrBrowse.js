@@ -4,12 +4,12 @@ import {VirtualGridList} from '@enact/sandstone/VirtualList';
 import Popup from '@enact/sandstone/Popup';
 import Button from '@enact/sandstone/Button';
 import $L from '@enact/i18n/$L';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import {useSettings} from '../../context/SettingsContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import * as jellyseerrApi from '../../services/jellyseerrApi';
+import * as seerrApi from '../../services/seerrApi';
 
-import css from './JellyseerrBrowse.module.less';
+import css from './SeerrBrowse.module.less';
 
 const SpottableDiv = Spottable('div');
 const SpottableButton = Spottable('button');
@@ -24,7 +24,7 @@ const BACKDROP_DEBOUNCE_MS = 300;
 const MAX_PAGES = 25;
 
 /**
- * JellyseerrBrowse - Browse Jellyseerr content by genre, studio, or keyword
+ * SeerrBrowse - Browse Seerr content by genre, studio, or keyword
  *
  * @param {Object} props
  * @param {string} props.browseType - 'genre', 'studio', 'network', or 'keyword'
@@ -33,8 +33,8 @@ const MAX_PAGES = 25;
  * @param {Function} props.onSelectItem - Callback when an item is selected
  * @param {Function} props.onBack - Callback to go back
  */
-const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSelectItem, backHandlerRef}) => {
-	const {isEnabled} = useJellyseerr();
+const SeerrBrowse = ({browseType, item, mediaType: initialMediaType, onSelectItem, backHandlerRef}) => {
+	const {isEnabled} = useSeerr();
 	const {settings} = useSettings();
 	const [items, setItems] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -70,16 +70,16 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 
 			switch (browseType) {
 				case 'genre':
-					result = await jellyseerrApi.discoverByGenre(mediaType, item.id, page);
+					result = await seerrApi.discoverByGenre(mediaType, item.id, page);
 					break;
 				case 'studio':
-					result = await jellyseerrApi.discoverByStudio(item.id, page);
+					result = await seerrApi.discoverByStudio(item.id, page);
 					break;
 				case 'network':
-					result = await jellyseerrApi.discoverByNetwork(item.id, page);
+					result = await seerrApi.discoverByNetwork(item.id, page);
 					break;
 				case 'keyword':
-					result = await jellyseerrApi.discoverByKeyword(mediaType, item.id, page);
+					result = await seerrApi.discoverByKeyword(mediaType, item.id, page);
 					break;
 				default:
 					console.error('Unknown browse type:', browseType);
@@ -100,7 +100,7 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 			if (!append && newItems.length > 0 && !backdropSetRef.current) {
 				const firstItemWithBackdrop = newItems.find(i => i.backdropPath);
 				if (firstItemWithBackdrop) {
-					const url = jellyseerrApi.getImageUrl(firstItemWithBackdrop.backdropPath, 'w1280');
+					const url = seerrApi.getImageUrl(firstItemWithBackdrop.backdropPath, 'w1280');
 					setBackdropUrl(url);
 					backdropSetRef.current = true;
 				}
@@ -144,7 +144,7 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 		if (!mediaItem) return;
 
 		if (mediaItem.backdropPath) {
-			const url = jellyseerrApi.getImageUrl(mediaItem.backdropPath, 'w1280');
+			const url = seerrApi.getImageUrl(mediaItem.backdropPath, 'w1280');
 
 			if (backdropTimeoutRef.current) {
 				clearTimeout(backdropTimeoutRef.current);
@@ -161,7 +161,6 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 
 		const mediaItem = itemsRef.current[parseInt(itemIndex, 10)];
 		if (mediaItem) {
-			// Format like JellyseerrDiscover does - determine type from item properties
 			const type = mediaItem.media_type || mediaItem.mediaType || (mediaItem.title ? 'movie' : 'tv');
 			onSelectItem?.({
 				mediaId: mediaItem.id,
@@ -221,7 +220,7 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 		if (!mediaItem) return null;
 
 		const imageUrl = mediaItem.posterPath
-			? jellyseerrApi.getImageUrl(mediaItem.posterPath, 'w300')
+			? seerrApi.getImageUrl(mediaItem.posterPath, 'w300')
 			: null;
 
 		const title = mediaItem.title || mediaItem.name;
@@ -299,7 +298,7 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 	if (!isEnabled) {
 		return (
 			<div className={css.page}>
-				<div className={css.empty}>{$L('Jellyseerr is not configured')}</div>
+				<div className={css.empty}>{$L('Seerr is not configured')}</div>
 			</div>
 		);
 	}
@@ -361,7 +360,7 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 							itemRenderer={renderItem}
 							itemSize={{minWidth: 180, minHeight: 340}}
 							spacing={20}
-							spotlightId="jellyseerr-browse-grid"
+							spotlightId="seerr-browse-grid"
 						/>
 						</div>
 					)}
@@ -394,4 +393,4 @@ const JellyseerrBrowse = ({browseType, item, mediaType: initialMediaType, onSele
 	);
 };
 
-export default JellyseerrBrowse;
+export default SeerrBrowse;

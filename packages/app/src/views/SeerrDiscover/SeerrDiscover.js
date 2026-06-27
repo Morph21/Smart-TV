@@ -3,15 +3,15 @@ import Spottable from '@enact/spotlight/Spottable';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import Spotlight from '@enact/spotlight';
 import $L from '@enact/i18n/$L';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import {useSeerr} from '../../context/SeerrContext';
 import {useSettings} from '../../context/SettingsContext';
-import jellyseerrApi from '../../services/jellyseerrApi';
+import seerrApi from '../../services/seerrApi';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {KEYS} from '../../utils/keys';
-import hydrateRequestMediaItems from '../../utils/jellyseerrHydration';
+import hydrateRequestMediaItems from '../../utils/seerrHydration';
 import {STREAMING_NETWORKS, MOVIE_STUDIOS} from '../../utils/seerrHomeRows';
 
-import css from './JellyseerrDiscover.module.less';
+import css from './SeerrDiscover.module.less';
 
 const SpottableDiv = Spottable('div');
 const RowContainer = SpotlightContainerDecorator({
@@ -39,7 +39,7 @@ let lastFocusedRowIndex = null;
 
 // Memoized card components for performance
 const MediaCard = memo(function MediaCard({item, mediaType, onSelect, onFocus}) {
-	const posterUrl = jellyseerrApi.getImageUrl(item.poster_path || item.posterPath, 'w342');
+	const posterUrl = seerrApi.getImageUrl(item.poster_path || item.posterPath, 'w342');
 	const title = item.title || item.name;
 	const status = item.mediaInfo?.status;
 	const itemMediaType = item.media_type || item.mediaType || mediaType;
@@ -75,7 +75,7 @@ const MediaCard = memo(function MediaCard({item, mediaType, onSelect, onFocus}) 
 
 const GenreCard = memo(function GenreCard({genre, mediaType, onSelect, onFocus}) {
 	const backdropPath = genre.backdrops?.[0] || '';
-	const backdropUrl = backdropPath ? jellyseerrApi.getImageUrl(backdropPath, 'w780') : '';
+	const backdropUrl = backdropPath ? seerrApi.getImageUrl(backdropPath, 'w780') : '';
 
 	const handleClick = useCallback(() => {
 		onSelect?.(genre.id, genre.name, mediaType);
@@ -96,7 +96,7 @@ const GenreCard = memo(function GenreCard({genre, mediaType, onSelect, onFocus})
 });
 
 const NetworkCard = memo(function NetworkCard({network, onSelect}) {
-	const logoUrl = jellyseerrApi.getImageUrl('/' + network.logo, 'w185');
+	const logoUrl = seerrApi.getImageUrl('/' + network.logo, 'w185');
 
 	const handleClick = useCallback(() => {
 		onSelect?.(network.id, network.name);
@@ -112,7 +112,7 @@ const NetworkCard = memo(function NetworkCard({network, onSelect}) {
 });
 
 const StudioCard = memo(function StudioCard({studio, onSelect}) {
-	const logoUrl = jellyseerrApi.getImageUrl('/' + studio.logo, 'w185');
+	const logoUrl = seerrApi.getImageUrl('/' + studio.logo, 'w185');
 
 	const handleClick = useCallback(() => {
 		onSelect?.(studio.id, studio.name);
@@ -130,7 +130,7 @@ const StudioCard = memo(function StudioCard({studio, onSelect}) {
 // Request card component - shows user's requests with status
 const RequestCard = memo(function RequestCard({request, onSelect, onFocus}) {
 	const media = request.media;
-	const posterUrl = media?.posterPath ? jellyseerrApi.getImageUrl(media.posterPath, 'w342') : null;
+	const posterUrl = media?.posterPath ? seerrApi.getImageUrl(media.posterPath, 'w342') : null;
 	const title = media?.title || media?.name || 'Unknown';
 	const requestStatus = request.status;
 	const mediaStatus = media?.status;
@@ -324,8 +324,8 @@ const DiscoverRow = memo(function DiscoverRow({
 	);
 });
 
-const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSelectStudio}) => {
-	const {isAuthenticated, isEnabled, user: contextUser} = useJellyseerr();
+const SeerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSelectStudio}) => {
+	const {isAuthenticated, isEnabled, user: contextUser} = useSeerr();
 	const {settings} = useSettings();
 	const [rows, setRows] = useState({});
 	const [rowPages, setRowPages] = useState({});
@@ -350,11 +350,10 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 			setIsLoading(true);
 			try {
 				// Prefer context user (Moonfin) or fall back to API user
-				const apiUser = await jellyseerrApi.getUser().catch(() => null);
-				const currentUser = contextUser?.jellyseerrUserId
-					? {id: contextUser.jellyseerrUserId, ...apiUser}
+				const apiUser = await seerrApi.getUser().catch(() => null);
+				const currentUser = contextUser?.seerrUserId
+					? {id: contextUser.seerrUserId, ...apiUser}
 					: apiUser;
-				console.log('[JellyseerrDiscover] Current user:', currentUser?.id, currentUser?.username);
 
 				const [
 					myRequestsData,
@@ -366,14 +365,14 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 					upcomingMoviesData,
 					upcomingTvData
 				] = await Promise.all([
-					currentUser?.id ? jellyseerrApi.getMyRequests(currentUser.id, 50).catch((e) => { console.error('[JellyseerrDiscover] myRequests error:', e); return {results: []}; }) : {results: []},
-					jellyseerrApi.trending().catch(() => ({results: []})),
-					jellyseerrApi.trendingMovies(1).catch(() => ({results: []})),
-					jellyseerrApi.trendingTv(1).catch(() => ({results: []})),
-					jellyseerrApi.getGenreSliderMovies().catch(() => []),
-					jellyseerrApi.getGenreSliderTv().catch(() => []),
-					jellyseerrApi.upcomingMovies(1).catch(() => ({results: []})),
-					jellyseerrApi.upcomingTv(1).catch(() => ({results: []}))
+					currentUser?.id ? seerrApi.getMyRequests(currentUser.id, 50).catch((e) => { console.error('[SeerrDiscover] myRequests error:', e); return {results: []}; }) : {results: []},
+					seerrApi.trending().catch(() => ({results: []})),
+					seerrApi.trendingMovies(1).catch(() => ({results: []})),
+					seerrApi.trendingTv(1).catch(() => ({results: []})),
+					seerrApi.getGenreSliderMovies().catch(() => []),
+					seerrApi.getGenreSliderTv().catch(() => []),
+					seerrApi.upcomingMovies(1).catch(() => ({results: []})),
+					seerrApi.upcomingTv(1).catch(() => ({results: []}))
 				]);
 
 				const hydratedMyRequests = await hydrateRequestMediaItems(myRequestsData.results || []);
@@ -409,7 +408,7 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 					upcomingTv: (upcomingTvData.results || []).length >= 20
 				});
 			} catch (err) {
-				console.error('Failed to load Jellyseerr data:', err);
+				console.error('Failed to load Seerr data:', err);
 			} finally {
 				setIsLoading(false);
 			}
@@ -438,19 +437,19 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 			let data;
 			switch (config.fetchFn) {
 				case 'trending':
-					data = await jellyseerrApi.trending(nextPage);
+					data = await seerrApi.trending(nextPage);
 					break;
 				case 'trendingMovies':
-					data = await jellyseerrApi.trendingMovies(nextPage);
+					data = await seerrApi.trendingMovies(nextPage);
 					break;
 				case 'trendingTv':
-					data = await jellyseerrApi.trendingTv(nextPage);
+					data = await seerrApi.trendingTv(nextPage);
 					break;
 				case 'upcomingMovies':
-					data = await jellyseerrApi.upcomingMovies(nextPage);
+					data = await seerrApi.upcomingMovies(nextPage);
 					break;
 				case 'upcomingTv':
-					data = await jellyseerrApi.upcomingTv(nextPage);
+					data = await seerrApi.upcomingTv(nextPage);
 					break;
 				default:
 					return;
@@ -483,9 +482,9 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 		backdropTimeoutRef.current = setTimeout(() => {
 			if (item?.backdrop_path || item?.backdropPath) {
 				const path = item.backdrop_path || item.backdropPath;
-				setBackdropUrl(jellyseerrApi.getImageUrl(path, 'w1280'));
+				setBackdropUrl(seerrApi.getImageUrl(path, 'w1280'));
 			} else if (item?.backdrops?.length > 0) {
-				setBackdropUrl(jellyseerrApi.getImageUrl(item.backdrops[0], 'w1280'));
+				setBackdropUrl(seerrApi.getImageUrl(item.backdrops[0], 'w1280'));
 			}
 		}, 150);
 	}, []);
@@ -551,8 +550,8 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 		return (
 			<div className={css.container}>
 				<div className={css.notConfigured}>
-					<p>{$L('Jellyseerr is not enabled.')}</p>
-					<p>{$L('Go to Settings to configure Jellyseerr.')}</p>
+					<p>{$L('Seerr is not enabled.')}</p>
+					<p>{$L('Go to Settings to configure Seerr.')}</p>
 				</div>
 			</div>
 		);
@@ -562,8 +561,8 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 		return (
 			<div className={css.container}>
 				<div className={css.notConfigured}>
-					<p>{$L('Jellyseerr is not authenticated.')}</p>
-					<p>{$L('Go to Settings to log in to Jellyseerr.')}</p>
+					<p>{$L('Seerr is not authenticated.')}</p>
+					<p>{$L('Go to Settings to log in to Seerr.')}</p>
 				</div>
 			</div>
 		);
@@ -638,4 +637,4 @@ const JellyseerrDiscover = ({onSelectItem, onSelectGenre, onSelectNetwork, onSel
 	);
 };
 
-export default JellyseerrDiscover;
+export default SeerrDiscover;

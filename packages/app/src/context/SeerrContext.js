@@ -1,13 +1,13 @@
 import {createContext, useContext, useState, useEffect, useCallback} from 'react';
-import * as jellyseerrApi from '../services/jellyseerrApi';
+import * as seerrApi from '../services/seerrApi';
 import {getFromStorage, saveToStorage, removeFromStorage} from '../services/storage';
 import {useSettings} from './SettingsContext';
 
-const JellyseerrContext = createContext(null);
+const SeerrContext = createContext(null);
 
 const normalizeMoonfinAuthType = (authType) => (authType === 'local' ? 'local' : 'jellyfin');
 
-export const JellyseerrProvider = ({children}) => {
+export const SeerrProvider = ({children}) => {
 const {syncFromServer} = useSettings();
 const [isEnabled, setIsEnabled] = useState(false);
 const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -15,65 +15,73 @@ const [isLoading, setIsLoading] = useState(true);
 const [user, setUser] = useState(null);
 const [serverUrl, setServerUrl] = useState(null);
 const [isMoonfin, setIsMoonfin] = useState(false);
-const [variant, setVariant] = useState('jellyseerr');
-const [displayName, setDisplayName] = useState('Jellyseerr');
+const [variant, setVariant] = useState('seerr');
+const [displayName, setDisplayName] = useState('Seerr');
 const [pluginInfo, setPluginInfo] = useState(null);
 const [moonfinAuthType, setMoonfinAuthTypeState] = useState('jellyfin');
 
 useEffect(() => {
 const init = async () => {
 try {
-const config = await getFromStorage('jellyseerr');
+let config = await getFromStorage('seerr');
+// Carry over pre-rename data stored under the old 'jellyseerr' key.
+if (!config) {
+const legacyConfig = await getFromStorage('jellyseerr');
+if (legacyConfig) {
+config = legacyConfig;
+await saveToStorage('seerr', legacyConfig);
+}
+}
 if (config?.moonfin) {
 const initialAuthType = normalizeMoonfinAuthType(config.moonfinAuthType);
 setMoonfinAuthTypeState(initialAuthType);
-jellyseerrApi.setMoonfinConfig(config.jellyfinServerUrl, config.jellyfinAccessToken);
-jellyseerrApi.setMoonfinMode(true);
+seerrApi.setMoonfinConfig(config.jellyfinServerUrl, config.jellyfinAccessToken);
+seerrApi.setMoonfinMode(true);
 setServerUrl(config.url || config.jellyfinServerUrl);
 setIsEnabled(true);
 setIsMoonfin(true);
 
 try {
-const status = await jellyseerrApi.getMoonfinStatus();
+const status = await seerrApi.getMoonfinStatus();
 if (status?.authenticated) {
 if (status.authType) {
 setMoonfinAuthTypeState(normalizeMoonfinAuthType(status.authType));
 }
 setUser({
 displayName: status.displayName,
-jellyseerrUserId: status.jellyseerrUserId,
+seerrUserId: status.seerrUserId,
 permissions: status.permissions ?? 0xFFFFFFFF
 });
 setIsAuthenticated(true);
 setServerUrl(status.url || config.url || config.jellyfinServerUrl);
 }
 } catch (e) {
-console.log('[Jellyseerr] Moonfin status check failed:', e.message);
+console.log('[Seerr] Moonfin status check failed:', e.message);
 }
 
 try {
 const [pingResult, configResult] = await Promise.all([
-jellyseerrApi.moonfinPing(config.jellyfinServerUrl, config.jellyfinAccessToken).catch(() => null),
-jellyseerrApi.getMoonfinConfig(config.jellyfinServerUrl, config.jellyfinAccessToken).catch(() => null)
+seerrApi.moonfinPing(config.jellyfinServerUrl, config.jellyfinAccessToken).catch(() => null),
+seerrApi.getMoonfinConfig(config.jellyfinServerUrl, config.jellyfinAccessToken).catch(() => null)
 ]);
 if (pingResult) {
 setPluginInfo(pingResult);
 }
 if (configResult) {
-const v = configResult.variant || 'jellyseerr';
+const v = configResult.variant || 'seerr';
 setVariant(v);
-setDisplayName(configResult.displayName || (v === 'seerr' ? 'Seerr' : 'Jellyseerr'));
+setDisplayName(configResult.displayName || 'Seerr');
 }
 } catch (e) {
-console.log('[Jellyseerr] Plugin info fetch failed:', e.message);
+console.log('[Seerr] Plugin info fetch failed:', e.message);
 }
 
 syncFromServer(config.jellyfinServerUrl, config.jellyfinAccessToken).catch(e =>
-console.log('[Jellyseerr] Settings sync failed:', e.message)
+console.log('[Seerr] Settings sync failed:', e.message)
 );
 }
 } catch (e) {
-console.error('[Jellyseerr] Init failed:', e);
+console.error('[Seerr] Init failed:', e);
 } finally {
 setIsLoading(false);
 }
@@ -83,30 +91,30 @@ init();
 }, []);
 
 const configureWithMoonfin = useCallback(async (jellyfinServer, token) => {
-const existingConfig = await getFromStorage('jellyseerr');
+const existingConfig = await getFromStorage('seerr');
 const savedAuthType = normalizeMoonfinAuthType(existingConfig?.moonfinAuthType);
 setMoonfinAuthTypeState(savedAuthType);
 
-jellyseerrApi.setMoonfinConfig(jellyfinServer, token);
-jellyseerrApi.setMoonfinMode(true);
+seerrApi.setMoonfinConfig(jellyfinServer, token);
+seerrApi.setMoonfinMode(true);
 
 const [status, pingResult, configResult] = await Promise.all([
-jellyseerrApi.getMoonfinStatus(),
-jellyseerrApi.moonfinPing(jellyfinServer, token).catch(() => null),
-jellyseerrApi.getMoonfinConfig(jellyfinServer, token).catch(() => null)
+seerrApi.getMoonfinStatus(),
+seerrApi.moonfinPing(jellyfinServer, token).catch(() => null),
+seerrApi.getMoonfinConfig(jellyfinServer, token).catch(() => null)
 ]);
 
 if (pingResult) {
 setPluginInfo(pingResult);
 }
 if (configResult) {
-const v = configResult.variant || 'jellyseerr';
+const v = configResult.variant || 'seerr';
 setVariant(v);
-setDisplayName(configResult.displayName || (v === 'seerr' ? 'Seerr' : 'Jellyseerr'));
+setDisplayName(configResult.displayName || 'Seerr');
 }
 
 syncFromServer(jellyfinServer, token).catch(e =>
-console.log('[Jellyseerr] Settings sync failed:', e.message)
+console.log('[Seerr] Settings sync failed:', e.message)
 );
 
 if (status?.authenticated) {
@@ -116,7 +124,7 @@ setMoonfinAuthTypeState(normalizeMoonfinAuthType(status.authType));
 }
 const userData = {
 displayName: status.displayName,
-jellyseerrUserId: status.jellyseerrUserId,
+seerrUserId: status.seerrUserId,
 permissions: status.permissions ?? 0xFFFFFFFF
 };
 setUser(userData);
@@ -125,12 +133,12 @@ setServerUrl(status.url || jellyfinServer);
 setIsEnabled(true);
 setIsMoonfin(true);
 
-await saveToStorage('jellyseerr', {
+await saveToStorage('seerr', {
 moonfin: true,
 url: status.url || jellyfinServer,
 jellyfinServerUrl: jellyfinServer,
 jellyfinAccessToken: token,
-userId: status.jellyseerrUserId,
+userId: status.seerrUserId,
 moonfinAuthType: resolvedAuthType
 });
 
@@ -140,7 +148,7 @@ setServerUrl(jellyfinServer);
 setIsEnabled(true);
 setIsMoonfin(true);
 
-await saveToStorage('jellyseerr', {
+await saveToStorage('seerr', {
 moonfin: true,
 jellyfinServerUrl: jellyfinServer,
 jellyfinAccessToken: token,
@@ -153,25 +161,25 @@ return {authenticated: false, url: status?.url};
 
 const loginWithMoonfin = useCallback(async (username, password, authType = 'jellyfin') => {
 const normalizedAuthType = normalizeMoonfinAuthType(authType);
-await jellyseerrApi.moonfinLogin(username, password, normalizedAuthType);
-const status = await jellyseerrApi.getMoonfinStatus();
+await seerrApi.moonfinLogin(username, password, normalizedAuthType);
+const status = await seerrApi.getMoonfinStatus();
 if (status?.authenticated) {
 const userData = {
 displayName: status.displayName,
-jellyseerrUserId: status.jellyseerrUserId,
+seerrUserId: status.seerrUserId,
 permissions: status.permissions ?? 0xFFFFFFFF
 };
 setMoonfinAuthTypeState(normalizedAuthType);
-const config = await getFromStorage('jellyseerr');
+const config = await getFromStorage('seerr');
 const resolvedUrl = status.url || config?.url || config?.jellyfinServerUrl || null;
 setUser(userData);
 setIsAuthenticated(true);
 setServerUrl(resolvedUrl);
 
-await saveToStorage('jellyseerr', {
+await saveToStorage('seerr', {
 ...config,
 url: resolvedUrl,
-userId: status.jellyseerrUserId,
+userId: status.seerrUserId,
 moonfinAuthType: normalizedAuthType
 });
 
@@ -184,9 +192,9 @@ const setMoonfinAuthType = useCallback(async (authType) => {
 const normalizedAuthType = normalizeMoonfinAuthType(authType);
 setMoonfinAuthTypeState(normalizedAuthType);
 
-const config = await getFromStorage('jellyseerr');
+const config = await getFromStorage('seerr');
 if (config?.moonfin) {
-await saveToStorage('jellyseerr', {
+await saveToStorage('seerr', {
 ...config,
 moonfinAuthType: normalizedAuthType
 });
@@ -194,13 +202,13 @@ moonfinAuthType: normalizedAuthType
 }, []);
 
 const logout = useCallback(async () => {
-try { await jellyseerrApi.moonfinLogout(); } catch (e) { void e; }
+try { await seerrApi.moonfinLogout(); } catch (e) { void e; }
 setUser(null);
 setIsAuthenticated(false);
 
-const config = await getFromStorage('jellyseerr');
+const config = await getFromStorage('seerr');
 if (config?.moonfin) {
-await saveToStorage('jellyseerr', {
+await saveToStorage('seerr', {
 ...config,
 url: config.jellyfinServerUrl || config.url,
 userId: null,
@@ -211,22 +219,22 @@ setServerUrl(config.jellyfinServerUrl || config.url || null);
 }, [moonfinAuthType]);
 
 const disable = useCallback(async () => {
-await removeFromStorage('jellyseerr');
-jellyseerrApi.setMoonfinMode(false);
-jellyseerrApi.setMoonfinConfig(null, null);
+await removeFromStorage('seerr');
+seerrApi.setMoonfinMode(false);
+seerrApi.setMoonfinConfig(null, null);
 setServerUrl(null);
 setUser(null);
 setIsEnabled(false);
 setIsAuthenticated(false);
 setIsMoonfin(false);
-setVariant('jellyseerr');
-setDisplayName('Jellyseerr');
+setVariant('seerr');
+setDisplayName('Seerr');
 setPluginInfo(null);
 setMoonfinAuthTypeState('jellyfin');
 }, []);
 
 return (
-<JellyseerrContext.Provider value={{
+<SeerrContext.Provider value={{
 isEnabled,
 isAuthenticated,
 isLoading,
@@ -237,7 +245,7 @@ variant,
 displayName,
 pluginInfo,
 moonfinAuthType,
-api: jellyseerrApi,
+api: seerrApi,
 configureWithMoonfin,
 loginWithMoonfin,
 setMoonfinAuthType,
@@ -245,14 +253,14 @@ logout,
 disable
 }}>
 {children}
-</JellyseerrContext.Provider>
+</SeerrContext.Provider>
 );
 };
 
-export const useJellyseerr = () => {
-const context = useContext(JellyseerrContext);
+export const useSeerr = () => {
+const context = useContext(SeerrContext);
 if (!context) {
-throw new Error('useJellyseerr must be used within JellyseerrProvider');
+throw new Error('useSeerr must be used within SeerrProvider');
 }
 return context;
 };

@@ -11,11 +11,11 @@ import ri from '@enact/ui/resolution';
 import Spotlight from '@enact/spotlight';
 import Spottable from '@enact/spotlight/Spottable';
 import $L from '@enact/i18n/$L';
-import jellyseerrApi from '../../services/jellyseerrApi';
-import hydrateRequestMediaItems from '../../utils/jellyseerrHydration';
-import {useJellyseerr} from '../../context/JellyseerrContext';
+import seerrApi from '../../services/seerrApi';
+import hydrateRequestMediaItems from '../../utils/seerrHydration';
+import {useSeerr} from '../../context/SeerrContext';
 import {useSettings} from '../../context/SettingsContext';
-import css from './JellyseerrRequests.module.less';
+import css from './SeerrRequests.module.less';
 
 const SpottableRow = Spottable('div');
 
@@ -34,7 +34,7 @@ const getStatusInfo = (request) => {
 const RequestItem = memo(function RequestItem({request, index, onSelect, onCancel}) {
 	const media = request.media;
 	const posterUrl = media?.posterPath
-		? jellyseerrApi.getImageUrl(media.posterPath, 'w185')
+		? seerrApi.getImageUrl(media.posterPath, 'w185')
 		: null;
 	const {label: statusLabel, variant: statusVariant} = getStatusInfo(request);
 
@@ -85,8 +85,8 @@ const RequestItem = memo(function RequestItem({request, index, onSelect, onCance
 	);
 });
 
-const JellyseerrRequests = ({onSelectItem, onClose, ...rest}) => {
-	const {isAuthenticated} = useJellyseerr();
+const SeerrRequests = ({onSelectItem, onClose, ...rest}) => {
+	const {isAuthenticated} = useSeerr();
 	const {settings} = useSettings();
 	const [requests, setRequests] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -99,7 +99,7 @@ const JellyseerrRequests = ({onSelectItem, onClose, ...rest}) => {
 		setLoading(true);
 		setError(null);
 		try {
-			const data = await jellyseerrApi.getRequests({take: 100});
+			const data = await seerrApi.getRequests({take: 100});
 			const hydrated = await hydrateRequestMediaItems(data.results || []);
 			setRequests(hydrated);
 		} catch (err) {
@@ -133,7 +133,7 @@ const JellyseerrRequests = ({onSelectItem, onClose, ...rest}) => {
 	const handleCancel = useCallback(async (requestId, e) => {
 		e.stopPropagation();
 		try {
-			await jellyseerrApi.cancelRequest(requestId);
+			await seerrApi.cancelRequest(requestId);
 			await loadRequests();
 		} catch (err) {
 			console.error('Failed to cancel request:', err);
@@ -172,7 +172,7 @@ const JellyseerrRequests = ({onSelectItem, onClose, ...rest}) => {
 		if (!isAuthenticated) {
 			return (
 				<Column align="center center" className={css.message}>
-					<BodyText>{$L('Please configure Jellyseerr in Settings')}</BodyText>
+					<BodyText>{$L('Please configure Seerr in Settings')}</BodyText>
 				</Column>
 			);
 		}
@@ -236,4 +236,4 @@ const JellyseerrRequests = ({onSelectItem, onClose, ...rest}) => {
 	);
 };
 
-export default JellyseerrRequests;
+export default SeerrRequests;

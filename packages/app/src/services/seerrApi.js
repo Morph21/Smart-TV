@@ -12,15 +12,10 @@ const shouldUseHttp = isWebOS() || isLegacyTizen();
 export const setMoonfinConfig = (serverUrl, token) => {
 jellyfinServerUrl = serverUrl?.replace(/\/+$/, '');
 jellyfinAccessToken = token;
-console.log('[Jellyseerr] Moonfin config set:', {
-serverUrl: jellyfinServerUrl,
-hasToken: !!jellyfinAccessToken
-});
 };
 
 export const setMoonfinMode = (enabled) => {
 moonfinMode = !!enabled;
-console.log('[Jellyseerr] Moonfin mode:', moonfinMode ? 'enabled' : 'disabled');
 };
 
 export const isMoonfinMode = () => moonfinMode;
@@ -62,7 +57,7 @@ throw new Error('Moonfin not configured');
 }
 
 const path = endpoint.replace(/^\//, '');
-const url = `${jellyfinServerUrl}/Moonfin/Jellyseerr/Api/${path}`;
+const url = `${jellyfinServerUrl}/Moonfin/Seerr/Api/${path}`;
 const headers = {
 'Content-Type': 'application/json',
 'Accept': 'application/json',
@@ -70,8 +65,6 @@ const headers = {
 };
 
 const bodyStr = options.body ? JSON.stringify(options.body) : undefined;
-
-console.log('[Jellyseerr/Moonfin] Request:', options.method || 'GET', endpoint);
 
 const result = await fetchRequest({
 url,
@@ -84,8 +77,6 @@ timeout: 30000
 if (!result.success) {
 throw new Error(result.error || 'Moonfin proxy request failed');
 }
-
-console.log('[Jellyseerr/Moonfin] Response:', result.status, endpoint);
 
 if (result.status >= 400) {
 let errorMessage = `Moonfin proxy error: ${result.status}`;
@@ -123,11 +114,8 @@ try {
 const decoded = decodeURIComponent(escape(atob(parsed.FileContents)));
 if (!decoded) return null;
 const unwrapped = JSON.parse(decoded);
-console.log('[Jellyseerr/Moonfin] Unwrapped FileContents for:', endpoint,
-'keys:', Object.keys(unwrapped || {}));
 return unwrapped;
 } catch (decodeErr) {
-console.log('[Jellyseerr/Moonfin] FileContents decode failed for:', endpoint, decodeErr.message);
 return null;
 }
 }
@@ -164,7 +152,7 @@ if (!jellyfinServerUrl || !jellyfinAccessToken) {
 throw new Error('Moonfin not configured');
 }
 
-const url = `${jellyfinServerUrl}/Moonfin/Jellyseerr/Status`;
+const url = `${jellyfinServerUrl}/Moonfin/Seerr/Status`;
 const result = await fetchRequest({
 url,
 method: 'GET',
@@ -197,7 +185,7 @@ throw new Error('Moonfin not configured');
 const normalizedAuthType = authType === 'local' ? 'local' : 'jellyfin';
 
 return moonfinAuthRequest(
-`${jellyfinServerUrl}/Moonfin/Jellyseerr/Login`,
+`${jellyfinServerUrl}/Moonfin/Seerr/Login`,
 'POST',
 {
 'Content-Type': 'application/json',
@@ -215,7 +203,7 @@ throw new Error('Moonfin not configured');
 }
 
 return moonfinAuthRequest(
-`${jellyfinServerUrl}/Moonfin/Jellyseerr/Logout`,
+`${jellyfinServerUrl}/Moonfin/Seerr/Logout`,
 'DELETE',
 {'Authorization': `MediaBrowser Token="${jellyfinAccessToken}"`},
 undefined,
@@ -229,7 +217,7 @@ throw new Error('Moonfin not configured');
 }
 
 return moonfinAuthRequest(
-`${jellyfinServerUrl}/Moonfin/Jellyseerr/Validate`,
+`${jellyfinServerUrl}/Moonfin/Seerr/Validate`,
 'GET',
 {
 'Accept': 'application/json',
@@ -308,7 +296,7 @@ if (!sUrl || !sToken) {
 throw new Error('Server URL and token required');
 }
 
-const url = `${sUrl}/Moonfin/Jellyseerr/Config`;
+const url = `${sUrl}/Moonfin/Seerr/Config`;
 const result = await fetchRequest({
 url,
 method: 'GET',
@@ -787,9 +775,7 @@ return request(`/request?filter=${filter}&take=${take}&skip=${skip}`);
 };
 
 export const getMyRequests = async (requestedByUserId, take = 50, skip = 0) => {
-console.log('[jellyseerrApi] getMyRequests called:', {requestedByUserId, take, skip});
 const result = await request(`/request?filter=all&requestedBy=${requestedByUserId}&take=${take}&skip=${skip}&sort=modified`);
-console.log('[jellyseerrApi] getMyRequests result:', result?.results?.length || 0, 'requests');
 return result;
 };
 

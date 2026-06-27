@@ -15,7 +15,7 @@ import {applyPerfTier} from '../utils/perfTier';
 import {isTizen, isWebOS} from '../platform';
 import {initVideo, cleanupVideoElement, setupVisibilityHandler, setupPlatformLifecycle} from '../services/video';
 import {SettingsProvider} from '../context/SettingsContext';
-import {JellyseerrProvider} from '../context/JellyseerrContext';
+import {SeerrProvider} from '../context/SeerrContext';
 import {SyncPlayProvider, useSyncPlay} from '../context/SyncPlayContext';
 import {useVersionCheck} from '../hooks/useVersionCheck';
 import UpdateNotification from '../components/UpdateNotification';
@@ -51,11 +51,11 @@ const GenreBrowse = lazy(() => import('../views/GenreBrowse'));
 const Person = lazy(() => import('../views/Person'));
 const LiveTV = lazy(() => import('../views/LiveTV'));
 const Recordings = lazy(() => import('../views/Recordings'));
-const JellyseerrDiscover = lazy(() => import('../views/JellyseerrDiscover'));
-const JellyseerrDetails = lazy(() => import('../views/JellyseerrDetails'));
-const JellyseerrRequests = lazy(() => import('../views/JellyseerrRequests'));
-const JellyseerrBrowse = lazy(() => import('../views/JellyseerrBrowse'));
-const JellyseerrPerson = lazy(() => import('../views/JellyseerrPerson'));
+const SeerrDiscover = lazy(() => import('../views/SeerrDiscover'));
+const SeerrDetails = lazy(() => import('../views/SeerrDetails'));
+const SeerrRequests = lazy(() => import('../views/SeerrRequests'));
+const SeerrBrowse = lazy(() => import('../views/SeerrBrowse'));
+const SeerrPerson = lazy(() => import('../views/SeerrPerson'));
 
 import '../styles/perf-overrides.less';
 import css from './App.module.less';
@@ -63,7 +63,7 @@ import css from './App.module.less';
 const MAX_HISTORY_LENGTH = 10;
 const SpottableButton = Spottable('button');
 
-const normalizeJellyseerrSelection = (item) => {
+const normalizeSeerrSelection = (item) => {
 	if (!item) return null;
 
 	const normalizedType = item.mediaType || item.media_type || item.type || item.Type;
@@ -99,13 +99,13 @@ const PANELS = {
 	GENRES: 8,
 	PERSON: 9,
 	LIVETV: 10,
-	JELLYSEERR_DISCOVER: 11,
-	JELLYSEERR_DETAILS: 12,
-	JELLYSEERR_REQUESTS: 13,
+	SEERR_DISCOVER: 11,
+	SEERR_DETAILS: 12,
+	SEERR_REQUESTS: 13,
 	GENRE_BROWSE: 14,
 	RECORDINGS: 15,
-	JELLYSEERR_BROWSE: 16,
-	JELLYSEERR_PERSON: 17,
+	SEERR_BROWSE: 16,
+	SEERR_PERSON: 17,
 	ADD_SERVER: 18,
 	ADD_USER: 19
 };
@@ -127,9 +127,9 @@ const AppContent = (props) => {
 	const [isResume, setIsResume] = useState(false);
 	const [isPlayerPaused, setIsPlayerPaused] = useState(false);
 	const [panelHistory, setPanelHistory] = useState([]);
-	const [jellyseerrItem, setJellyseerrItem] = useState(null);
-	const [jellyseerrBrowse, setJellyseerrBrowse] = useState(null);
-	const [jellyseerrPerson, setJellyseerrPerson] = useState(null);
+	const [seerrItem, setSeerrItem] = useState(null);
+	const [seerrBrowse, setSeerrBrowse] = useState(null);
+	const [seerrPerson, setSeerrPerson] = useState(null);
 	const [authChecked, setAuthChecked] = useState(false);
 	const [libraries, setLibraries] = useState([]);
 	const [showAccountModal, setShowAccountModal] = useState(false);
@@ -143,7 +143,7 @@ const AppContent = (props) => {
 	const cleanupHandlersRef = useRef(null);
 	const backHandlerRef = useRef(null);
 	const detailsItemStackRef = useRef([]);
-	const jellyseerrItemStackRef = useRef([]);
+	const seerrItemStackRef = useRef([]);
 	const prevUserIdRef = useRef(null);
 	const [photoViewerItem, setPhotoViewerItem] = useState(null);
 	const [photoViewerItems, setPhotoViewerItems] = useState([]);
@@ -444,7 +444,7 @@ const AppContent = (props) => {
 
 	const handleBack = useCallback(() => {
 		detailsItemStackRef.current = [];
-		jellyseerrItemStackRef.current = [];
+		seerrItemStackRef.current = [];
 		if (panelIndex === PANELS.ADD_SERVER || panelIndex === PANELS.ADD_USER) {
 			setPanelHistory([]);
 			setPanelIndex(PANELS.SETTINGS);
@@ -505,8 +505,8 @@ const AppContent = (props) => {
 					setSelectedItem(detailsItemStackRef.current.pop());
 					return;
 				}
-				if (panelIndex === PANELS.JELLYSEERR_DETAILS && jellyseerrItemStackRef.current.length > 0) {
-					setJellyseerrItem(jellyseerrItemStackRef.current.pop());
+				if (panelIndex === PANELS.SEERR_DETAILS && seerrItemStackRef.current.length > 0) {
+					setSeerrItem(seerrItemStackRef.current.pop());
 					return;
 				}
 				handleBack();
@@ -530,18 +530,18 @@ const AppContent = (props) => {
 	}, []);
 
 	const handleSelectItem = useCallback((item) => {
-		if (item.isJellyseerr) {
-			const jellyseerrMapped = normalizeJellyseerrSelection(item);
-			if (!jellyseerrMapped) {
+		if (item.isSeerr) {
+			const seerrMapped = normalizeSeerrSelection(item);
+			if (!seerrMapped) {
 				return;
 			}
-			if (panelIndex === PANELS.JELLYSEERR_DETAILS && jellyseerrItem) {
-				jellyseerrItemStackRef.current.push(jellyseerrItem);
-				setJellyseerrItem(jellyseerrMapped);
+			if (panelIndex === PANELS.SEERR_DETAILS && seerrItem) {
+				seerrItemStackRef.current.push(seerrItem);
+				setSeerrItem(seerrMapped);
 			} else {
-				jellyseerrItemStackRef.current = [];
-				setJellyseerrItem(jellyseerrMapped);
-				navigateTo(PANELS.JELLYSEERR_DETAILS);
+				seerrItemStackRef.current = [];
+				setSeerrItem(seerrMapped);
+				navigateTo(PANELS.SEERR_DETAILS);
 			}
 			return;
 		}
@@ -569,7 +569,7 @@ const AppContent = (props) => {
 			setSelectedItem(item);
 			navigateTo(PANELS.DETAILS);
 		}
-	}, [navigateTo, panelIndex, selectedItem, jellyseerrItem]);
+	}, [navigateTo, panelIndex, selectedItem, seerrItem]);
 
 	const handleViewPhoto = useCallback((item, siblings) => {
 		setPhotoViewerItem(item);
@@ -759,8 +759,8 @@ const AppContent = (props) => {
 		navigateTo(PANELS.PLAYER);
 	}, [navigateTo]);
 
-	const handleOpenJellyseerr = useCallback(() => {
-		navigateTo(PANELS.JELLYSEERR_DISCOVER);
+	const handleOpenSeerr = useCallback(() => {
+		navigateTo(PANELS.SEERR_DISCOVER);
 	}, [navigateTo]);
 
 	const handleHome = useCallback(() => {
@@ -770,15 +770,15 @@ const AppContent = (props) => {
 		setSelectedPerson(null);
 		setSelectedGenre(null);
 		setGenreFilter(null);
-		setJellyseerrItem(null);
-		setJellyseerrBrowse(null);
-		setJellyseerrPerson(null);
+		setSeerrItem(null);
+		setSeerrBrowse(null);
+		setSeerrPerson(null);
 		window.dispatchEvent(new CustomEvent('moonfin:browseRefresh'));
 		setPanelIndex(PANELS.BROWSE);
 	}, []);
 
-	const handleOpenJellyseerrRequests = useCallback(() => {
-		navigateTo(PANELS.JELLYSEERR_REQUESTS);
+	const handleOpenSeerrRequests = useCallback(() => {
+		navigateTo(PANELS.SEERR_REQUESTS);
 	}, [navigateTo]);
 
 	const handleSwitchUser = useCallback(async () => {
@@ -807,44 +807,44 @@ const AppContent = (props) => {
 		setPanelIndex(PANELS.BROWSE);
 	}, []);
 
-	const handleSelectJellyseerrItem = useCallback((item) => {
-		const normalized = normalizeJellyseerrSelection(item);
+	const handleSelectSeerrItem = useCallback((item) => {
+		const normalized = normalizeSeerrSelection(item);
 		if (!normalized) {
 			return;
 		}
-		if (panelIndex === PANELS.JELLYSEERR_DETAILS && jellyseerrItem) {
-			jellyseerrItemStackRef.current.push(jellyseerrItem);
-			setJellyseerrItem(normalized);
+		if (panelIndex === PANELS.SEERR_DETAILS && seerrItem) {
+			seerrItemStackRef.current.push(seerrItem);
+			setSeerrItem(normalized);
 		} else {
-			jellyseerrItemStackRef.current = [];
-			setJellyseerrItem(normalized);
-			navigateTo(PANELS.JELLYSEERR_DETAILS);
+			seerrItemStackRef.current = [];
+			setSeerrItem(normalized);
+			navigateTo(PANELS.SEERR_DETAILS);
 		}
-	}, [navigateTo, panelIndex, jellyseerrItem]);
+	}, [navigateTo, panelIndex, seerrItem]);
 
-	const handleSelectJellyseerrGenre = useCallback((genreId, genreName, mediaType) => {
-		setJellyseerrBrowse({browseType: 'genre', item: {id: genreId, name: genreName}, mediaType});
-		navigateTo(PANELS.JELLYSEERR_BROWSE);
+	const handleSelectSeerrGenre = useCallback((genreId, genreName, mediaType) => {
+		setSeerrBrowse({browseType: 'genre', item: {id: genreId, name: genreName}, mediaType});
+		navigateTo(PANELS.SEERR_BROWSE);
 	}, [navigateTo]);
 
-	const handleSelectJellyseerrStudio = useCallback((studioId, studioName) => {
-		setJellyseerrBrowse({browseType: 'studio', item: {id: studioId, name: studioName}, mediaType: 'movie'});
-		navigateTo(PANELS.JELLYSEERR_BROWSE);
+	const handleSelectSeerrStudio = useCallback((studioId, studioName) => {
+		setSeerrBrowse({browseType: 'studio', item: {id: studioId, name: studioName}, mediaType: 'movie'});
+		navigateTo(PANELS.SEERR_BROWSE);
 	}, [navigateTo]);
 
-	const handleSelectJellyseerrNetwork = useCallback((networkId, networkName) => {
-		setJellyseerrBrowse({browseType: 'network', item: {id: networkId, name: networkName}, mediaType: 'tv'});
-		navigateTo(PANELS.JELLYSEERR_BROWSE);
+	const handleSelectSeerrNetwork = useCallback((networkId, networkName) => {
+		setSeerrBrowse({browseType: 'network', item: {id: networkId, name: networkName}, mediaType: 'tv'});
+		navigateTo(PANELS.SEERR_BROWSE);
 	}, [navigateTo]);
 
-	const handleSelectJellyseerrKeyword = useCallback((keyword, mediaType) => {
-		setJellyseerrBrowse({browseType: 'keyword', item: keyword, mediaType});
-		navigateTo(PANELS.JELLYSEERR_BROWSE);
+	const handleSelectSeerrKeyword = useCallback((keyword, mediaType) => {
+		setSeerrBrowse({browseType: 'keyword', item: keyword, mediaType});
+		navigateTo(PANELS.SEERR_BROWSE);
 	}, [navigateTo]);
 
-	const handleSelectJellyseerrPerson = useCallback((personId, personName) => {
-		setJellyseerrPerson({id: personId, name: personName});
-		navigateTo(PANELS.JELLYSEERR_PERSON);
+	const handleSelectSeerrPerson = useCallback((personId, personName) => {
+		setSeerrPerson({id: personId, name: personName});
+		navigateTo(PANELS.SEERR_PERSON);
 	}, [navigateTo]);
 
 	const handlePinInputChange = useCallback((e) => {
@@ -923,11 +923,11 @@ const AppContent = (props) => {
 			case PANELS.SETTINGS: return 'settings';
 			case PANELS.FAVORITES: return 'favorites';
 			case PANELS.GENRES: return 'genres';
-			case PANELS.JELLYSEERR_DISCOVER:
-			case PANELS.JELLYSEERR_DETAILS:
-			case PANELS.JELLYSEERR_REQUESTS:
-			case PANELS.JELLYSEERR_BROWSE:
-			case PANELS.JELLYSEERR_PERSON:
+			case PANELS.SEERR_DISCOVER:
+			case PANELS.SEERR_DETAILS:
+			case PANELS.SEERR_REQUESTS:
+			case PANELS.SEERR_BROWSE:
+			case PANELS.SEERR_PERSON:
 				return 'discover';
 			case PANELS.LIBRARY: return selectedLibrary?.Id || '';
 			default: return '';
@@ -953,7 +953,7 @@ const AppContent = (props) => {
 					onShuffle={handleShuffle}
 					onGenres={handleOpenGenres}
 					onFavorites={handleOpenFavorites}
-					onDiscover={handleOpenJellyseerr}
+					onDiscover={handleOpenSeerr}
 					onSyncPlay={settings.syncplayEnabled !== false ? openSyncPlay : undefined}
 					onSettings={handleOpenSettings}
 					onSelectLibrary={handleSelectLibrary}
@@ -968,7 +968,7 @@ const AppContent = (props) => {
 					onShuffle={handleShuffle}
 					onGenres={handleOpenGenres}
 					onFavorites={handleOpenFavorites}
-					onDiscover={handleOpenJellyseerr}
+					onDiscover={handleOpenSeerr}
 					onSyncPlay={settings.syncplayEnabled !== false ? openSyncPlay : undefined}
 					onSettings={handleOpenSettings}
 					onSelectLibrary={handleSelectLibrary}
@@ -985,10 +985,10 @@ const AppContent = (props) => {
 							onSelectItem={handleSelectItem}
 							onSelectLibrary={handleSelectLibrary}
 							onSelectGenre={handleSelectGenreFromBrowse}
-							onSelectSeerrItem={handleSelectJellyseerrItem}
-							onSelectSeerrGenre={handleSelectJellyseerrGenre}
-							onSelectSeerrStudio={handleSelectJellyseerrStudio}
-							onSelectSeerrNetwork={handleSelectJellyseerrNetwork}
+							onSelectSeerrItem={handleSelectSeerrItem}
+							onSelectSeerrGenre={handleSelectSeerrGenre}
+							onSelectSeerrStudio={handleSelectSeerrStudio}
+							onSelectSeerrNetwork={handleSelectSeerrNetwork}
 							isVisible={panelIndex === PANELS.BROWSE && !showSettingsPanel}
 							onFocusItemThemeMusic={themeMusic.playThemeMusicDelayed}
 							onBlurItemThemeMusic={themeMusic.cancelDelayed}
@@ -1069,26 +1069,26 @@ const AppContent = (props) => {
 						)}
 					</Panel>
 					<Panel>
-						{panelIndex === PANELS.JELLYSEERR_DISCOVER && (
-							<JellyseerrDiscover
-								onSelectItem={handleSelectJellyseerrItem}
-								onSelectGenre={handleSelectJellyseerrGenre}
-								onSelectStudio={handleSelectJellyseerrStudio}
-								onSelectNetwork={handleSelectJellyseerrNetwork}
-								onOpenRequests={handleOpenJellyseerrRequests}
+						{panelIndex === PANELS.SEERR_DISCOVER && (
+							<SeerrDiscover
+								onSelectItem={handleSelectSeerrItem}
+								onSelectGenre={handleSelectSeerrGenre}
+								onSelectStudio={handleSelectSeerrStudio}
+								onSelectNetwork={handleSelectSeerrNetwork}
+								onOpenRequests={handleOpenSeerrRequests}
 
 							/>
 						)}
 					</Panel>
 					<Panel>
-						{panelIndex === PANELS.JELLYSEERR_DETAILS && (
-							<JellyseerrDetails
-								mediaType={jellyseerrItem?.mediaType}
-								mediaId={jellyseerrItem?.mediaId}
-								onSelectItem={handleSelectJellyseerrItem}
+						{panelIndex === PANELS.SEERR_DETAILS && (
+							<SeerrDetails
+								mediaType={seerrItem?.mediaType}
+								mediaId={seerrItem?.mediaId}
+								onSelectItem={handleSelectSeerrItem}
 								onPlayInMoonfin={handleSelectItem}
-								onSelectPerson={handleSelectJellyseerrPerson}
-								onSelectKeyword={handleSelectJellyseerrKeyword}
+								onSelectPerson={handleSelectSeerrPerson}
+								onSelectKeyword={handleSelectSeerrKeyword}
 							onClose={handleBack}
 							onBack={handleBack}
 							backHandlerRef={backHandlerRef}
@@ -1096,9 +1096,9 @@ const AppContent = (props) => {
 						)}
 					</Panel>
 					<Panel>
-						{panelIndex === PANELS.JELLYSEERR_REQUESTS && (
-							<JellyseerrRequests
-								onSelectItem={handleSelectJellyseerrItem}
+						{panelIndex === PANELS.SEERR_REQUESTS && (
+							<SeerrRequests
+								onSelectItem={handleSelectSeerrItem}
 								onClose={handleBack}
 							/>
 						)}
@@ -1118,22 +1118,22 @@ const AppContent = (props) => {
 						)}
 					</Panel>
 					<Panel>
-						{panelIndex === PANELS.JELLYSEERR_BROWSE && (
-							<JellyseerrBrowse
-								browseType={jellyseerrBrowse?.browseType}
-								item={jellyseerrBrowse?.item}
-								mediaType={jellyseerrBrowse?.mediaType}
-								onSelectItem={handleSelectJellyseerrItem}
+						{panelIndex === PANELS.SEERR_BROWSE && (
+							<SeerrBrowse
+								browseType={seerrBrowse?.browseType}
+								item={seerrBrowse?.item}
+								mediaType={seerrBrowse?.mediaType}
+								onSelectItem={handleSelectSeerrItem}
 							backHandlerRef={backHandlerRef}
 						/>
 						)}
 					</Panel>
 					<Panel>
-						{panelIndex === PANELS.JELLYSEERR_PERSON && (
-							<JellyseerrPerson
-								personId={jellyseerrPerson?.id}
-								personName={jellyseerrPerson?.name}
-								onSelectItem={handleSelectJellyseerrItem}
+						{panelIndex === PANELS.SEERR_PERSON && (
+							<SeerrPerson
+								personId={seerrPerson?.id}
+								personName={seerrPerson?.name}
+								onSelectItem={handleSelectSeerrItem}
 								onBack={handleBack}
 							/>
 						)}
@@ -1257,11 +1257,11 @@ localeContext.keys().forEach((key) => {
 const AppBase = (props) => (
 	<SettingsProvider>
 		<AuthProvider>
-			<JellyseerrProvider>
+			<SeerrProvider>
 				<SyncPlayProvider>
 					<AppContent {...props} />
 				</SyncPlayProvider>
-			</JellyseerrProvider>
+			</SeerrProvider>
 		</AuthProvider>
 	</SettingsProvider>
 );
